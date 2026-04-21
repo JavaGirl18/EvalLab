@@ -1,0 +1,21 @@
+# Environment variables — never commit API keys
+.env
+
+# Python cache files — generated automatically, not needed in git
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment — dependencies are tracked in requirements.txt instead
+venv/
+.venv/
+
+# CSV results — these are generated output, not source code
+backend/results/
+
+# Node / Angular
+node_modules/
+dist/
+
+# macOS
+.DS_Store
