@@ -1,0 +1,50 @@
+<div class="flex flex-col gap-6 p-6 bg-white border-r border-gray-200 h-full">
+  <h2 class="text-xl font-bold text-gray-800">Run Evaluation</h2>
+
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-gray-600">Task Category</label>
+    <select
+      [(ngModel)]="task"
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option *ngFor="let t of tasks" [value]="t.slug">{{ t.label }}</option>
+    </select>
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label class="text-sm font-medium text-gray-600">Your Prompt</label>
+    <textarea
+      [(ngModel)]="userPrompt"
+      rows="6"
+      placeholder="e.g. How do I write a resume if I've only had retail jobs?"
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+    ></textarea>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <div class="flex justify-between">
+      <label class="text-sm font-medium text-gray-600">Temperature</label>
+      <span class="text-sm font-mono text-blue-600">{{ temperature }}</span>
+    </div>
+    <input
+      type="range"
+      [(ngModel)]="temperature"
+      min="0" max="1" step="0.1"
+      class="w-full accent-blue-500"
+    />
+    <div class="flex justify-between text-xs text-gray-400">
+      <span>Precise (0.0)</span>
+      <span>Creative (1.0)</span>
+    </div>
+  </div>
+
+  <p *ngIf="error" class="text-sm text-red-500">{{ error }}</p>
+
+  <button
+    (click)="runEval()"
+    [disabled]="loading || !userPrompt.trim()"
+    class="mt-auto bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
+  >
+    {{ loading ? 'Running eval...' : 'Run Eval' }}
+  </button>
+</div>

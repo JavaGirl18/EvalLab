@@ -1,0 +1,49 @@
+<div class="p-6 overflow-auto h-full">
+  <div *ngIf="results.length === 0" class="flex items-center justify-center h-full text-gray-400 text-sm">
+    Results will appear here after you run an eval.
+  </div>
+
+  <div *ngIf="results.length > 0" class="flex flex-col gap-10">
+    <div *ngFor="let variant of variants">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">
+        {{ variant === 'zero_shot' ? 'Zero-Shot' : 'Role-Prompted' }}
+      </h3>
+
+      <div class="grid gap-4" [style.grid-template-columns]="'repeat(' + grouped[variant].length + ', minmax(0, 1fr))'">
+        <div
+          *ngFor="let result of grouped[variant]"
+          class="border rounded-xl p-4 flex flex-col gap-3"
+          [class.border-amber-400]="result.needs_human_review"
+          [class.border-gray-200]="!result.needs_human_review"
+        >
+          <!-- Model header -->
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-gray-800 text-sm">{{ result.model }}</span>
+            <span
+              *ngIf="result.needs_human_review"
+              class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium"
+            >
+              ⚑ Review
+            </span>
+          </div>
+
+          <!-- Response text -->
+          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ result.response_text }}</p>
+
+          <!-- Scores -->
+          <div class="grid grid-cols-2 gap-1 pt-2 border-t border-gray-100 text-xs">
+            <div *ngFor="let dim of scoreDims" class="flex justify-between">
+              <span class="text-gray-500 capitalize">{{ dim }}</span>
+              <span [class]="scoreColor(getDimScore(result, dim))" class="font-semibold">
+                {{ getDimScore(result, dim) }}/10
+              </span>
+            </div>
+          </div>
+
+          <!-- Judge reasoning -->
+          <p class="text-xs text-gray-400 italic border-t border-gray-100 pt-2">{{ result.judge_reasoning }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
