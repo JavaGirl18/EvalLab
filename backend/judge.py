@@ -3,6 +3,7 @@ import anthropic
 from config import ANTHROPIC_API_KEY, JUDGE_MODEL, SCORING_DIMENSIONS, HUMAN_REVIEW_THRESHOLD, HIGH_STAKES_TASKS
 from runner import ModelResponse
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Initialize the Anthropic client once at the module level.
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -87,12 +88,15 @@ def score_response(response: ModelResponse) -> ScoredResponse:
         ],
     )
 
-    # Extract the text content from Claude's response.
     raw_text = api_response.content[0].text
 
-    # json.loads() parses a JSON string into a Python dict.
-    # If Claude returns malformed JSON this will raise an error —
-    # we'll add error handling in a later improvement.
+    # Strip markdown code fences if Claude wraps the JSON in ```json ... ```
+    if raw_text.startswith("```"):
+        raw_text = raw_text.split("```")[1]
+        if raw_text.startswith("json"):
+            raw_text = raw_text[4:]
+    raw_text = raw_text.strip()
+
     scores = json.loads(raw_text)
 
     # Determine whether this response needs human review.
@@ -123,8 +127,6 @@ def score_response(response: ModelResponse) -> ScoredResponse:
 
 
 def score_all(responses: list[ModelResponse]) -> list[ScoredResponse]:
-    """
-    Convenience function that scores an entire list of ModelResponses.
-    Calls score_response() on each one and returns the full scored list.
-    """
-    return [score_response(r) for r in responses]
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(score_response, r): r for r in responses}
+        return [future.result() for future in as_completed(futures)]
