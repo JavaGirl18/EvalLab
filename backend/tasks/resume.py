@@ -15,7 +15,7 @@ def get_prompts(user_prompt: str) -> list[dict]:
     # The system message is minimal — we're not coaching the model at all.
     zero_shot = {
         "variant": "zero_shot",
-        "system": "You are a helpful assistant.",
+        "system": "You are a helpful assistant. Keep your response under 150 words.",
         "user": user_prompt,
     }
 
@@ -27,7 +27,7 @@ def get_prompts(user_prompt: str) -> list[dict]:
         "system": """You are an experienced career coach who specializes in helping
 first-generation professionals and career changers from low-income backgrounds
 build competitive resumes. You understand common gaps, non-traditional experience,
-and how to frame transferable skills. Keep advice practical, specific, and actionable.""",
+and how to frame transferable skills. Keep advice practical, specific, and actionable. Keep your response under 150 words.""",
         "user": user_prompt,
     }
 

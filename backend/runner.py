@@ -1,6 +1,9 @@
 from openai import OpenAI
 from config import OPENAI_API_KEY, SUBJECT_MODELS
 from dataclasses import dataclass
+
+
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import tasks.resume as resume

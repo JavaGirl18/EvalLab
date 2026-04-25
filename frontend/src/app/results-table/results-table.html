@@ -1,9 +1,40 @@
 <div class="p-6 overflow-auto h-full">
-  <div *ngIf="results.length === 0" class="flex items-center justify-center h-full text-gray-400 text-sm">
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && results.length === 0" class="flex items-center justify-center h-full text-gray-400 text-sm">
     Results will appear here after you run an eval.
   </div>
 
-  <div *ngIf="results.length > 0" class="flex flex-col gap-10">
+  <!-- Skeleton loader -->
+  <div *ngIf="loading" class="flex flex-col gap-10">
+    <div>
+      <div class="h-4 w-24 bg-gray-200 rounded animate-pulse mb-4"></div>
+      <div class="grid grid-cols-3 gap-4">
+        <div *ngFor="let _ of skeletonCards" class="border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
+          <div class="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
+          <div class="flex flex-col gap-2">
+            <div class="h-3 bg-gray-200 rounded animate-pulse"></div>
+            <div class="h-3 bg-gray-200 rounded animate-pulse w-5/6"></div>
+            <div class="h-3 bg-gray-200 rounded animate-pulse w-4/6"></div>
+            <div class="h-3 bg-gray-200 rounded animate-pulse w-3/6"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-1 pt-2 border-t border-gray-100">
+            <div *ngFor="let _ of [1,2,3,4]" class="h-3 bg-gray-100 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-2 text-sm text-gray-400">
+      <svg class="animate-spin h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      Running models and scoring with Claude...
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="!loading && results.length > 0" class="flex flex-col gap-10">
     <div *ngFor="let variant of variants">
       <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">
         {{ variant === 'zero_shot' ? 'Zero-Shot' : 'Role-Prompted' }}
@@ -16,21 +47,36 @@
           [class.border-amber-400]="result.needs_human_review"
           [class.border-gray-200]="!result.needs_human_review"
         >
-          <!-- Model header -->
           <div class="flex items-center justify-between">
             <span class="font-semibold text-gray-800 text-sm">{{ result.model }}</span>
-            <span
-              *ngIf="result.needs_human_review"
-              class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium"
-            >
-              ⚑ Review
-            </span>
+            <div class="flex items-center gap-2">
+              <span
+                *ngIf="result.needs_human_review"
+                class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium"
+              >
+                ⚑ Review
+              </span>
+              <button
+                (click)="toggleLike(result)"
+                [class.text-blue-500]="isLiked(result)"
+                [class.text-gray-300]="!isLiked(result)"
+                class="text-lg hover:text-blue-400 transition-colors"
+                [title]="isLiked(result) ? 'Liked' : 'Thumbs up'"
+              >
+                👍
+              </button>
+            </div>
           </div>
 
-          <!-- Response text -->
-          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ result.response_text }}</p>
+          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ displayText(result) }}</p>
+          <button
+            *ngIf="result.response_text.length > TRUNCATE_LENGTH"
+            (click)="toggleExpand(result)"
+            class="text-xs text-blue-500 hover:text-blue-700 self-start"
+          >
+            {{ isExpanded(result) ? 'Show less' : 'Show more' }}
+          </button>
 
-          <!-- Scores -->
           <div class="grid grid-cols-2 gap-1 pt-2 border-t border-gray-100 text-xs">
             <div *ngFor="let dim of scoreDims" class="flex justify-between">
               <span class="text-gray-500 capitalize">{{ dim }}</span>
@@ -40,10 +86,10 @@
             </div>
           </div>
 
-          <!-- Judge reasoning -->
           <p class="text-xs text-gray-400 italic border-t border-gray-100 pt-2">{{ result.judge_reasoning }}</p>
         </div>
       </div>
     </div>
   </div>
+
 </div>

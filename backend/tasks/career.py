@@ -6,7 +6,7 @@ def get_prompts(user_prompt: str) -> list[dict]:
 
     zero_shot = {
         "variant": "zero_shot",
-        "system": "You are a helpful assistant.",
+        "system": "You are a helpful assistant. Keep your response under 150 words.",
         "user": user_prompt,
     }
 
@@ -16,7 +16,7 @@ def get_prompts(user_prompt: str) -> list[dict]:
 making mid-career changes, often from blue-collar or service industry backgrounds
 into tech, healthcare, or skilled trades. You focus on realistic pathways,
 free or low-cost certifications, and how to leverage existing experience.
-Avoid generic advice — be specific about industries, timelines, and costs.""",
+Avoid generic advice — be specific about industries, timelines, and costs. Keep your response under 150 words.""",
         "user": user_prompt,
     }
 

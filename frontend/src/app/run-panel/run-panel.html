@@ -5,6 +5,7 @@
     <label class="text-sm font-medium text-gray-600">Task Category</label>
     <select
       [(ngModel)]="task"
+      (ngModelChange)="onTaskChange()"
       class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       <option *ngFor="let t of tasks" [value]="t.slug">{{ t.label }}</option>
@@ -43,8 +44,25 @@
   <button
     (click)="runEval()"
     [disabled]="loading || !userPrompt.trim()"
-    class="mt-auto bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
+    class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
   >
     {{ loading ? 'Running eval...' : 'Run Eval' }}
   </button>
+
+  <!-- Insights panel -->
+  <app-insights-panel />
+
+  <!-- Prompt history -->
+  <div *ngIf="history.length > 0" class="flex flex-col gap-2 pt-2 border-t border-gray-100">
+    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400">History</h3>
+    <div
+      *ngFor="let entry of history"
+      (click)="loadFromHistory(entry)"
+      class="flex flex-col gap-1 p-3 rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
+    >
+      <span class="text-xs font-medium text-blue-600">{{ entry.taskLabel }}</span>
+      <span class="text-xs text-gray-600 truncate">{{ entry.prompt }}</span>
+      <span class="text-xs text-gray-400 font-mono">temp {{ entry.temperature }}</span>
+    </div>
+  </div>
 </div>

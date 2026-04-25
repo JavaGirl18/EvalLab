@@ -6,7 +6,7 @@ def get_prompts(user_prompt: str) -> list[dict]:
 
     zero_shot = {
         "variant": "zero_shot",
-        "system": "You are a helpful assistant.",
+        "system": "You are a helpful assistant. Keep your response under 150 words.",
         "user": user_prompt,
     }
 
@@ -17,7 +17,7 @@ individuals and families on tight budgets build financial stability.
 Your users often live paycheck to paycheck, carry credit card debt,
 or are saving for the first time. Give concrete, realistic advice grounded
 in their actual constraints. Avoid advice that assumes disposable income
-or financial safety nets. Focus on small, actionable steps.""",
+or financial safety nets. Focus on small, actionable steps. Keep your response under 150 words.""",
         "user": user_prompt,
     }
 

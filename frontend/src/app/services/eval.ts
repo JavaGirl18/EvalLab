@@ -28,6 +28,13 @@ export interface EvalResponse {
   csv_path: string;
 }
 
+export interface PreferenceRequest {
+  model: string;
+  task: string;
+  variant: string;
+  user_prompt: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -38,5 +45,13 @@ export class EvalService {
 
   runEval(request: EvalRequest): Observable<EvalResponse> {
     return this.http.post<EvalResponse>(`${this.apiUrl}/eval`, request);
+  }
+
+  savePreference(request: PreferenceRequest): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.apiUrl}/preference`, request);
+  }
+
+  getPreferencesSummary(): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${this.apiUrl}/preferences/summary`);
   }
 }

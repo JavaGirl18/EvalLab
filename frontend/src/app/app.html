@@ -1,20 +1,21 @@
 <div class="flex h-screen bg-gray-50 font-sans">
   <!-- Header -->
   <div class="fixed top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
-    <h1 class="text-2xl font-bold text-gray-900">EvalLab</h1>
+    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+      <ng-icon name="lucideGavel" class="text-blue-600" size="28" />
+      EvalLab
+    </h1>
     <p class="text-sm text-gray-500">Compare AI models on economic mobility tasks</p>
   </div>
 
   <!-- Main layout -->
   <div class="flex w-full pt-20 h-full">
-    <!-- Left panel — fixed width -->
     <div class="w-80 shrink-0 h-full overflow-y-auto border-r border-gray-200 bg-white">
-      <app-run-panel (resultsReady)="onResultsReady($event)" />
+      <app-run-panel (loadingChange)="onLoadingChange($event)" (resultsReady)="onResultsReady($event)" />
     </div>
 
-    <!-- Right panel — fills remaining space -->
     <div class="flex-1 overflow-y-auto">
-      <app-results-table [results]="results" />
+      <app-results-table [results]="results" [loading]="loading" />
     </div>
   </div>
 </div>
