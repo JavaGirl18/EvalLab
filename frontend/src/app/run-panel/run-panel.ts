@@ -1,7 +1,7 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { EvalService, EvalRequest, EvalResponse } from '../services/eval';
+import { EvalService, EvalRequest, EvalResponse, ScoreResult } from '../services/eval';
 import { InsightsPanelComponent } from '../insights-panel/insights-panel';
 
 interface HistoryEntry {
@@ -19,6 +19,7 @@ interface HistoryEntry {
   styles: '',
 })
 export class RunPanelComponent {
+  @Input() results: ScoreResult[] = [];
   @Output() resultsReady = new EventEmitter<EvalResponse>();
   @Output() loadingChange = new EventEmitter<boolean>();
 

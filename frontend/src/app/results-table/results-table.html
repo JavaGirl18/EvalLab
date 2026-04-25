@@ -58,12 +58,12 @@
               </span>
               <button
                 (click)="toggleLike(result)"
+                class="flex items-center gap-1 cursor-pointer transition-colors"
                 [class.text-blue-500]="isLiked(result)"
-                [class.text-gray-300]="!isLiked(result)"
-                class="text-lg hover:text-blue-400 transition-colors"
-                [title]="isLiked(result) ? 'Liked' : 'Thumbs up'"
+                [class.text-gray-400]="!isLiked(result)"
               >
-                👍
+                <span class="text-xs">Do you prefer this response?</span>
+                <span class="text-lg leading-none">👍</span>
               </button>
             </div>
           </div>

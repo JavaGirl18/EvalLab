@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 
 export interface EvalRequest {
   task: string;
@@ -41,6 +41,10 @@ export interface PreferenceRequest {
 export class EvalService {
   private apiUrl = 'http://localhost:8000';
 
+  // Emits whenever a preference is successfully saved so the insights
+  // panel knows to reload its chart data in real time.
+  preferenceAdded$ = new Subject<void>();
+
   constructor(private http: HttpClient) {}
 
   runEval(request: EvalRequest): Observable<EvalResponse> {
@@ -48,7 +52,9 @@ export class EvalService {
   }
 
   savePreference(request: PreferenceRequest): Observable<{ status: string }> {
-    return this.http.post<{ status: string }>(`${this.apiUrl}/preference`, request);
+    return this.http.post<{ status: string }>(`${this.apiUrl}/preference`, request).pipe(
+      tap(() => this.preferenceAdded$.next())
+    );
   }
 
   getPreferencesSummary(): Observable<Record<string, number>> {

@@ -1,20 +1,30 @@
 <div class="border-t border-gray-100 pt-4">
   <button
     (click)="toggle()"
-    class="flex items-center justify-between w-full text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-600 transition-colors"
+    class="flex items-center justify-between w-full text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
   >
     <span>Insights</span>
     <span>{{ collapsed ? '▸' : '▾' }}</span>
   </button>
 
-  <div *ngIf="!collapsed" class="mt-4 flex flex-col gap-4">
+  <div *ngIf="!collapsed" class="mt-4 flex flex-col gap-6">
 
     <!-- Zero state -->
-    <p *ngIf="totalVotes() === 0" class="text-xs text-gray-400 text-center py-4">
-      No preferences yet — thumbs up responses to see insights.
+    <p *ngIf="!results.length && totalVotes() === 0" class="text-xs text-gray-400 text-center py-4">
+      Run an eval and thumbs up responses to see insights.
     </p>
 
-    <!-- Bar chart -->
+    <!-- Radar chart — scores per model -->
+    <div *ngIf="results.length > 0" class="flex flex-col gap-1">
+      <p class="text-xs font-medium text-gray-500">Avg Scores by Model</p>
+      <canvas baseChart
+        [data]="radarData"
+        [options]="radarOptions"
+        type="radar">
+      </canvas>
+    </div>
+
+    <!-- Bar chart — thumbs up -->
     <div *ngIf="totalVotes() > 0" class="flex flex-col gap-1">
       <p class="text-xs font-medium text-gray-500">Thumbs Up by Model</p>
       <canvas baseChart
@@ -22,15 +32,17 @@
         [options]="barOptions"
         type="bar">
       </canvas>
-    </div>
-
-    <!-- Per-model counts -->
-    <div *ngIf="totalVotes() > 0" class="flex flex-col gap-1">
-      <div *ngFor="let model of models" class="flex justify-between text-xs">
-        <span class="text-gray-500">{{ model }}</span>
-        <span class="font-semibold text-gray-700">{{ summary[model] || 0 }} 👍</span>
+      <div class="flex flex-col gap-1 mt-1">
+        <div *ngFor="let model of models" class="flex justify-between text-xs">
+          <span class="text-gray-500">{{ model }}</span>
+          <span class="font-semibold text-gray-700">{{ summary[model] || 0 }} 👍</span>
+        </div>
       </div>
     </div>
+
+    <p *ngIf="totalVotes() === 0 && results.length > 0" class="text-xs text-gray-400 text-center">
+      Thumbs up responses to see preference data.
+    </p>
 
   </div>
 </div>

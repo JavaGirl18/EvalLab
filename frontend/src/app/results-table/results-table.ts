@@ -57,20 +57,23 @@ export class ResultsTableComponent {
 
   toggleExpand(result: ScoreResult): void {
     const key = this.cardKey(result);
-    this.expanded[key] = !this.expanded[key];
+    this.expanded = { ...this.expanded, [key]: !this.expanded[key] };
   }
 
   toggleLike(result: ScoreResult): void {
     const key = this.cardKey(result);
-    if (this.liked[key]) return; // thumbs up is one-way per run
+    const nowLiked = !this.liked[key];
+    // Spread into a new object so Angular detects the change and re-renders.
+    this.liked = { ...this.liked, [key]: nowLiked };
 
-    this.liked[key] = true;
-    this.evalService.savePreference({
-      model: result.model,
-      task: result.task,
-      variant: result.variant,
-      user_prompt: result.user_prompt,
-    }).subscribe();
+    if (nowLiked) {
+      this.evalService.savePreference({
+        model: result.model,
+        task: result.task,
+        variant: result.variant,
+        user_prompt: result.user_prompt,
+      }).subscribe();
+    }
   }
 
   displayText(result: ScoreResult): string {

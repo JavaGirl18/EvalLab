@@ -11,7 +11,7 @@
   <!-- Main layout -->
   <div class="flex w-full pt-20 h-full">
     <div class="w-80 shrink-0 h-full overflow-y-auto border-r border-gray-200 bg-white">
-      <app-run-panel (loadingChange)="onLoadingChange($event)" (resultsReady)="onResultsReady($event)" />
+      <app-run-panel [results]="results" (loadingChange)="onLoadingChange($event)" (resultsReady)="onResultsReady($event)" />
     </div>
 
     <div class="flex-1 overflow-y-auto">
