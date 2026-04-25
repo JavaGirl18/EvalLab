@@ -86,7 +86,49 @@
             </div>
           </div>
 
-          <p class="text-xs text-gray-400 italic border-t border-gray-100 pt-2">{{ result.judge_reasoning }}</p>
+          <!-- Bias audit -->
+          <div class="border-t border-gray-100 pt-2">
+            <button
+              (click)="toggleBias(result)"
+              class="flex items-center justify-between w-full cursor-pointer rounded-lg px-2 py-1.5 hover:bg-gray-50 transition-colors group"
+            >
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-medium text-gray-500 group-hover:text-gray-700">Bias Audit</span>
+                <span class="text-xs text-gray-300 group-hover:text-gray-400">— click to expand</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span [class]="biasColor(result.bias_score)" class="text-xs font-semibold">
+                  {{ result.bias_score }}/10
+                </span>
+                <span class="text-xs text-gray-400 transition-transform" [class.rotate-90]="isBiasExpanded(result)">▸</span>
+              </div>
+            </button>
+
+            <div *ngIf="isBiasExpanded(result)" class="mt-2 flex flex-col gap-3">
+              <p class="text-xs text-gray-500 italic">{{ result.bias_assessment }}</p>
+
+              <div *ngIf="result.bias_flags.length === 0" class="text-xs text-green-600">
+                No bias detected.
+              </div>
+
+              <div *ngFor="let flag of result.bias_flags" class="flex flex-col gap-1">
+                <span [class]="categoryColor(flag.category)" class="text-xs font-medium px-2 py-0.5 rounded-full self-start capitalize">
+                  {{ flag.category }}
+                </span>
+                <blockquote class="text-xs text-gray-600 border-l-2 border-gray-200 pl-2 italic">
+                  "{{ flag.quote }}"
+                </blockquote>
+                <p class="text-xs text-gray-400">{{ flag.explanation }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Judge's verdict -->
+          <div class="border-t border-gray-100 pt-2 flex flex-col gap-1">
+            <span class="text-xs font-medium text-gray-500">Judge's Verdict</span>
+            <p class="text-xs text-gray-400 italic">{{ result.judge_reasoning }}</p>
+          </div>
+
         </div>
       </div>
     </div>

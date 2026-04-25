@@ -8,6 +8,12 @@ export interface EvalRequest {
   temperature: number;
 }
 
+export interface BiasFlag {
+  quote: string;
+  category: string;
+  explanation: string;
+}
+
 export interface ScoreResult {
   model: string;
   task: string;
@@ -21,6 +27,9 @@ export interface ScoreResult {
   reliability: number;
   judge_reasoning: string;
   needs_human_review: boolean;
+  bias_score: number;
+  bias_flags: BiasFlag[];
+  bias_assessment: string;
 }
 
 export interface EvalResponse {

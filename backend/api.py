@@ -38,6 +38,9 @@ class ScoreResult(BaseModel):
     reliability: int
     judge_reasoning: str
     needs_human_review: bool
+    bias_score: int
+    bias_flags: list
+    bias_assessment: str
 
 
 class EvalResponse(BaseModel):

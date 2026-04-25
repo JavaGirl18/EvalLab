@@ -84,4 +84,31 @@ export class ResultsTableComponent {
   }
 
   scoreDims = ['usefulness', 'clarity', 'confidence', 'reliability'];
+
+  biasExpanded: Record<string, boolean> = {};
+
+  toggleBias(result: ScoreResult): void {
+    const key = this.cardKey(result);
+    this.biasExpanded = { ...this.biasExpanded, [key]: !this.biasExpanded[key] };
+  }
+
+  isBiasExpanded(result: ScoreResult): boolean {
+    return !!this.biasExpanded[this.cardKey(result)];
+  }
+
+  biasColor(score: number): string {
+    if (score >= 8) return 'text-green-600';
+    if (score >= 6) return 'text-yellow-500';
+    return 'text-red-500';
+  }
+
+  categoryColor(category: string): string {
+    const map: Record<string, string> = {
+      assumption:    'bg-orange-100 text-orange-700',
+      framing:       'bg-purple-100 text-purple-700',
+      demographic:   'bg-red-100 text-red-700',
+      accessibility: 'bg-blue-100 text-blue-700',
+    };
+    return map[category] ?? 'bg-gray-100 text-gray-600';
+  }
 }
