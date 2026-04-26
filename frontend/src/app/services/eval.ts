@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface EvalRequest {
   task: string;
@@ -48,7 +49,7 @@ export interface PreferenceRequest {
   providedIn: 'root',
 })
 export class EvalService {
-  private apiUrl = 'http://localhost:8000';
+  private apiUrl = environment.apiUrl;
 
   // Emits whenever a preference is successfully saved so the insights
   // panel knows to reload its chart data in real time.
