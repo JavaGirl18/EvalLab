@@ -8,16 +8,9 @@ from db import init_db, save_preference, get_summary
 
 app = FastAPI(title="EvalLab API")
 
-import os
-
-ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-    os.getenv("FRONTEND_URL", ""),
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o for o in ALLOWED_ORIGINS if o],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
