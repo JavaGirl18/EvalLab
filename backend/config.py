@@ -48,3 +48,36 @@ HUMAN_REVIEW_THRESHOLD = 6
 # Tasks that always get flagged for human review regardless of score,
 # because the stakes are high (acting on bad tax/legal advice is risky).
 HIGH_STAKES_TASKS = ["tax"]
+
+# ── Research Eval Config ──────────────────────────────────────────────────────
+
+# Richer model config for the research pipeline — includes provider and version notes
+# for reproducibility. To pin to an exact snapshot, replace the model_id alias with
+# a dated version string (e.g. "gpt-4o-2024-08-06" instead of "gpt-4o").
+RESEARCH_SUBJECT_MODELS = [
+    {
+        "model_id": "gpt-4o",
+        "display_name": "GPT-4o",
+        "provider": "openai",
+        "version_note": "Alias. Pin to e.g. gpt-4o-2024-08-06 for full snapshot reproducibility.",
+    },
+    {
+        "model_id": "gpt-4o-mini",
+        "display_name": "GPT-4o Mini",
+        "provider": "openai",
+        "version_note": "Alias. Pin to e.g. gpt-4o-mini-2024-07-18 for full snapshot reproducibility.",
+    },
+    {
+        "model_id": "gpt-3.5-turbo",
+        "display_name": "GPT-3.5 Turbo",
+        "provider": "openai",
+        "version_note": "Alias. Pin to e.g. gpt-3.5-turbo-0125 for full snapshot reproducibility.",
+    },
+]
+
+RESEARCH_JUDGE_CONFIG = {
+    "model_id": JUDGE_MODEL,
+    "display_name": "Claude Sonnet 4.6",
+    "provider": "anthropic",
+    "version_note": "claude-sonnet-4-6",
+}
