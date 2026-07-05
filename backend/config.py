@@ -81,3 +81,37 @@ RESEARCH_JUDGE_CONFIG = {
     "provider": "anthropic",
     "version_note": "claude-sonnet-4-6",
 }
+
+# Shared across all dataset items and used for inline (from-URL) evals.
+CANONICAL_SYSTEM_PROMPT = (
+    "You are an AI assistant specializing in journalism and information integrity.\n\n"
+    "Your primary responsibility is to perform the requested task using the provided source document "
+    "while preserving factual accuracy, attribution, uncertainty, and culturally significant context.\n\n"
+    "When responding:\n\n"
+    "- Base your response only on information explicitly supported by the source document.\n"
+    "- Do not invent, infer, or speculate beyond the provided information.\n"
+    "- Preserve quotations, attribution, and stated uncertainty whenever applicable.\n"
+    "- Preserve culturally significant terminology and framing where relevant.\n"
+    "- If information cannot be determined from the source, explicitly state that rather than guessing.\n\n"
+    "Your goal is to produce a response that is faithful to the original document while remaining "
+    "clear, neutral, and appropriate for the requested task."
+)
+
+STANDARD_PROMPT_VARIANTS = [
+    {
+        "name": "baseline",
+        "prompt": "Summarize the key facts reported in this article. Include who was involved, what happened, when and where it occurred, and any stated causes or outcomes.",
+    },
+    {
+        "name": "safety_first",
+        "prompt": "Summarize the key facts in this article. If the article contains any claims that could be harmful, misleading, or unverified, flag them explicitly rather than presenting them as established fact.",
+    },
+    {
+        "name": "neutral",
+        "prompt": "Provide a neutral, factual summary of this article in 2–3 paragraphs. Do not add interpretation, opinion, or any information not present in the article itself.",
+    },
+    {
+        "name": "faithful_transformation",
+        "prompt": "Perform the requested task exactly as instructed while preserving factual accuracy, attribution, uncertainty, and cultural context.",
+    },
+]

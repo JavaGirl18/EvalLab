@@ -6,8 +6,9 @@ from runner import run_eval
 from judge import score_all
 from output import save_to_csv
 from db import init_db, save_preference, get_summary
-from research_runner import run_research_eval, load_dataset, get_dataset_item
+from research_runner import run_research_eval, load_dataset, get_dataset_item, DatasetItem
 from research_judge import score_all_research
+from config import CANONICAL_SYSTEM_PROMPT, STANDARD_PROMPT_VARIANTS
 
 app = FastAPI(title="EvalLab API")
 
@@ -130,15 +131,78 @@ class ResearchScoredResult(BaseModel):
     suggested_improvements: str
 
 
+class FetchArticleRequest(BaseModel):
+    url: str
+
+
+class FetchArticleResult(BaseModel):
+    title: str
+    text: str
+    publisher: str = ""
+    published_date: str = ""
+
+
 class ResearchEvalRequest(BaseModel):
-    item_id: str
+    # Dataset mode: provide item_id
+    item_id: Optional[str] = None
+    # Inline mode (from URL): provide these directly
+    source_url: Optional[str] = None
+    source_title: Optional[str] = None
+    source_text: Optional[str] = None
+    human_notes: Optional[str] = None
+    # Common
     temperature: float = Field(default=0.7, ge=0.0, le=1.0)
-    prompt_variant: Optional[str] = None  # variant name; defaults to first if omitted
+    prompt_variant: Optional[str] = None
+    task_instructions: Optional[str] = None
 
 
 class ResearchEvalResponse(BaseModel):
     results: list[ResearchScoredResult]
     item_id: str
+
+
+@app.post("/fetch-article", response_model=FetchArticleResult)
+def fetch_article_endpoint(request: FetchArticleRequest):
+    """Fetch and extract article text from a URL using trafilatura."""
+    try:
+        import trafilatura
+        downloaded = trafilatura.fetch_url(request.url)
+        if not downloaded:
+            raise HTTPException(
+                status_code=422,
+                detail="Could not fetch that URL — it may be blocked, paywalled, or require a browser. Try the Paste tab instead.",
+            )
+
+        result = trafilatura.bare_extraction(
+            downloaded,
+            include_comments=False,
+            include_tables=False,
+            with_metadata=True,
+        )
+        if not result:
+            raise HTTPException(status_code=422, detail="Could not extract article text from that page.")
+
+        def _get(key: str) -> str:
+            val = getattr(result, key, None)
+            return val.strip() if isinstance(val, str) and val.strip() else ""
+
+        text = _get("text")
+        if not text:
+            raise HTTPException(
+                status_code=422,
+                detail="Extracted text is empty — page may be JS-rendered or paywalled. Try the Paste tab instead.",
+            )
+
+        return FetchArticleResult(
+            title=_get("title") or request.url,
+            text=text,
+            publisher=_get("sitename") or "",
+            published_date=_get("date") or "",
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fetch failed: {e}")
 
 
 @app.get("/dataset")
@@ -167,19 +231,42 @@ def get_dataset():
 
 @app.post("/research-eval", response_model=ResearchEvalResponse)
 def run_research_evaluation(request: ResearchEvalRequest):
-    try:
-        item = get_dataset_item(request.item_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    if not item.source_text.strip():
-        raise HTTPException(
-            status_code=400,
-            detail=f"Dataset item '{request.item_id}' has no source article. "
-                   f"Populate source_text in pilot_dataset.json before running an evaluation.",
+    # ── Resolve the dataset item ──────────────────────────────────────────────
+    if request.item_id:
+        try:
+            item = get_dataset_item(request.item_id)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        if not item.source_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Dataset item '{request.item_id}' has no source article. "
+                       f"Run python3 ingest_articles.py first.",
+            )
+    elif request.source_text and request.source_text.strip():
+        # Inline mode: build a temporary DatasetItem from the provided article data
+        item = DatasetItem(
+            id="inline_eval",
+            article_type="news",
+            source_type="custom",
+            high_context=False,
+            expected_failure_categories=[],
+            source_title=request.source_title or request.source_url or "Untitled",
+            source_url=request.source_url or "",
+            source_text=request.source_text,
+            system_prompt=CANONICAL_SYSTEM_PROMPT,
+            metadata={},
+            prompt_variants=STANDARD_PROMPT_VARIANTS,
+            benchmark_rationale="",
+            human_notes=request.human_notes or "",
+            human_override=False,
         )
+    else:
+        raise HTTPException(status_code=400, detail="Provide either item_id or source_text.")
 
-    responses = run_research_eval(request.item_id, request.temperature, request.prompt_variant)
+    responses = run_research_eval(item_id=None, temperature=request.temperature,
+                                  prompt_variant_name=request.prompt_variant, item=item,
+                                  task_instructions=request.task_instructions)
     scored = score_all_research(item, responses)
 
     results = [
@@ -215,4 +302,4 @@ def run_research_evaluation(request: ResearchEvalRequest):
         for r in scored
     ]
 
-    return ResearchEvalResponse(results=results, item_id=request.item_id)
+    return ResearchEvalResponse(results=results, item_id=item.id)

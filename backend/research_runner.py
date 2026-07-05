@@ -57,13 +57,26 @@ def get_dataset_item(item_id: str) -> DatasetItem:
     raise ValueError(f"Dataset item '{item_id}' not found.")
 
 
-def get_prompt_variant(item: DatasetItem, variant_name: Optional[str] = None) -> dict:
+def get_prompt_variant(
+    item: DatasetItem,
+    variant_name: Optional[str] = None,
+    task_instructions: Optional[str] = None,
+) -> dict:
     if not item.prompt_variants:
         raise ValueError(f"Dataset item '{item.id}' has no prompt variants defined.")
     if variant_name is None:
         return item.prompt_variants[0]
     for v in item.prompt_variants:
         if v["name"] == variant_name:
+            if variant_name == "faithful_transformation" and task_instructions:
+                return {
+                    "name": v["name"],
+                    "prompt": (
+                        f"Perform the following task exactly as instructed while preserving "
+                        f"factual accuracy, attribution, uncertainty, and cultural context.\n\n"
+                        f"Task: {task_instructions}"
+                    ),
+                }
             return v
     available = [v["name"] for v in item.prompt_variants]
     raise ValueError(
@@ -102,12 +115,17 @@ def _call_model(
 
 
 def run_research_eval(
-    item_id: str,
+    item_id: Optional[str] = None,
     temperature: float = 0.7,
     prompt_variant_name: Optional[str] = None,
+    item: Optional[DatasetItem] = None,
+    task_instructions: Optional[str] = None,
 ) -> list[ResearchModelResponse]:
-    item = get_dataset_item(item_id)
-    variant = get_prompt_variant(item, prompt_variant_name)
+    if item is None:
+        if item_id is None:
+            raise ValueError("Either item_id or item must be provided.")
+        item = get_dataset_item(item_id)
+    variant = get_prompt_variant(item, prompt_variant_name, task_instructions)
 
     with ThreadPoolExecutor() as executor:
         futures = {
