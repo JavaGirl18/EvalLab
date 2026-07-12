@@ -1,7 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchScoredResult, ResearchHistoryEntry } from '../services/eval';
+import { ResearchScoredResult, ResearchHistoryEntry, BatchSummary, EvalService } from '../services/eval';
 
 const CATEGORY_META: Record<string, { name: string; group: 'ii' | 'cf' }> = {
   FH:  { name: 'Factual Hallucination',      group: 'ii' },
@@ -61,7 +61,7 @@ export interface ModelComparisonMatrix {
   imports: [CommonModule, FormsModule],
   templateUrl: './research-trends.html',
 })
-export class ResearchTrendsComponent {
+export class ResearchTrendsComponent implements OnInit {
   @Input() history: ResearchHistoryEntry[] = [];
   @Input() currentResults: ResearchScoredResult[] = [];
 
@@ -69,8 +69,64 @@ export class ResearchTrendsComponent {
   modelView: 'matrix' | 'chart' = 'matrix';
   experimentFilter: string = '';
 
+  // Batch filter state
+  batches: BatchSummary[] = [];
+  batchFilter: string = '';
+  batchResults: ResearchScoredResult[] = [];
+  batchLoading = false;
+  batchError = '';
+
+  constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
+
+  ngOnInit() {
+    this.evalService.listBatches().subscribe({
+      next: (b) => {
+        this.batches = b;
+        const latest = b.find((x) => x.status === 'completed');
+        if (latest && !this.batchFilter) {
+          this.selectBatch(latest.batch_id);
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {},
+    });
+  }
+
+  get filterMode(): 'batch' | 'experiment' {
+    return this.batchFilter ? 'batch' : 'experiment';
+  }
+
+  selectBatch(batchId: string) {
+    this.batchFilter      = batchId;
+    this.experimentFilter = '';
+    if (!batchId) {
+      this.batchResults = [];
+      return;
+    }
+    this.batchLoading = true;
+    this.batchError   = '';
+    this.evalService.getBatchResults(batchId).subscribe({
+      next: (res) => {
+        this.batchResults = res.results;
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.batchError   = 'Could not load batch results.';
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  selectExperiment(expId: string) {
+    this.experimentFilter = expId;
+    this.batchFilter      = '';
+    this.batchResults     = [];
+  }
+
   get hasData(): boolean {
-    return this.history.length > 0 || this.currentResults.length > 0;
+    return this.history.length > 0 || this.currentResults.length > 0 || this.batchResults.length > 0;
   }
 
   get experiments(): string[] {
@@ -81,11 +137,13 @@ export class ResearchTrendsComponent {
   }
 
   get filteredHistory(): ResearchHistoryEntry[] {
+    if (this.filterMode === 'batch') return [];
     if (!this.experimentFilter) return this.history;
     return this.history.filter((e) => e.experiment?.experiment_id === this.experimentFilter);
   }
 
   get allResults(): ResearchScoredResult[] {
+    if (this.filterMode === 'batch') return this.batchResults;
     return this.filteredHistory.flatMap((e) => e.results);
   }
 
@@ -121,6 +179,24 @@ export class ResearchTrendsComponent {
   }
 
   get scoreTimeline(): ScorePoint[] {
+    if (this.filterMode === 'batch') {
+      // Group batch results by item_id to synthesize timeline points
+      const grouped = new Map<string, ResearchScoredResult[]>();
+      for (const r of this.batchResults) {
+        const key = r.item_id || r.source_title;
+        grouped.set(key, [...(grouped.get(key) ?? []), r]);
+      }
+      return [...grouped.entries()].map(([key, results]) => {
+        const avgII = results.reduce((s, r) => s + r.overall_information_integrity_score, 0) / results.length;
+        const avgCF = results.reduce((s, r) => s + r.overall_cultural_fidelity_score, 0) / results.length;
+        const label = results[0].source_title;
+        return {
+          label: label.length > 28 ? label.slice(0, 28) + '…' : label,
+          ii: Math.round(avgII * 10) / 10,
+          cf: Math.round(avgCF * 10) / 10,
+        };
+      });
+    }
     return [...this.filteredHistory]
       .reverse()
       .map((e) => ({
@@ -131,21 +207,38 @@ export class ResearchTrendsComponent {
   }
 
   get modelComparison(): ModelPoint[] {
-    const src = this.currentResults.length > 0
-      ? this.currentResults
+    const src = this.allResults.length > 0 ? this.allResults
+      : this.currentResults.length > 0 ? this.currentResults
       : this.history[0]?.results ?? [];
-    return src.map((r) => ({
-      model: r.model.split('/').pop() ?? r.model,
-      ii: r.overall_information_integrity_score,
-      cf: r.overall_cultural_fidelity_score,
+    if (src.length === 0) return [];
+
+    const byModel = new Map<string, { ii: number[]; cf: number[] }>();
+    for (const r of src) {
+      const m = r.model.split('/').pop() ?? r.model;
+      if (!byModel.has(m)) byModel.set(m, { ii: [], cf: [] });
+      byModel.get(m)!.ii.push(r.overall_information_integrity_score);
+      byModel.get(m)!.cf.push(r.overall_cultural_fidelity_score);
+    }
+    return [...byModel.entries()].map(([model, scores]) => ({
+      model,
+      ii: Math.round(scores.ii.reduce((a, b) => a + b, 0) / scores.ii.length * 10) / 10,
+      cf: Math.round(scores.cf.reduce((a, b) => a + b, 0) / scores.cf.length * 10) / 10,
     }));
   }
 
   get modelMatrix(): ModelComparisonMatrix {
-    const src = this.currentResults.length > 0
-      ? this.currentResults
+    const src = this.allResults.length > 0 ? this.allResults
+      : this.currentResults.length > 0 ? this.currentResults
       : this.history[0]?.results ?? [];
-    const models = src.map((r) => r.model.split('/').pop() ?? r.model);
+    if (src.length === 0) return { models: [], iiRows: [], cfRows: [] };
+
+    // Preserve model order from first appearance
+    const modelOrder: string[] = [];
+    const seen = new Set<string>();
+    for (const r of src) {
+      const m = r.model.split('/').pop() ?? r.model;
+      if (!seen.has(m)) { modelOrder.push(m); seen.add(m); }
+    }
 
     const makeRows = (group: 'ii' | 'cf'): DimensionRow[] =>
       Object.entries(CATEGORY_META)
@@ -154,15 +247,26 @@ export class ResearchTrendsComponent {
           id,
           name: meta.name,
           group,
-          cells: src.map((r) => ({
-            model: r.model.split('/').pop() ?? r.model,
-            severity: r.dimension_scores[id]?.severity ?? 0,
-            confidence: r.dimension_scores[id]?.confidence ?? 'Low',
-            explanation: r.dimension_scores[id]?.explanation ?? '',
-          })),
+          cells: modelOrder.map((model) => {
+            const mrs = src.filter((r) => (r.model.split('/').pop() ?? r.model) === model);
+            const severities = mrs.map((r) => r.dimension_scores[id]?.severity ?? 0);
+            const avg = severities.length
+              ? Math.round(severities.reduce((a, b) => a + b, 0) / severities.length)
+              : 0;
+            const worst = mrs.reduce((best, r) =>
+              (r.dimension_scores[id]?.severity ?? 0) > (best.dimension_scores[id]?.severity ?? 0) ? r : best,
+              mrs[0]
+            );
+            return {
+              model,
+              severity: avg,
+              confidence: worst?.dimension_scores[id]?.confidence ?? 'Low',
+              explanation: worst?.dimension_scores[id]?.explanation ?? '',
+            };
+          }),
         }));
 
-    return { models, iiRows: makeRows('ii'), cfRows: makeRows('cf') };
+    return { models: modelOrder, iiRows: makeRows('ii'), cfRows: makeRows('cf') };
   }
 
   severityClass(s: number): string {
@@ -196,13 +300,32 @@ export class ResearchTrendsComponent {
     return this.allResults.length || this.currentResults.length;
   }
 
-  get activeExperimentLabel(): string {
+  get activeFilterLabel(): string {
+    if (this.filterMode === 'batch') {
+      const b = this.batches.find((b) => b.batch_id === this.batchFilter);
+      return b ? `Batch · ${b.experiment_id} (${b.completed}/${b.total} runs)` : this.batchFilter;
+    }
     if (!this.experimentFilter) return 'All experiments';
     const meta = this.history.find((e) => e.experiment?.experiment_id === this.experimentFilter)?.experiment;
     if (!meta) return this.experimentFilter;
     return meta.experiment_name
       ? `${this.experimentFilter} · ${meta.experiment_name}`
       : this.experimentFilter;
+  }
+
+  get activeExperimentLabel(): string {
+    return this.activeFilterLabel;
+  }
+
+  batchStatusColor(status: string): string {
+    const map: Record<string, string> = {
+      completed: 'text-green-600',
+      running:   'text-blue-500',
+      failed:    'text-red-500',
+      pending:   'text-gray-400',
+      cancelled: 'text-gray-400',
+    };
+    return map[status] ?? 'text-gray-400';
   }
 
   barWidth(pct: number): string {

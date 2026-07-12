@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -9,6 +9,12 @@ import {
   ResearchEvalResponse,
   ResearchHistoryEntry,
   ExperimentMeta,
+  ExperimentStatus,
+  ExperimentFileSummary,
+  HumanReviewCounts,
+  HumanReviewSummary,
+  HumanReviewStats,
+  ImportResult,
 } from '../services/eval';
 
 const STANDARD_VARIANTS = [
@@ -39,7 +45,7 @@ type SourceMode = 'dataset' | 'url' | 'paste';
   imports: [CommonModule, FormsModule],
   templateUrl: './research-panel.html',
 })
-export class ResearchPanelComponent implements OnInit {
+export class ResearchPanelComponent implements OnInit, OnDestroy {
   @Input() history: ResearchHistoryEntry[] = [];
   @Output() resultsReady    = new EventEmitter<ResearchEvalResponse>();
   @Output() historySelect   = new EventEmitter<ResearchHistoryEntry>();
@@ -80,6 +86,9 @@ export class ResearchPanelComponent implements OnInit {
   loading = false;
   evalError = '';
 
+  // Sidebar tab
+  sidebarTab: 'experiment' | 'run' | 'review' = 'experiment';
+
   // Collapsible sections
   articlesExpanded = true;
   historyExpanded = true;
@@ -98,6 +107,16 @@ export class ResearchPanelComponent implements OnInit {
   experimentSourceId  = '';
   experimentVariant   = '';
   experimentModels: string[] = [];
+  experimentStatusPhase = 'planned';
+  experimentCreatedBy   = 'Valencia Cooper';
+  experimentStartedAt   = '';
+  experimentCompletedAt = '';
+
+  readonly statusPhases = ['planned', 'in_progress', 'completed', 'paused'];
+
+  // Experiment file loader
+  availableExperiments: ExperimentFileSummary[] = [];
+  selectedExperimentFile = '';
 
   constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
 
@@ -105,6 +124,38 @@ export class ResearchPanelComponent implements OnInit {
     this.loadDataset();
     this.loadCustomItems();
     this.loadExperimentConfig();
+    this.loadExperimentFiles();
+  }
+
+  loadExperimentFiles() {
+    this.evalService.listExperiments().subscribe({
+      next: (exps) => { this.availableExperiments = exps; this.cdr.detectChanges(); },
+      error: () => {},
+    });
+  }
+
+  loadExperiment(experimentId: string) {
+    if (!experimentId) return;
+    this.evalService.getExperiment(experimentId).subscribe({
+      next: (exp) => {
+        this.experimentId          = exp.experiment_id ?? '';
+        this.experimentName        = exp.experiment_name ?? '';
+        this.experimentPhase       = (exp.research_phase ?? '').toLowerCase().replace(/\s+/g, '_');
+        this.experimentObjective   = exp.research_objective ?? '';
+        this.experimentQuestion    = exp.research_question ?? '';
+        this.experimentHypothesis  = exp.hypothesis ?? '';
+        this.experimentVariant     = exp.prompt_variant ?? '';
+        this.taskInstructions      = exp.transformation_task?.instructions ?? '';
+        this.experimentModels      = exp.subject_models ?? [];
+        this.experimentStatusPhase = exp.status?.phase ?? 'planned';
+        this.experimentCreatedBy   = exp.status?.created_by ?? 'Valencia Cooper';
+        this.experimentStartedAt   = exp.status?.started_at ?? '';
+        this.experimentCompletedAt = exp.status?.completed_at ?? '';
+        this.persistExperimentConfig();
+        this.cdr.detectChanges();
+      },
+      error: () => {},
+    });
   }
 
   loadDataset() {
@@ -168,12 +219,20 @@ export class ResearchPanelComponent implements OnInit {
         this.experimentVariant     = cfg.prompt_variant      ?? '';
         this.taskInstructions      = cfg.task_instructions  ?? '';
         this.experimentModels      = cfg.models             ?? [];
+        this.experimentStatusPhase = cfg.status?.phase        ?? 'planned';
+        this.experimentCreatedBy   = cfg.status?.created_by   ?? 'Valencia Cooper';
+        this.experimentStartedAt   = cfg.status?.started_at   ?? '';
+        this.experimentCompletedAt = cfg.status?.completed_at ?? '';
       }
     } catch {}
   }
 
   saveExperimentConfig() {
     this.persistExperimentConfig();
+    const id = this.experimentId.trim();
+    if (id) {
+      this.evalService.updateExperiment(id, this.currentExperiment).subscribe({ error: () => {} });
+    }
     this.experimentSaved = true;
     setTimeout(() => { this.experimentSaved = false; }, 2000);
   }
@@ -198,6 +257,12 @@ export class ResearchPanelComponent implements OnInit {
       prompt_variant:     this.experimentVariant,
       ...(this.taskInstructions.trim() ? { task_instructions: this.taskInstructions.trim() } : {}),
       models:             this.experimentModels,
+      status: {
+        phase:        this.experimentStatusPhase,
+        started_at:   this.experimentStartedAt   || null,
+        completed_at: this.experimentCompletedAt || null,
+        created_by:   this.experimentCreatedBy.trim(),
+      } as ExperimentStatus,
     };
   }
 
@@ -219,7 +284,6 @@ export class ResearchPanelComponent implements OnInit {
 
   autofillFromEval() {
     if (this.selectedItemId) this.experimentSourceId = this.selectedItemId;
-    if (this.selectedVariant) this.experimentVariant = this.selectedVariant;
   }
 
   tagHistoryEntry(entry: ResearchHistoryEntry) {
@@ -439,6 +503,277 @@ export class ResearchPanelComponent implements OnInit {
         human_override: false,
       });
     }
+  }
+
+  // ── Batch ────────────────────────────────────────────────────────────────────
+
+  batchLoading = false;
+  batchSubmitted = false;
+  batchId = '';
+  batchError = '';
+  batchTotal = 0;
+  batchCompleted = 0;
+  batchRunStatus: 'idle' | 'running' | 'completed' | 'failed' = 'idle';
+  private batchPollRef: ReturnType<typeof setInterval> | null = null;
+
+  ngOnDestroy() {
+    this.clearBatchPoll();
+  }
+
+  private startBatchPolling(batchId: string) {
+    this.batchPollRef = setInterval(() => {
+      this.evalService.getBatchStatus(batchId).subscribe({
+        next: (s) => {
+          this.batchTotal     = s.total;
+          this.batchCompleted = s.completed;
+          if (s.status === 'completed' || s.status === 'failed' || s.status === 'cancelled') {
+            this.batchRunStatus = s.status === 'completed' ? 'completed' : 'failed';
+            this.clearBatchPoll();
+          } else {
+            this.batchRunStatus = 'running';
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {},
+      });
+    }, 4000);
+  }
+
+  private clearBatchPoll() {
+    if (this.batchPollRef !== null) {
+      clearInterval(this.batchPollRef);
+      this.batchPollRef = null;
+    }
+  }
+
+  get canRunBatch(): boolean {
+    return !this.batchLoading && this.hasExperiment && this.items.length > 0;
+  }
+
+  runBatch() {
+    if (!this.canRunBatch) return;
+    this.batchLoading  = true;
+    this.batchSubmitted = false;
+    this.batchError    = '';
+
+    const itemIds = this.items
+      .filter((i) => i.source_text?.trim())
+      .map((i) => i.id);
+
+    const request = {
+      experiment_id:   this.experimentId.trim(),
+      item_ids:        itemIds,
+      prompt_variants: [this.experimentVariant || this.selectedVariant],
+      models:          this.experimentModels.length > 0 ? this.experimentModels : ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+      temperature:     this.temperature,
+      ...(this.taskInstructions.trim() ? { task_instructions: this.taskInstructions.trim() } : {}),
+      experiment_meta: this.currentExperiment,
+      max_concurrency: 3,
+      retry_limit:     3,
+      resume_existing: true,
+    };
+
+    this.evalService.createBatch(request).subscribe({
+      next: (status) => {
+        this.batchId        = status.batch_id;
+        this.batchTotal     = status.total;
+        this.batchCompleted = 0;
+        this.batchRunStatus = 'running';
+        this.batchLoading   = false;
+        this.batchSubmitted  = true;
+        this.startBatchPolling(status.batch_id);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.batchError   = err.error?.detail
+          ? (Array.isArray(err.error.detail) ? JSON.stringify(err.error.detail) : String(err.error.detail))
+          : 'Batch submission failed.';
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Human Review ─────────────────────────────────────────────────────────────
+
+  hrExpanded            = false;
+  hrLoading             = false;
+  hrError               = '';
+  hrBatchId             = '';
+  hrFilterMode: 'experiment' | 'batch' = 'experiment';
+  hrSeverityThreshold: number | null   = 2;
+  hrRandomPct: number | null           = null;
+  hrFailureCount: number | null        = null;
+  hrReviewRound                        = 1;
+  hrBlinded                            = true;
+  hrCounts: HumanReviewCounts | null   = null;
+  hrReviews: HumanReviewSummary[]      = [];
+  hrStats: HumanReviewStats | null     = null;
+  hrImporting                          = false;
+  hrImportResult: ImportResult | null  = null;
+  hrImportError                        = '';
+
+  toggleHrSection() {
+    this.hrExpanded = !this.hrExpanded;
+    if (this.hrExpanded) {
+      if (!this.hrBatchId && this.batchId) this.hrBatchId = this.batchId;
+      if (this.experimentId && this.hrFilterMode === 'experiment') {
+        this.loadHrData();
+      } else if (this.hrBatchId) {
+        this.loadHrData();
+      }
+    }
+  }
+
+  loadHrData() {
+    const useExp = this.hrFilterMode === 'experiment' && !!this.experimentId;
+    const params = useExp
+      ? { experiment_id: this.experimentId, review_round: this.hrReviewRound }
+      : { batch_id: this.hrBatchId,         review_round: this.hrReviewRound };
+
+    if (!params.experiment_id && !params.batch_id) return;
+
+    if (params.batch_id) {
+      this.evalService.countHumanReviews(params.batch_id).subscribe({
+        next: (c) => { this.hrCounts = c; this.cdr.detectChanges(); },
+        error: () => {},
+      });
+    }
+    this.evalService.listHumanReviews(params).subscribe({
+      next: (r) => { this.hrReviews = r; this.cdr.detectChanges(); },
+      error: () => {},
+    });
+  }
+
+  loadHrCounts() {
+    this.loadHrData();
+  }
+
+  get hrReviewsByArticle(): { itemId: string; reviews: HumanReviewSummary[] }[] {
+    const groups = new Map<string, HumanReviewSummary[]>();
+    for (const r of this.hrReviews) {
+      if (!groups.has(r.dataset_item_id)) groups.set(r.dataset_item_id, []);
+      groups.get(r.dataset_item_id)!.push(r);
+    }
+    return Array.from(groups.entries()).map(([itemId, reviews]) => ({ itemId, reviews }));
+  }
+
+  get canGenerateHr(): boolean {
+    return !this.hrLoading && !!this.hrBatchId.trim() &&
+      (this.hrSeverityThreshold !== null || this.hrRandomPct !== null || this.hrFailureCount !== null);
+  }
+
+  generateHumanReviews() {
+    if (!this.canGenerateHr) return;
+    this.hrLoading = true;
+    this.hrError   = '';
+
+    this.evalService.generateHumanReviews({
+      batch_id:                this.hrBatchId.trim(),
+      review_round:            this.hrReviewRound,
+      blinded:                 this.hrBlinded,
+      severity_threshold:      this.hrSeverityThreshold,
+      random_pct:              this.hrRandomPct,
+      failure_count_threshold: this.hrFailureCount,
+    }).subscribe({
+      next: (result) => {
+        this.hrLoading = false;
+        this.hrError   = result.created === 0 && result.skipped_duplicates === 0
+          ? 'No eligible runs found for those rules.'
+          : '';
+        this.loadHrData();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.hrError   = err.error?.detail || 'Failed to generate reviews.';
+        this.hrLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  exportHrHtml(reviewId: string) {
+    const url = this.evalService.exportHumanReviewUrl('html', { review_id: reviewId });
+    window.open(url, '_blank');
+  }
+
+  hrStatusColor(status: string): string {
+    if (status === 'completed') return 'text-green-600';
+    if (status === 'exported')  return 'text-blue-500';
+    if (status === 'archived')  return 'text-gray-400';
+    return 'text-amber-500';
+  }
+
+  hrStatusLabel(status: string): string {
+    if (status === 'completed') return '✓';
+    if (status === 'exported')  return '↑';
+    if (status === 'archived')  return '—';
+    return '·';
+  }
+
+  exportHrCsvTemplate() {
+    if (!this.hrBatchId) return;
+    const url = this.evalService.exportHumanReviewUrl('csv_template', {
+      batch_id:     this.hrBatchId,
+      review_round: this.hrReviewRound,
+    });
+    window.open(url, '_blank');
+  }
+
+  exportHrContextCsv() {
+    if (!this.hrBatchId) return;
+    const url = this.evalService.exportHumanReviewUrl('csv_context', {
+      batch_id:     this.hrBatchId,
+      review_round: this.hrReviewRound,
+    });
+    window.open(url, '_blank');
+  }
+
+  exportHrJson() {
+    if (!this.hrBatchId) return;
+    const url = this.evalService.exportHumanReviewUrl('json', {
+      batch_id:     this.hrBatchId,
+      review_round: this.hrReviewRound,
+    });
+    window.open(url, '_blank');
+  }
+
+  importHrResponses(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    this.hrImporting    = true;
+    this.hrImportResult = null;
+    this.hrImportError  = '';
+
+    this.evalService.importHumanReviews(file).subscribe({
+      next: (result) => {
+        this.hrImportResult = result;
+        this.hrImporting    = false;
+        this.loadHrCounts();
+        this.cdr.detectChanges();
+        input.value = '';
+      },
+      error: (err) => {
+        this.hrImportError = err.error?.detail || 'Import failed.';
+        this.hrImporting   = false;
+        this.cdr.detectChanges();
+        input.value = '';
+      },
+    });
+  }
+
+  loadHrStats() {
+    if (!this.hrBatchId) return;
+    this.evalService.getHumanReviewSummary({ batch_id: this.hrBatchId, review_round: this.hrReviewRound }).subscribe({
+      next: (s) => { this.hrStats = s; this.cdr.detectChanges(); },
+      error: () => {},
+    });
+  }
+
+  hrAgreementPct(key: 'yes_pct' | 'partially_pct' | 'no_pct' | 'unable_pct'): string {
+    if (!this.hrStats) return '—';
+    return `${Math.round((this.hrStats.agreement[key] ?? 0) * 100)}%`;
   }
 
   // ── History ──────────────────────────────────────────────────────────────────

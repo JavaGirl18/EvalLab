@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Ingestion script — fetches and extracts article content for dataset items that have
-a source_url but empty source_text. Writes results back to pilot_dataset.json in place.
+a source_url but empty source_text. Writes results back to the target corpus in place.
 Safe to re-run: already-populated items are skipped unless --force is passed.
 
 Fields populated when available:
@@ -13,8 +13,9 @@ Fields populated when available:
   metadata.ingestion_error — error message if fetch failed (cleared on success)
 
 Usage (run from backend/):
-    python3 ingest_articles.py              # skip items that already have source_text
-    python3 ingest_articles.py --force      # re-fetch all items with a source_url
+    python3 ingest_articles.py                                   # pilot_dataset.json
+    python3 ingest_articles.py --corpus benchmark/benchmark_corpus.json
+    python3 ingest_articles.py --force      # re-fetch items that already have source_text
     python3 ingest_articles.py --dry-run    # print what would be fetched without writing
 
 The /research-eval endpoint is not involved here. It only reads static source_text.
@@ -30,7 +31,8 @@ from pathlib import Path
 
 import trafilatura
 
-DATASET_PATH = Path(__file__).parent / "data" / "pilot_dataset.json"
+DATA_DIR = Path(__file__).parent / "data"
+DEFAULT_CORPUS = "pilot_dataset.json"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -76,8 +78,11 @@ def _is_placeholder(value: str) -> bool:
     return not value or value.strip().startswith("[Placeholder")
 
 
-def ingest(force: bool = False, dry_run: bool = False) -> None:
-    with open(DATASET_PATH) as f:
+def ingest(force: bool = False, dry_run: bool = False, corpus: str = DEFAULT_CORPUS) -> None:
+    dataset_path = DATA_DIR / corpus
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"Corpus file not found: {dataset_path}")
+    with open(dataset_path) as f:
         dataset = json.load(f)
 
     changed = 0
@@ -138,10 +143,10 @@ def ingest(force: bool = False, dry_run: bool = False) -> None:
             failed += 1
 
     if not dry_run and changed > 0:
-        with open(DATASET_PATH, "w") as f:
+        with open(dataset_path, "w") as f:
             json.dump(dataset, f, indent=2, ensure_ascii=False)
             f.write("\n")
-        log.info("Wrote updated dataset to %s", DATASET_PATH)
+        log.info("Wrote updated dataset to %s", dataset_path)
 
     log.info("Done — %d fetched, %d skipped, %d failed", changed, skipped, failed)
     if failed:
@@ -153,8 +158,10 @@ if __name__ == "__main__":
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    parser.add_argument("--corpus",  default=DEFAULT_CORPUS,
+                        help=f"Path relative to data/ (default: {DEFAULT_CORPUS})")
     parser.add_argument("--force",   action="store_true", help="Re-fetch items that already have source_text")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be fetched without writing")
     args = parser.parse_args()
 
-    ingest(force=args.force, dry_run=args.dry_run)
+    ingest(force=args.force, dry_run=args.dry_run, corpus=args.corpus)

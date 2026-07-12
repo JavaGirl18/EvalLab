@@ -1,4 +1,5 @@
 import json
+import time
 import anthropic
 from config import ANTHROPIC_API_KEY, JUDGE_MODEL, RESEARCH_JUDGE_CONFIG
 from research_runner import DatasetItem, ResearchModelResponse
@@ -146,10 +147,27 @@ def _call_judge(prompt: str) -> dict:
     return json.loads(raw.strip())
 
 
+def _call_judge_with_retry(prompt: str, max_retries: int = 3) -> dict:
+    last_exc: Exception = RuntimeError("No attempts made")
+    for attempt in range(max_retries):
+        try:
+            return _call_judge(prompt)
+        except anthropic.RateLimitError as e:
+            last_exc = e
+            time.sleep((2 ** attempt) * 2)
+        except (anthropic.APIError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
+            last_exc = e
+            time.sleep(2 ** attempt)
+        except json.JSONDecodeError as e:
+            last_exc = e
+            time.sleep(1)
+    raise last_exc
+
+
 def score_research_response(item: DatasetItem, response: ResearchModelResponse) -> ResearchScoredResponse:
     taxonomy = load_taxonomy()
     prompt = build_judge_prompt(item, response.eval_prompt, response.response_text, taxonomy)
-    raw = _call_judge(prompt)
+    raw = _call_judge_with_retry(prompt)
 
     # Parse dimension scores. Gracefully default any missing category to severity 0.
     categories = get_categories(taxonomy)

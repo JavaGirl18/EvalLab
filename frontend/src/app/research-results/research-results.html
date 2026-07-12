@@ -35,8 +35,184 @@
     </div>
   </div>
 
+  <!-- Batch loading -->
+  <div *ngIf="batchLoading" class="flex items-center gap-2 text-sm text-gray-400 py-4">
+    <svg class="animate-spin h-4 w-4 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+    Loading batch results…
+  </div>
+
+  <!-- ── Batch Summary ──────────────────────────────────────────────────────── -->
+  <div *ngIf="!batchLoading && batchData && results.length === 0" class="flex flex-col gap-5">
+
+    <!-- Header -->
+    <div class="rounded-xl bg-violet-50 border border-violet-100 px-5 py-4 flex flex-col gap-1">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex flex-col gap-0.5">
+          <span class="text-sm font-semibold text-violet-900">
+            {{ batchData.experiment_meta?.experiment_name ?? batchData.experiment_id }}
+          </span>
+          <span class="text-xs text-violet-600 font-mono">{{ batchData.batch_id }}</span>
+        </div>
+        <span class="text-xs text-green-600 font-medium bg-green-50 border border-green-200 px-2 py-1 rounded-lg">
+          ✓ {{ batchData.summary.completed }} / {{ batchData.summary.expected }} completed
+        </span>
+      </div>
+      <div class="flex flex-wrap gap-3 text-xs text-violet-500 mt-1">
+        <span *ngIf="batchData.experiment_meta?.phase">Phase: <strong>{{ batchData.experiment_meta?.phase?.replace(/_/g,' ') }}</strong></span>
+        <span *ngIf="batchData.experiment_meta?.prompt_variant">Variant: <strong>{{ batchData.experiment_meta?.prompt_variant?.replace(/_/g,' ') }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Model scores -->
+    <div class="flex flex-col gap-2">
+      <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Average Scores by Model</span>
+      <div class="grid gap-3" [style.grid-template-columns]="'repeat(' + batchModelNames.length + ', 1fr)'">
+        <div *ngFor="let model of batchModelNames"
+          class="border border-gray-200 rounded-xl px-4 py-3 flex flex-col gap-2">
+          <span class="text-xs font-semibold text-gray-700 font-mono truncate" [title]="model">{{ model }}</span>
+          <div class="flex gap-2">
+            <div class="flex-1 flex flex-col items-center bg-gray-50 rounded-lg py-2">
+              <span class="text-xs text-gray-400 uppercase tracking-wide font-medium mb-0.5">II</span>
+              <span [class]="'text-lg font-bold ' + scoreColor(batchData.summary.avg_ii_by_model[model] ?? 0)">
+                {{ batchData.summary.avg_ii_by_model[model] ?? '—' }}
+              </span>
+            </div>
+            <div class="flex-1 flex flex-col items-center bg-gray-50 rounded-lg py-2">
+              <span class="text-xs text-gray-400 uppercase tracking-wide font-medium mb-0.5">CF</span>
+              <span [class]="'text-lg font-bold ' + scoreColor(batchData.summary.avg_cf_by_model[model] ?? 0)">
+                {{ batchData.summary.avg_cf_by_model[model] ?? '—' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top failure categories -->
+    <div *ngIf="batchData.summary.top_failure_categories.length > 0" class="flex flex-col gap-2">
+      <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Top Failure Categories</span>
+      <div class="flex flex-wrap gap-2">
+        <span *ngFor="let item of batchData.summary.top_failure_categories"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-100 text-xs">
+          <span class="font-mono font-bold text-rose-600">{{ item[0] }}</span>
+          <span class="text-rose-400">{{ item[1] }} flag{{ item[1] !== 1 ? 's' : '' }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Per-article sections -->
+    <div class="flex flex-col gap-3">
+      <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Results by Article</span>
+
+      <div *ngFor="let article of batchArticles" class="border border-gray-200 rounded-xl overflow-hidden">
+
+        <!-- Article header / toggle -->
+        <button (click)="toggleArticle(article.itemId)"
+          class="w-full flex items-start justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left gap-3">
+          <div class="flex flex-col gap-1 min-w-0 flex-1">
+            <span class="text-sm font-medium text-gray-800 truncate leading-snug">{{ article.title }}</span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono text-gray-400">{{ article.itemId }}</span>
+              <span *ngFor="let cat of articleFailureSummary(article)"
+                class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-500 leading-none">
+                {{ cat }}
+              </span>
+            </div>
+          </div>
+          <span class="shrink-0 text-gray-400 text-xs mt-1">{{ isArticleExpanded(article.itemId) ? '▾' : '▸' }}</span>
+        </button>
+
+        <!-- Model rows for this article -->
+        <div *ngIf="isArticleExpanded(article.itemId)" class="divide-y divide-gray-100 border-t border-gray-100">
+
+          <div *ngFor="let result of article.results" class="flex flex-col">
+
+            <!-- Compact summary row -->
+            <div class="px-4 py-3 flex items-start gap-3">
+              <!-- Model name -->
+              <span class="text-xs font-semibold font-mono text-gray-700 w-24 shrink-0 pt-0.5 truncate leading-snug"
+                [title]="result.model">
+                {{ result.model.split('/').pop() ?? result.model }}
+              </span>
+              <!-- II + CF scores -->
+              <div class="flex gap-1.5 shrink-0">
+                <div class="flex flex-col items-center bg-gray-50 rounded px-2 py-1 min-w-[2.25rem]">
+                  <span class="text-[10px] text-gray-400 font-medium leading-none mb-0.5">II</span>
+                  <span [class]="'text-sm font-bold leading-none ' + scoreColor(result.overall_information_integrity_score)">
+                    {{ result.overall_information_integrity_score }}
+                  </span>
+                </div>
+                <div class="flex flex-col items-center bg-gray-50 rounded px-2 py-1 min-w-[2.25rem]">
+                  <span class="text-[10px] text-gray-400 font-medium leading-none mb-0.5">CF</span>
+                  <span [class]="'text-sm font-bold leading-none ' + scoreColor(result.overall_cultural_fidelity_score)">
+                    {{ result.overall_cultural_fidelity_score }}
+                  </span>
+                </div>
+              </div>
+              <!-- Failures + summary -->
+              <div class="flex-1 min-w-0 flex flex-col gap-1">
+                <div class="flex flex-wrap gap-1">
+                  <span *ngFor="let cat of result.most_significant_failures"
+                    class="px-1.5 py-0.5 text-[10px] rounded bg-rose-50 text-rose-600 font-mono font-semibold leading-none">
+                    {{ cat }}
+                  </span>
+                  <span *ngIf="result.most_significant_failures.length === 0"
+                    class="text-[10px] text-green-600 font-medium">No failures</span>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed truncate italic" [title]="result.executive_summary">
+                  {{ result.executive_summary }}
+                </p>
+              </div>
+              <!-- Detail toggle -->
+              <button (click)="toggleModelDetail(article.itemId, result.model); $event.stopPropagation()"
+                class="shrink-0 text-[10px] text-indigo-400 hover:text-indigo-600 pt-1"
+                [title]="isModelDetailExpanded(article.itemId, result.model) ? 'Hide dimensions' : 'Show dimensions'">
+                {{ isModelDetailExpanded(article.itemId, result.model) ? '▾' : '▸' }}
+              </button>
+            </div>
+
+            <!-- Dimension detail (expandable) -->
+            <div *ngIf="isModelDetailExpanded(article.itemId, result.model)"
+              class="px-4 pb-3 pt-1 bg-gray-50 border-t border-gray-100 flex flex-col gap-3">
+              <!-- II dimensions -->
+              <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Information Integrity</span>
+                <div *ngFor="let row of iiRows(result)" class="flex items-start gap-1.5">
+                  <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold ' + severityClass(row.score.severity)">
+                    {{ row.id }}
+                  </span>
+                  <span *ngIf="row.score.severity > 0" class="text-xs text-gray-500 leading-relaxed">
+                    {{ row.score.explanation }}
+                  </span>
+                </div>
+              </div>
+              <!-- CF dimensions -->
+              <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Cultural Fidelity</span>
+                <div *ngFor="let row of cfRows(result)" class="flex items-start gap-1.5">
+                  <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold ' + severityClass(row.score.severity)">
+                    {{ row.id }}
+                  </span>
+                  <span *ngIf="row.score.severity > 0" class="text-xs text-gray-500 leading-relaxed">
+                    {{ row.score.explanation }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
   <!-- Empty state -->
-  <div *ngIf="!loading && results.length === 0"
+  <div *ngIf="!loading && !batchLoading && results.length === 0 && !batchData"
     class="flex items-center justify-center flex-1 text-gray-400 text-sm">
     Select an article and run an evaluation to see results.
   </div>

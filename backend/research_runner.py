@@ -1,13 +1,17 @@
+import dataclasses
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+import openai
 from openai import OpenAI
-from config import OPENAI_API_KEY, RESEARCH_SUBJECT_MODELS
-from dataclasses import dataclass, field
+from config import OPENAI_API_KEY, RESEARCH_SUBJECT_MODELS, CANONICAL_SYSTEM_PROMPT
+from dataclasses import dataclass, field as dc_field
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-DATASET_PATH = Path(__file__).parent / "data" / "pilot_dataset.json"
+DATA_DIR    = Path(__file__).parent / "data"
+DATASET_PATH = DATA_DIR / "benchmark" / "benchmark_corpus.json"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -28,6 +32,7 @@ class DatasetItem:
     benchmark_rationale: str
     human_notes: str
     human_override: bool
+    characteristics: dict = dc_field(default_factory=dict)
 
 
 @dataclass
@@ -45,13 +50,26 @@ class ResearchModelResponse:
     timestamp: str                # ISO 8601 UTC
 
 
-def load_dataset() -> list[DatasetItem]:
-    with open(DATASET_PATH) as f:
-        return [DatasetItem(**item) for item in json.load(f)]
+_ITEM_FIELDS = {f.name for f in dataclasses.fields(DatasetItem)}
 
 
-def get_dataset_item(item_id: str) -> DatasetItem:
-    for item in load_dataset():
+def _normalize_item(raw: dict) -> dict:
+    """Fill in defaults for fields the benchmark corpus schema omits, drop unknown keys."""
+    item = raw.copy()
+    item.setdefault("article_type", "news")
+    item.setdefault("high_context", False)
+    item.setdefault("system_prompt", CANONICAL_SYSTEM_PROMPT)
+    return {k: v for k, v in item.items() if k in _ITEM_FIELDS}
+
+
+def load_dataset(path: Optional[Path] = None) -> list[DatasetItem]:
+    corpus = path or DATASET_PATH
+    with open(corpus) as f:
+        return [DatasetItem(**_normalize_item(item)) for item in json.load(f)]
+
+
+def get_dataset_item(item_id: str, path: Optional[Path] = None) -> DatasetItem:
+    for item in load_dataset(path):
         if item.id == item_id:
             return item
     raise ValueError(f"Dataset item '{item_id}' not found.")
@@ -114,12 +132,33 @@ def _call_model(
     )
 
 
+def _call_model_with_retry(
+    model_cfg: dict,
+    item: DatasetItem,
+    variant: dict,
+    temperature: float,
+    max_retries: int = 3,
+) -> ResearchModelResponse:
+    last_exc: Exception = RuntimeError("No attempts made")
+    for attempt in range(max_retries):
+        try:
+            return _call_model(model_cfg, item, variant, temperature)
+        except openai.RateLimitError as e:
+            last_exc = e
+            time.sleep((2 ** attempt) * 2)
+        except (openai.APIError, openai.APIConnectionError, openai.APITimeoutError) as e:
+            last_exc = e
+            time.sleep(2 ** attempt)
+    raise last_exc
+
+
 def run_research_eval(
     item_id: Optional[str] = None,
     temperature: float = 0.7,
     prompt_variant_name: Optional[str] = None,
     item: Optional[DatasetItem] = None,
     task_instructions: Optional[str] = None,
+    models: Optional[list[str]] = None,
 ) -> list[ResearchModelResponse]:
     if item is None:
         if item_id is None:
@@ -127,9 +166,13 @@ def run_research_eval(
         item = get_dataset_item(item_id)
     variant = get_prompt_variant(item, prompt_variant_name, task_instructions)
 
+    model_configs = RESEARCH_SUBJECT_MODELS
+    if models:
+        model_configs = [m for m in RESEARCH_SUBJECT_MODELS if m["model_id"] in models]
+
     with ThreadPoolExecutor() as executor:
         futures = {
             executor.submit(_call_model, model_cfg, item, variant, temperature): model_cfg["model_id"]
-            for model_cfg in RESEARCH_SUBJECT_MODELS
+            for model_cfg in model_configs
         }
         return [future.result() for future in as_completed(futures)]

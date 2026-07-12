@@ -41,6 +41,19 @@
         "prompt": "Perform the requested task exactly as instructed while preserving factual accuracy, attribution, uncertainty, and cultural context."
       }
     ],
+    "characteristics": {
+      "benchmark_category": "control",
+      "cultural_significance": "low",
+      "primary_community": null,
+      "geographic_context": "DRC/Uganda/United States",
+      "domain": "health",
+      "contains_multiple_perspectives": true,
+      "contains_uncertainty": true,
+      "contains_disputed_claims": false,
+      "contains_direct_quotes": true,
+      "contains_statistics": true,
+      "transformation_risk": "medium"
+    },
     "benchmark_rationale": "",
     "human_notes": "",
     "human_override": false

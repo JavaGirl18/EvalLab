@@ -12,21 +12,58 @@
       <div class="flex flex-col gap-1">
         <h2 class="text-lg font-bold text-gray-800">Taxonomy Trends</h2>
         <p class="text-xs text-gray-400">
-          {{ activeExperimentLabel }} ·
+          {{ activeFilterLabel }} ·
           {{ evalCount }} model eval{{ evalCount !== 1 ? 's' : '' }}
-          across {{ filteredHistory.length }} run{{ filteredHistory.length !== 1 ? 's' : '' }}.
-          <span *ngIf="filteredHistory.length === 0" class="text-indigo-500">No data for this filter yet.</span>
+          <ng-container *ngIf="filterMode === 'experiment'">
+            across {{ filteredHistory.length }} run{{ filteredHistory.length !== 1 ? 's' : '' }}.
+            <span *ngIf="filteredHistory.length === 0 && experimentFilter" class="text-indigo-500">No data for this filter yet.</span>
+          </ng-container>
+          <ng-container *ngIf="filterMode === 'batch'">
+            from batch results.
+            <span *ngIf="batchLoading" class="text-indigo-500">Loading…</span>
+            <span *ngIf="batchError" class="text-red-500">{{ batchError }}</span>
+          </ng-container>
         </p>
       </div>
 
-      <!-- Experiment filter -->
-      <div *ngIf="experiments.length > 0" class="flex flex-col gap-1">
-        <label class="text-xs text-gray-500 font-medium">Filter by experiment</label>
-        <select [(ngModel)]="experimentFilter"
-          class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white min-w-40">
-          <option value="">All experiments</option>
-          <option *ngFor="let exp of experiments" [value]="exp">{{ exp }}</option>
-        </select>
+      <!-- Filter controls: Experiments + Batches as a unified group -->
+      <div class="flex gap-3 flex-wrap items-end">
+
+        <!-- Experiment filter -->
+        <div *ngIf="experiments.length > 0" class="flex flex-col gap-1">
+          <label class="text-xs text-gray-500 font-medium">Experiment</label>
+          <select
+            [ngModel]="batchFilter ? '' : experimentFilter"
+            (ngModelChange)="selectExperiment($event)"
+            class="border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white min-w-36"
+            [class.border-indigo-400]="filterMode === 'experiment' && experimentFilter"
+            [class.border-gray-200]="filterMode !== 'experiment' || !experimentFilter">
+            <option value="">All experiments</option>
+            <option *ngFor="let exp of experiments" [value]="exp">{{ exp }}</option>
+          </select>
+        </div>
+
+        <!-- Batch filter -->
+        <div *ngIf="batches.length > 0" class="flex flex-col gap-1">
+          <label class="text-xs text-gray-500 font-medium">Batch</label>
+          <select
+            [ngModel]="batchFilter"
+            (ngModelChange)="selectBatch($event)"
+            class="border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white min-w-44"
+            [class.border-violet-400]="filterMode === 'batch'"
+            [class.border-gray-200]="filterMode !== 'batch'">
+            <option value="">— select a batch —</option>
+            <option *ngFor="let b of batches" [value]="b.batch_id">
+              {{ b.experiment_id }} · {{ b.completed }}/{{ b.total }}
+              <ng-container [ngSwitch]="b.status">
+                <ng-container *ngSwitchCase="'completed'"> ✓</ng-container>
+                <ng-container *ngSwitchCase="'running'"> ⟳</ng-container>
+                <ng-container *ngSwitchCase="'failed'"> ✕</ng-container>
+              </ng-container>
+            </option>
+          </select>
+        </div>
+
       </div>
     </div>
 

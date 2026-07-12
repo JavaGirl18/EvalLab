@@ -23,6 +23,10 @@ def init_db():
             )
         """)
         conn.commit()
+    from batch_db import init_batch_tables
+    init_batch_tables()
+    from human_review_db import init_human_review_tables
+    init_human_review_tables()
 
 
 def save_preference(model: str, task: str, variant: str, user_prompt: str):

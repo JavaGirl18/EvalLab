@@ -41,22 +41,37 @@
   <div class="flex w-full pt-16 h-full">
 
     <!-- Sidebar -->
-    <div class="w-[400px] shrink-0 h-full overflow-y-auto border-r border-gray-200 bg-white">
-      <app-run-panel
-        *ngIf="mode === 'eval'"
-        [results]="results"
-        (loadingChange)="onLoadingChange($event)"
-        (resultsReady)="onResultsReady($event)"
-      />
-      <app-research-panel
-        *ngIf="mode === 'research'"
-        [history]="researchHistory"
-        (loadingChange)="onResearchLoadingChange($event)"
-        (resultsReady)="onResearchResultsReady($event)"
-        (historySelect)="onHistorySelect($event)"
-        (historyTagged)="onHistoryTagged($event)"
-        (experimentReady)="onExperimentReady($event)"
-      />
+    <div class="relative shrink-0 h-full flex">
+      <!-- Collapsible sidebar content -->
+      <div class="overflow-hidden border-r border-gray-200 bg-white"
+        [style.width]="sidebarCollapsed ? '0px' : '400px'"
+        style="transition: width 0.2s ease;">
+        <div class="w-[400px] h-full overflow-y-auto">
+          <app-run-panel
+            *ngIf="mode === 'eval'"
+            [results]="results"
+            (loadingChange)="onLoadingChange($event)"
+            (resultsReady)="onResultsReady($event)"
+          />
+          <app-research-panel
+            *ngIf="mode === 'research'"
+            [history]="researchHistory"
+            (loadingChange)="onResearchLoadingChange($event)"
+            (resultsReady)="onResearchResultsReady($event)"
+            (historySelect)="onHistorySelect($event)"
+            (historyTagged)="onHistoryTagged($event)"
+            (experimentReady)="onExperimentReady($event)"
+          />
+        </div>
+      </div>
+      <!-- Toggle tab -->
+      <div class="flex items-start pt-24 shrink-0">
+        <button (click)="sidebarCollapsed = !sidebarCollapsed"
+          class="h-10 w-4 bg-white border border-l-0 border-gray-200 rounded-r flex items-center justify-center
+                 text-gray-300 hover:text-gray-500 hover:bg-gray-50 shadow-sm text-[10px]">
+          {{ sidebarCollapsed ? '▶' : '◀' }}
+        </button>
+      </div>
     </div>
 
     <!-- Main content -->
@@ -80,6 +95,14 @@
           [class.text-gray-900]="researchView === 'trends'"
           [class.text-gray-500]="researchView !== 'trends'"
         >Trends</button>
+        <button
+          (click)="researchView = 'reviews'"
+          class="px-4 py-1.5 rounded-md text-xs font-medium transition-colors"
+          [class.bg-white]="researchView === 'reviews'"
+          [class.shadow-sm]="researchView === 'reviews'"
+          [class.text-gray-900]="researchView === 'reviews'"
+          [class.text-gray-500]="researchView !== 'reviews'"
+        >Reviews</button>
       </div>
 
       <app-results-table
@@ -96,6 +119,10 @@
         *ngIf="mode === 'research' && researchView === 'trends'"
         [history]="researchHistory"
         [currentResults]="researchResults"
+      />
+      <app-human-review-dashboard
+        *ngIf="mode === 'research' && researchView === 'reviews'"
+        [experimentId]="currentExperimentId"
       />
     </div>
 

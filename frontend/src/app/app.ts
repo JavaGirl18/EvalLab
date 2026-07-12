@@ -7,6 +7,7 @@ import { ResultsTableComponent } from './results-table/results-table';
 import { ResearchPanelComponent } from './research-panel/research-panel';
 import { ResearchResultsComponent } from './research-results/research-results';
 import { ResearchTrendsComponent } from './research-trends/research-trends';
+import { HumanReviewDashboardComponent } from './human-review-dashboard/human-review-dashboard';
 import {
   EvalResponse,
   ResearchEvalResponse,
@@ -28,6 +29,7 @@ const MAX_HISTORY = 10;
     ResearchPanelComponent,
     ResearchResultsComponent,
     ResearchTrendsComponent,
+    HumanReviewDashboardComponent,
     NgIcon,
   ],
   providers: [provideIcons({ lucideGavel })],
@@ -36,7 +38,9 @@ const MAX_HISTORY = 10;
 })
 export class App {
   mode: 'eval' | 'research' = 'research';
-  researchView: 'results' | 'trends' = 'results';
+  researchView: 'results' | 'trends' | 'reviews' = 'results';
+  sidebarCollapsed = false;
+  currentExperimentId = '';
 
   // Model Eval state
   results: EvalResponse['results'] = [];
@@ -93,6 +97,9 @@ export class App {
 
   onExperimentReady(exp: ExperimentMeta | null) {
     this.pendingExperiment = exp;
+    if (exp?.experiment_id) {
+      this.currentExperimentId = exp.experiment_id;
+    }
   }
 
   onHistoryTagged({ timestamp, experiment }: { timestamp: string; experiment: ExperimentMeta }) {

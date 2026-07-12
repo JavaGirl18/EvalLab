@@ -1,21 +1,84 @@
-<div class="flex flex-col gap-5 p-5 bg-white h-full overflow-y-auto">
+<div class="flex flex-col h-full bg-white overflow-hidden">
 
-  <h2 class="text-xl font-bold text-gray-800">Research Eval</h2>
+  <!-- ── Fixed header ─────────────────────────────────────────────────────── -->
+  <div class="shrink-0 px-5 pt-4 bg-white border-b border-gray-100">
+    <h2 class="text-base font-bold text-gray-800 mb-3">Research Eval</h2>
 
-  <!-- ── Experiment Config ─────────────────────────────────────────────── -->
-  <div class="flex flex-col gap-3 pb-3 border-b border-gray-100">
-    <button (click)="experimentExpanded = !experimentExpanded" class="flex items-center justify-between w-full text-left">
-      <div class="flex items-center gap-2">
-        <span class="text-sm font-semibold text-gray-700">Experiment</span>
-        <span *ngIf="hasExperiment"
-          class="px-1.5 py-0.5 text-xs rounded bg-indigo-100 text-indigo-700 font-mono truncate max-w-28"
-          [title]="experimentId">{{ experimentId }}</span>
-        <span *ngIf="!hasExperiment" class="text-xs text-gray-400">not set</span>
+    <!-- Tab bar -->
+    <div class="flex gap-0 -mb-px">
+      <button (click)="sidebarTab='experiment'"
+        class="px-4 py-2 text-xs font-semibold border-b-2 transition-colors"
+        [class.border-indigo-500]="sidebarTab==='experiment'"
+        [class.text-indigo-600]="sidebarTab==='experiment'"
+        [class.border-transparent]="sidebarTab!=='experiment'"
+        [class.text-gray-400]="sidebarTab!=='experiment'"
+        [class.hover:text-gray-600]="sidebarTab!=='experiment'">
+        Experiment
+      </button>
+      <button (click)="sidebarTab='run'"
+        class="px-4 py-2 text-xs font-semibold border-b-2 transition-colors"
+        [class.border-indigo-500]="sidebarTab==='run'"
+        [class.text-indigo-600]="sidebarTab==='run'"
+        [class.border-transparent]="sidebarTab!=='run'"
+        [class.text-gray-400]="sidebarTab!=='run'"
+        [class.hover:text-gray-600]="sidebarTab!=='run'">
+        Run
+      </button>
+      <button (click)="sidebarTab='review'"
+        class="px-4 py-2 text-xs font-semibold border-b-2 transition-colors relative"
+        [class.border-indigo-500]="sidebarTab==='review'"
+        [class.text-indigo-600]="sidebarTab==='review'"
+        [class.border-transparent]="sidebarTab!=='review'"
+        [class.text-gray-400]="sidebarTab!=='review'"
+        [class.hover:text-gray-600]="sidebarTab!=='review'">
+        Review
+        <span *ngIf="hrReviews.length > 0"
+          class="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-violet-500 text-white text-[9px] flex items-center justify-center font-bold">
+          {{ hrReviews.length > 9 ? '9+' : hrReviews.length }}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Scrollable tab content ────────────────────────────────────────────── -->
+  <div class="flex-1 overflow-y-auto">
+
+    <!-- Experiment context bar (shown on Run and Review tabs) -->
+    <div *ngIf="sidebarTab !== 'experiment'"
+      class="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs">
+      <span class="text-gray-400">Experiment:</span>
+      <span *ngIf="hasExperiment"
+        class="font-mono text-indigo-600 font-medium truncate max-w-40" [title]="experimentId">{{ experimentId }}</span>
+      <span *ngIf="!hasExperiment" class="text-amber-500 italic">not set</span>
+      <button *ngIf="!hasExperiment" (click)="sidebarTab='experiment'"
+        class="ml-auto text-xs text-indigo-400 hover:text-indigo-600 underline">Set up →</button>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: EXPERIMENT                                                      -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="sidebarTab==='experiment'" class="flex flex-col gap-4 px-5 py-4">
+
+      <!-- Load from file -->
+      <div *ngIf="availableExperiments.length > 0">
+        <label class="text-xs font-medium text-gray-600 block mb-1.5">Load saved experiment</label>
+        <select
+          [(ngModel)]="selectedExperimentFile"
+          (ngModelChange)="loadExperiment($event)"
+          class="w-full border border-indigo-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-indigo-50 text-indigo-800">
+          <option value="">Choose from file…</option>
+          <option *ngFor="let e of availableExperiments" [value]="e.experiment_id">
+            {{ e.experiment_name }} · {{ e.research_phase }}
+          </option>
+        </select>
       </div>
-      <span class="text-xs text-gray-400">{{ experimentExpanded ? '▾' : '▸' }}</span>
-    </button>
 
-    <div *ngIf="experimentExpanded" class="flex flex-col gap-3">
+      <!-- Divider -->
+      <div *ngIf="availableExperiments.length > 0" class="flex items-center gap-2">
+        <div class="flex-1 border-t border-gray-100"></div>
+        <span class="text-[10px] text-gray-400 uppercase tracking-wider">or edit manually</span>
+        <div class="flex-1 border-t border-gray-100"></div>
+      </div>
 
       <!-- ID + Name -->
       <div class="flex gap-2">
@@ -26,7 +89,7 @@
         </div>
         <div class="flex flex-col gap-1.5 flex-1">
           <label class="text-xs font-medium text-gray-600">Name</label>
-          <input [(ngModel)]="experimentName" type="text" placeholder="e.g. Control article baseline summarization"
+          <input [(ngModel)]="experimentName" type="text" placeholder="e.g. Control article baseline"
             class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
         </div>
       </div>
@@ -110,6 +173,31 @@
         </div>
       </div>
 
+      <!-- Status -->
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-medium text-gray-600">Status</label>
+        <div class="flex gap-2">
+          <select [(ngModel)]="experimentStatusPhase"
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+            <option *ngFor="let p of statusPhases" [value]="p">{{ p }}</option>
+          </select>
+          <input [(ngModel)]="experimentCreatedBy" type="text" placeholder="Created by"
+            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div class="flex gap-2">
+          <div class="flex flex-col gap-1 flex-1">
+            <label class="text-xs text-gray-400">Started</label>
+            <input [(ngModel)]="experimentStartedAt" type="date"
+              class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+          <div class="flex flex-col gap-1 flex-1">
+            <label class="text-xs text-gray-400">Completed</label>
+            <input [(ngModel)]="experimentCompletedAt" type="date"
+              class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+        </div>
+      </div>
+
       <div class="flex items-center gap-3">
         <button (click)="saveExperimentConfig()"
           class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors"
@@ -122,309 +210,555 @@
         </button>
         <span class="text-xs text-gray-400">Auto-saves on each eval run</span>
       </div>
-    </div>
-  </div>
 
-  <!-- ── Source Article ─────────────────────────────────────────────────── -->
-  <div class="flex flex-col gap-3">
-    <button (click)="articlesExpanded = !articlesExpanded" class="flex items-center justify-between w-full text-left">
-      <span class="text-sm font-semibold text-gray-700">Source Article</span>
-      <span class="text-xs text-gray-400">{{ articlesExpanded ? '▾' : '▸' }}</span>
-    </button>
-
-    <!-- Mode tabs -->
-    <div *ngIf="articlesExpanded" class="flex gap-1 bg-gray-100 p-0.5 rounded-lg">
-      <button
-        (click)="switchMode('dataset')"
-        class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
-        [class.bg-white]="sourceMode === 'dataset'"
-        [class.shadow-sm]="sourceMode === 'dataset'"
-        [class.text-gray-900]="sourceMode === 'dataset'"
-        [class.text-gray-500]="sourceMode !== 'dataset'"
-      >Dataset</button>
-      <button
-        (click)="switchMode('url')"
-        class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
-        [class.bg-white]="sourceMode === 'url'"
-        [class.shadow-sm]="sourceMode === 'url'"
-        [class.text-gray-900]="sourceMode === 'url'"
-        [class.text-gray-500]="sourceMode !== 'url'"
-      >From URL</button>
-      <button
-        (click)="switchMode('paste')"
-        class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
-        [class.bg-white]="sourceMode === 'paste'"
-        [class.shadow-sm]="sourceMode === 'paste'"
-        [class.text-gray-900]="sourceMode === 'paste'"
-        [class.text-gray-500]="sourceMode !== 'paste'"
-      >Paste</button>
-    </div>
-
-    <!-- ── Dataset mode ─────────────────────────────────────────────────── -->
-    <div *ngIf="articlesExpanded && sourceMode === 'dataset'">
-      <div *ngIf="loadingDataset" class="flex flex-col gap-2">
-        <div *ngFor="let _ of [1,2]" class="p-3 rounded-lg border border-gray-100">
-          <div class="flex justify-between mb-2">
-            <div class="h-2.5 w-20 bg-gray-200 rounded animate-pulse"></div>
-            <div class="h-2.5 w-2.5 rounded-full bg-gray-200 animate-pulse"></div>
-          </div>
-          <div class="h-2.5 w-full bg-gray-100 rounded animate-pulse mb-1.5"></div>
-          <div class="h-2.5 w-3/4 bg-gray-100 rounded animate-pulse mb-2"></div>
-          <div class="flex gap-1">
-            <div class="h-4 w-12 bg-gray-100 rounded animate-pulse"></div>
-            <div class="h-4 w-16 bg-gray-100 rounded animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-
-      <p *ngIf="datasetError" class="text-xs text-red-500">{{ datasetError }}</p>
-
-      <div *ngIf="!loadingDataset && !datasetError" class="flex flex-col gap-2">
-        <ng-container *ngFor="let item of customItems.concat(items)">
-          <div
-            (click)="selectItem(item.id)"
-            class="flex flex-col gap-1.5 p-3 rounded-lg border cursor-pointer transition-all"
-            [class.border-indigo-400]="selectedItemId === item.id"
-            [class.bg-indigo-50]="selectedItemId === item.id"
-            [class.border-gray-200]="selectedItemId !== item.id"
-            [class.hover:border-indigo-300]="selectedItemId !== item.id"
-            [class.hover:bg-gray-50]="selectedItemId !== item.id"
-          >
-            <div class="flex items-start justify-between gap-2">
-              <p class="text-xs text-gray-700 font-medium leading-snug line-clamp-2 flex-1">{{ item.source_title }}</p>
-              <button
-                *ngIf="isCustomItem(item.id)"
-                (click)="removeCustomItem(item.id, $event)"
-                class="shrink-0 text-gray-300 hover:text-red-400 transition-colors text-xs leading-none mt-0.5"
-                title="Remove"
-              >✕</button>
-            </div>
-            <div class="flex flex-wrap gap-1">
-              <span *ngIf="isCustomItem(item.id)" class="px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-700">Saved</span>
-              <ng-container *ngIf="!isCustomItem(item.id)">
-                <span class="px-1.5 py-0.5 rounded text-xs bg-indigo-100 text-indigo-700">{{ item.article_type }}</span>
-                <span class="px-1.5 py-0.5 rounded text-xs bg-gray-200 text-gray-600">{{ sourceTypeLabel(item.source_type) }}</span>
-                <span *ngIf="item.high_context" class="px-1.5 py-0.5 rounded text-xs bg-amber-100 text-amber-700">High Context</span>
-              </ng-container>
-            </div>
-            <p *ngIf="!item.source_text" class="text-xs text-amber-600">
-              ⚠ No source text — run <code class="bg-amber-50 px-0.5 rounded">ingest_articles.py</code>
-            </p>
-            <div class="text-xs text-gray-400">
-              <span *ngIf="item.metadata['publisher']">{{ item.metadata['publisher'] }}</span>
-              <span *ngIf="item.metadata['publisher'] && item.metadata['published_date']"> · </span>
-              <span *ngIf="item.metadata['published_date']">{{ item.metadata['published_date'] }}</span>
-            </div>
-            <div *ngIf="(item.expected_failure_categories || []).length > 0" class="flex flex-wrap gap-1 pt-1 border-t border-gray-100">
-              <span class="text-xs text-gray-400 w-full">Expected failures:</span>
-              <span
-                *ngFor="let cat of item.expected_failure_categories"
-                class="px-1.5 py-0.5 text-xs rounded-full bg-rose-50 text-rose-600 font-mono font-medium"
-              >{{ cat }}</span>
-            </div>
-          </div>
-        </ng-container>
-      </div>
-    </div>
-
-    <!-- ── URL mode ─────────────────────────────────────────────────────── -->
-    <div *ngIf="articlesExpanded && sourceMode === 'url'" class="flex flex-col gap-3">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-600">Article URL</label>
-        <div class="flex gap-2">
-          <input
-            [(ngModel)]="urlInput"
-            (keyup.enter)="fetchArticle()"
-            type="url"
-            placeholder="https://..."
-            class="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-          <button
-            (click)="fetchArticle()"
-            [disabled]="!urlInput.trim() || fetchLoading"
-            class="shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
-          >{{ fetchLoading ? '…' : 'Fetch' }}</button>
-        </div>
-        <p *ngIf="fetchError" class="text-xs text-red-500">{{ fetchError }}</p>
-      </div>
-      <div *ngIf="fetchedArticle" class="flex flex-col gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
-        <div class="flex items-start justify-between gap-2">
-          <span class="text-xs font-semibold text-green-800 leading-snug">{{ fetchedArticle.title }}</span>
-          <button (click)="clearFetch()" class="shrink-0 text-xs text-gray-400 hover:text-gray-600 mt-0.5">✕</button>
-        </div>
-        <div *ngIf="fetchedArticle.publisher || fetchedArticle.published_date" class="text-xs text-green-700">
-          {{ fetchedArticle.publisher }}<span *ngIf="fetchedArticle.publisher && fetchedArticle.published_date"> · </span>{{ fetchedArticle.published_date }}
-        </div>
-        <p class="text-xs text-gray-500 leading-relaxed italic">{{ urlTextPreview }}</p>
-      </div>
-    </div>
-
-    <!-- ── Paste mode ────────────────────────────────────────────────────── -->
-    <div *ngIf="articlesExpanded && sourceMode === 'paste'" class="flex flex-col gap-3">
-      <p class="text-xs text-gray-400">Use this when a URL can't be fetched (paywall, bot protection, etc.).</p>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-600">Title <span class="text-gray-400">(optional)</span></label>
-        <input
-          [(ngModel)]="pastedTitle"
-          type="text"
-          placeholder="Article headline or title…"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
-      </div>
-
-      <div class="flex gap-2">
-        <div class="flex flex-col gap-1.5 flex-1">
-          <label class="text-xs font-medium text-gray-600">Publisher <span class="text-gray-400">(optional)</span></label>
-          <input
-            [(ngModel)]="pastedPublisher"
-            type="text"
-            placeholder="e.g. Reuters"
-            class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
-        <div class="flex flex-col gap-1.5 flex-1">
-          <label class="text-xs font-medium text-gray-600">Date <span class="text-gray-400">(optional)</span></label>
-          <input
-            [(ngModel)]="pastedDate"
-            type="text"
-            placeholder="e.g. 2026-07-04"
-            class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <div class="flex items-center justify-between">
-          <label class="text-xs font-medium text-gray-600">Article Text</label>
-          <span *ngIf="pastedWordCount > 0" class="text-xs text-gray-400">{{ pastedWordCount }} words</span>
-        </div>
-        <textarea
-          [(ngModel)]="pastedText"
-          rows="8"
-          placeholder="Paste the full article text here…"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300"
-        ></textarea>
-      </div>
-
-      <button
-        *ngIf="pastedText.trim()"
-        (click)="clearPaste()"
-        class="text-xs text-gray-400 hover:text-gray-600 self-start"
-      >Clear</button>
-    </div>
-  </div>
-
-  <!-- ── Task instructions (faithful_transformation only) ─────────────── -->
-  <div *ngIf="needsTaskInstructions && (canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim()))"
-    class="flex flex-col gap-1.5">
-    <label class="text-sm font-semibold text-gray-700">
-      Task Instructions
-      <span class="text-red-400 ml-0.5">*</span>
-    </label>
-    <textarea
-      [(ngModel)]="taskInstructions"
-      rows="3"
-      placeholder="Describe the transformation to perform — e.g. 'Rewrite for a 6th grade reading level' or 'Translate key points for a diaspora audience'…"
-      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300"
-    ></textarea>
-    <p class="text-xs text-gray-400">Required for this variant — the model uses these as the specific task to perform.</p>
-  </div>
-
-  <!-- ── Notes ─────────────────────────────────────────────────────────── -->
-  <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
-    class="flex flex-col gap-1.5">
-    <label class="text-sm font-semibold text-gray-700">Notes</label>
-    <textarea
-      [(ngModel)]="humanNotes"
-      rows="3"
-      placeholder="Research notes, hypotheses, or context about this article…"
-      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300"
-    ></textarea>
-  </div>
-
-  <!-- ── Prompt variant ─────────────────────────────────────────────────── -->
-  <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
-    class="flex flex-col gap-2">
-    <span class="text-sm font-semibold text-gray-700">Prompt Variant</span>
-    <div class="flex flex-col gap-1.5">
-      <label
-        *ngFor="let v of variants"
-        class="flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors"
-        [class.border-indigo-400]="selectedVariant === v.name"
-        [class.bg-indigo-50]="selectedVariant === v.name"
-        [class.border-gray-200]="selectedVariant !== v.name"
-      >
-        <input type="radio" [(ngModel)]="selectedVariant" [value]="v.name" class="mt-0.5 accent-indigo-600" />
-        <div class="flex flex-col gap-0.5">
-          <span class="text-xs font-semibold text-gray-700">{{ v.label }}</span>
-          <span class="text-xs text-gray-400 leading-relaxed">{{ v.desc }}</span>
-        </div>
-      </label>
-    </div>
-  </div>
-
-  <!-- ── Temperature ────────────────────────────────────────────────────── -->
-  <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
-    class="flex flex-col gap-2">
-    <div class="flex justify-between">
-      <span class="text-sm font-semibold text-gray-700">Temperature</span>
-      <span class="text-sm font-mono text-indigo-600">{{ temperature }}</span>
-    </div>
-    <input type="range" [(ngModel)]="temperature" min="0" max="1" step="0.1" class="w-full accent-indigo-500" />
-    <div class="flex justify-between text-xs text-gray-400">
-      <span>Precise (0.0)</span><span>Creative (1.0)</span>
-    </div>
-  </div>
-
-  <!-- ── Error + Run ────────────────────────────────────────────────────── -->
-  <p *ngIf="evalError" class="text-xs text-red-500">{{ evalError }}</p>
-
-  <button
-    (click)="runEval()"
-    [disabled]="!canRun"
-    class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors text-sm"
-  >
-    {{ loading ? 'Running eval…' : 'Run Research Eval' }}
-  </button>
-
-  <!-- ── History ────────────────────────────────────────────────────────── -->
-  <div *ngIf="history.length > 0" class="flex flex-col gap-2 pt-2 border-t border-gray-100">
-    <button (click)="historyExpanded = !historyExpanded" class="flex items-center justify-between w-full text-left">
-      <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400">History</h3>
-      <span class="text-xs text-gray-400">{{ historyExpanded ? '▾' : '▸' }}</span>
-    </button>
-    <div
-      *ngFor="let entry of historyExpanded ? history : []"
-      (click)="historySelect.emit(entry)"
-      class="flex flex-col gap-1.5 p-3 rounded-lg border border-gray-100 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition-colors"
-    >
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-mono text-gray-600 truncate">{{ entry.item_id }}</span>
-        <span class="text-xs text-gray-400 shrink-0">{{ formatTime(entry.timestamp) }}</span>
-      </div>
-      <p class="text-xs text-gray-500 truncate">{{ entry.source_title }}</p>
-      <div class="flex items-center gap-3">
-        <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 capitalize">{{ entry.variant.replace('_', ' ') }}</span>
-        <span class="text-xs font-mono">
-          II <span [class]="scoreColor(entry.avg_ii_score)" class="font-semibold">{{ entry.avg_ii_score }}</span>
-          &nbsp;CF <span [class]="scoreColor(entry.avg_cf_score)" class="font-semibold">{{ entry.avg_cf_score }}</span>
-        </span>
-      </div>
-      <div class="flex items-center justify-between gap-2">
-        <span *ngIf="entry.experiment?.experiment_id"
-          class="text-xs text-indigo-500 truncate"
-          [title]="entry.experiment!.experiment_name || entry.experiment!.experiment_id">
-          {{ entry.experiment!.experiment_id }}<span *ngIf="entry.experiment!.experiment_name"> · {{ entry.experiment!.experiment_name }}</span>
-        </span>
-        <span *ngIf="!entry.experiment?.experiment_id" class="text-xs text-gray-300 italic">unclassified</span>
-        <button *ngIf="hasExperiment"
-          (click)="tagHistoryEntry(entry); $event.stopPropagation()"
-          class="shrink-0 text-xs text-indigo-400 hover:text-indigo-600 font-medium transition-colors"
-          [title]="'Assign to ' + experimentId">
-          Tag
+      <!-- History -->
+      <div *ngIf="history.length > 0" class="flex flex-col gap-2 pt-3 border-t border-gray-100">
+        <button (click)="historyExpanded = !historyExpanded" class="flex items-center justify-between w-full text-left">
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400">History</h3>
+          <span class="text-xs text-gray-400">{{ historyExpanded ? '▾' : '▸' }}</span>
         </button>
+        <div
+          *ngFor="let entry of historyExpanded ? history : []"
+          (click)="historySelect.emit(entry)"
+          class="flex flex-col gap-1.5 p-3 rounded-lg border border-gray-100 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition-colors"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-mono text-gray-600 truncate">{{ entry.item_id }}</span>
+            <span class="text-xs text-gray-400 shrink-0">{{ formatTime(entry.timestamp) }}</span>
+          </div>
+          <p class="text-xs text-gray-500 truncate">{{ entry.source_title }}</p>
+          <div class="flex items-center gap-3">
+            <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 capitalize">{{ entry.variant.replace('_', ' ') }}</span>
+            <span class="text-xs font-mono">
+              II <span [class]="scoreColor(entry.avg_ii_score)" class="font-semibold">{{ entry.avg_ii_score }}</span>
+              &nbsp;CF <span [class]="scoreColor(entry.avg_cf_score)" class="font-semibold">{{ entry.avg_cf_score }}</span>
+            </span>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <span *ngIf="entry.experiment?.experiment_id"
+              class="text-xs text-indigo-500 truncate"
+              [title]="entry.experiment!.experiment_name || entry.experiment!.experiment_id">
+              {{ entry.experiment!.experiment_id }}<span *ngIf="entry.experiment!.experiment_name"> · {{ entry.experiment!.experiment_name }}</span>
+            </span>
+            <span *ngIf="!entry.experiment?.experiment_id" class="text-xs text-gray-300 italic">unclassified</span>
+            <button *ngIf="hasExperiment"
+              (click)="tagHistoryEntry(entry); $event.stopPropagation()"
+              class="shrink-0 text-xs text-indigo-400 hover:text-indigo-600 font-medium transition-colors"
+              [title]="'Assign to ' + experimentId">
+              Tag
+            </button>
+          </div>
+        </div>
       </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: RUN                                                             -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="sidebarTab==='run'" class="flex flex-col gap-4 px-5 py-4">
+
+      <!-- Source Article -->
+      <div class="flex flex-col gap-3">
+        <span class="text-sm font-semibold text-gray-700">Source Article</span>
+
+        <!-- Mode tabs -->
+        <div class="flex gap-1 bg-gray-100 p-0.5 rounded-lg">
+          <button (click)="switchMode('dataset')"
+            class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
+            [class.bg-white]="sourceMode === 'dataset'"
+            [class.shadow-sm]="sourceMode === 'dataset'"
+            [class.text-gray-900]="sourceMode === 'dataset'"
+            [class.text-gray-500]="sourceMode !== 'dataset'"
+          >Dataset</button>
+          <button (click)="switchMode('url')"
+            class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
+            [class.bg-white]="sourceMode === 'url'"
+            [class.shadow-sm]="sourceMode === 'url'"
+            [class.text-gray-900]="sourceMode === 'url'"
+            [class.text-gray-500]="sourceMode !== 'url'"
+          >From URL</button>
+          <button (click)="switchMode('paste')"
+            class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
+            [class.bg-white]="sourceMode === 'paste'"
+            [class.shadow-sm]="sourceMode === 'paste'"
+            [class.text-gray-900]="sourceMode === 'paste'"
+            [class.text-gray-500]="sourceMode !== 'paste'"
+          >Paste</button>
+        </div>
+
+        <!-- ── Dataset mode ─────────────────────────────────────────────── -->
+        <div *ngIf="sourceMode === 'dataset'">
+          <div *ngIf="loadingDataset" class="flex flex-col gap-2">
+            <div *ngFor="let _ of [1,2]" class="p-3 rounded-lg border border-gray-100">
+              <div class="flex justify-between mb-2">
+                <div class="h-2.5 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-2.5 w-2.5 rounded-full bg-gray-200 animate-pulse"></div>
+              </div>
+              <div class="h-2.5 w-full bg-gray-100 rounded animate-pulse mb-1.5"></div>
+              <div class="h-2.5 w-3/4 bg-gray-100 rounded animate-pulse mb-2"></div>
+              <div class="flex gap-1">
+                <div class="h-4 w-12 bg-gray-100 rounded animate-pulse"></div>
+                <div class="h-4 w-16 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          <p *ngIf="datasetError" class="text-xs text-red-500">{{ datasetError }}</p>
+
+          <div *ngIf="!loadingDataset && !datasetError" class="flex flex-col gap-2">
+            <ng-container *ngFor="let item of customItems.concat(items)">
+              <div
+                (click)="selectItem(item.id)"
+                class="flex flex-col gap-1.5 p-3 rounded-lg border cursor-pointer transition-all"
+                [class.border-indigo-400]="selectedItemId === item.id"
+                [class.bg-indigo-50]="selectedItemId === item.id"
+                [class.border-gray-200]="selectedItemId !== item.id"
+                [class.hover:border-indigo-300]="selectedItemId !== item.id"
+                [class.hover:bg-gray-50]="selectedItemId !== item.id"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <p class="text-xs text-gray-700 font-medium leading-snug line-clamp-2 flex-1">{{ item.source_title }}</p>
+                  <button
+                    *ngIf="isCustomItem(item.id)"
+                    (click)="removeCustomItem(item.id, $event)"
+                    class="shrink-0 text-gray-300 hover:text-red-400 transition-colors text-xs leading-none mt-0.5"
+                    title="Remove"
+                  >✕</button>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  <span *ngIf="isCustomItem(item.id)" class="px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-700">Saved</span>
+                  <ng-container *ngIf="!isCustomItem(item.id)">
+                    <span class="px-1.5 py-0.5 rounded text-xs bg-indigo-100 text-indigo-700">{{ item.article_type }}</span>
+                    <span class="px-1.5 py-0.5 rounded text-xs bg-gray-200 text-gray-600">{{ sourceTypeLabel(item.source_type) }}</span>
+                    <ng-container *ngIf="item.characteristics as c">
+                      <span class="px-1.5 py-0.5 rounded text-xs"
+                        [class.bg-amber-100]="c.cultural_significance === 'high'"
+                        [class.text-amber-700]="c.cultural_significance === 'high'"
+                        [class.bg-yellow-100]="c.cultural_significance === 'medium'"
+                        [class.text-yellow-700]="c.cultural_significance === 'medium'"
+                        [class.bg-gray-100]="c.cultural_significance === 'low'"
+                        [class.text-gray-500]="c.cultural_significance === 'low'">
+                        {{ c.cultural_significance }} context
+                      </span>
+                      <span class="px-1.5 py-0.5 rounded text-xs bg-teal-100 text-teal-700">{{ c.domain }}</span>
+                      <span class="px-1.5 py-0.5 rounded text-xs"
+                        [class.bg-red-100]="c.transformation_risk === 'high'"
+                        [class.text-red-600]="c.transformation_risk === 'high'"
+                        [class.bg-orange-100]="c.transformation_risk === 'medium'"
+                        [class.text-orange-600]="c.transformation_risk === 'medium'"
+                        [class.bg-green-100]="c.transformation_risk === 'low'"
+                        [class.text-green-600]="c.transformation_risk === 'low'">
+                        {{ c.transformation_risk }} risk
+                      </span>
+                      <span class="flex gap-1 text-gray-400 text-xs items-center">
+                        <span [title]="'Multiple perspectives'" [class.text-indigo-500]="c.contains_multiple_perspectives">⊕</span>
+                        <span [title]="'Contains uncertainty'" [class.text-indigo-500]="c.contains_uncertainty">~</span>
+                        <span [title]="'Disputed claims'" [class.text-indigo-500]="c.contains_disputed_claims">⚑</span>
+                        <span [title]="'Direct quotes'" [class.text-indigo-500]="c.contains_direct_quotes">"</span>
+                        <span [title]="'Statistics'" [class.text-indigo-500]="c.contains_statistics">#</span>
+                      </span>
+                    </ng-container>
+                    <span *ngIf="!item.characteristics && item.high_context"
+                      class="px-1.5 py-0.5 rounded text-xs bg-amber-100 text-amber-700">High Context</span>
+                  </ng-container>
+                </div>
+                <p *ngIf="!item.source_text" class="text-xs text-amber-600">
+                  ⚠ No source text — run <code class="bg-amber-50 px-0.5 rounded">ingest_articles.py</code>
+                </p>
+                <div class="text-xs text-gray-400">
+                  <span *ngIf="item.metadata['publisher']">{{ item.metadata['publisher'] }}</span>
+                  <span *ngIf="item.metadata['publisher'] && item.metadata['published_date']"> · </span>
+                  <span *ngIf="item.metadata['published_date']">{{ item.metadata['published_date'] }}</span>
+                </div>
+                <div *ngIf="(item.expected_failure_categories || []).length > 0" class="flex flex-wrap gap-1 pt-1 border-t border-gray-100">
+                  <span class="text-xs text-gray-400 w-full">Expected failures:</span>
+                  <span
+                    *ngFor="let cat of item.expected_failure_categories"
+                    class="px-1.5 py-0.5 text-xs rounded-full bg-rose-50 text-rose-600 font-mono font-medium"
+                  >{{ cat }}</span>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- ── URL mode ─────────────────────────────────────────────────── -->
+        <div *ngIf="sourceMode === 'url'" class="flex flex-col gap-3">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-600">Article URL</label>
+            <div class="flex gap-2">
+              <input
+                [(ngModel)]="urlInput"
+                (keyup.enter)="fetchArticle()"
+                type="url"
+                placeholder="https://..."
+                class="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <button
+                (click)="fetchArticle()"
+                [disabled]="!urlInput.trim() || fetchLoading"
+                class="shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
+              >{{ fetchLoading ? '…' : 'Fetch' }}</button>
+            </div>
+            <p *ngIf="fetchError" class="text-xs text-red-500">{{ fetchError }}</p>
+          </div>
+          <div *ngIf="fetchedArticle" class="flex flex-col gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+            <div class="flex items-start justify-between gap-2">
+              <span class="text-xs font-semibold text-green-800 leading-snug">{{ fetchedArticle.title }}</span>
+              <button (click)="clearFetch()" class="shrink-0 text-xs text-gray-400 hover:text-gray-600 mt-0.5">✕</button>
+            </div>
+            <div *ngIf="fetchedArticle.publisher || fetchedArticle.published_date" class="text-xs text-green-700">
+              {{ fetchedArticle.publisher }}<span *ngIf="fetchedArticle.publisher && fetchedArticle.published_date"> · </span>{{ fetchedArticle.published_date }}
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed italic">{{ urlTextPreview }}</p>
+          </div>
+        </div>
+
+        <!-- ── Paste mode ────────────────────────────────────────────────── -->
+        <div *ngIf="sourceMode === 'paste'" class="flex flex-col gap-3">
+          <p class="text-xs text-gray-400">Use this when a URL can't be fetched (paywall, bot protection, etc.).</p>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-gray-600">Title <span class="text-gray-400">(optional)</span></label>
+            <input [(ngModel)]="pastedTitle" type="text" placeholder="Article headline or title…"
+              class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+          <div class="flex gap-2">
+            <div class="flex flex-col gap-1.5 flex-1">
+              <label class="text-xs font-medium text-gray-600">Publisher <span class="text-gray-400">(optional)</span></label>
+              <input [(ngModel)]="pastedPublisher" type="text" placeholder="e.g. Reuters"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div class="flex flex-col gap-1.5 flex-1">
+              <label class="text-xs font-medium text-gray-600">Date <span class="text-gray-400">(optional)</span></label>
+              <input [(ngModel)]="pastedDate" type="text" placeholder="e.g. 2026-07-04"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-medium text-gray-600">Article Text</label>
+              <span *ngIf="pastedWordCount > 0" class="text-xs text-gray-400">{{ pastedWordCount }} words</span>
+            </div>
+            <textarea [(ngModel)]="pastedText" rows="8"
+              placeholder="Paste the full article text here…"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300">
+            </textarea>
+          </div>
+          <button *ngIf="pastedText.trim()" (click)="clearPaste()"
+            class="text-xs text-gray-400 hover:text-gray-600 self-start">Clear</button>
+        </div>
+      </div>
+
+      <!-- Task instructions -->
+      <div *ngIf="needsTaskInstructions && (canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim()))"
+        class="flex flex-col gap-1.5">
+        <label class="text-sm font-semibold text-gray-700">
+          Task Instructions
+          <span class="text-red-400 ml-0.5">*</span>
+        </label>
+        <textarea [(ngModel)]="taskInstructions" rows="3"
+          placeholder="Describe the transformation to perform…"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300">
+        </textarea>
+        <p class="text-xs text-gray-400">Required for this variant — the model uses these as the specific task to perform.</p>
+      </div>
+
+      <!-- Notes -->
+      <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
+        class="flex flex-col gap-1.5">
+        <label class="text-sm font-semibold text-gray-700">Notes</label>
+        <textarea [(ngModel)]="humanNotes" rows="2"
+          placeholder="Research notes, hypotheses, or context about this article…"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300">
+        </textarea>
+      </div>
+
+      <!-- Prompt variant -->
+      <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
+        class="flex flex-col gap-2">
+        <span class="text-sm font-semibold text-gray-700">Prompt Variant</span>
+        <div class="flex flex-col gap-1.5">
+          <label *ngFor="let v of variants"
+            class="flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors"
+            [class.border-indigo-400]="selectedVariant === v.name"
+            [class.bg-indigo-50]="selectedVariant === v.name"
+            [class.border-gray-200]="selectedVariant !== v.name"
+          >
+            <input type="radio" [(ngModel)]="selectedVariant" [value]="v.name" class="mt-0.5 accent-indigo-600" />
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs font-semibold text-gray-700">{{ v.label }}</span>
+              <span class="text-xs text-gray-400 leading-relaxed">{{ v.desc }}</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Temperature -->
+      <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
+        class="flex flex-col gap-2">
+        <div class="flex justify-between">
+          <span class="text-sm font-semibold text-gray-700">Temperature</span>
+          <span class="text-sm font-mono text-indigo-600">{{ temperature }}</span>
+        </div>
+        <input type="range" [(ngModel)]="temperature" min="0" max="1" step="0.1" class="w-full accent-indigo-500" />
+        <div class="flex justify-between text-xs text-gray-400">
+          <span>Precise (0.0)</span><span>Creative (1.0)</span>
+        </div>
+      </div>
+
+      <!-- Error + Run single eval -->
+      <p *ngIf="evalError" class="text-xs text-red-500">{{ evalError }}</p>
+      <button (click)="runEval()" [disabled]="!canRun"
+        class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors text-sm">
+        {{ loading ? 'Running eval…' : 'Run Research Eval' }}
+      </button>
+
+      <!-- Run as batch -->
+      <div class="flex flex-col gap-2 pt-3 border-t border-gray-100">
+        <span class="text-xs font-semibold text-gray-700">Run Full Dataset as Batch</span>
+        <p class="text-xs text-gray-400">
+          {{ items.length }} dataset article{{ items.length !== 1 ? 's' : '' }}
+          · <span class="font-mono">{{ experimentVariant || selectedVariant }}</span>
+          <ng-container *ngIf="hasExperiment"> · {{ experimentId }}</ng-container>
+        </p>
+        <button (click)="runBatch()" [disabled]="!canRunBatch || batchLoading"
+          class="w-full py-2 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          [class.bg-violet-600]="!batchSubmitted"
+          [class.hover:bg-violet-700]="!batchSubmitted && !batchLoading"
+          [class.bg-green-600]="batchSubmitted">
+          {{ batchLoading ? 'Queuing…' : batchSubmitted ? 'Queued ✓' : 'Queue Batch' }}
+        </button>
+        <p *ngIf="!hasExperiment" class="text-xs text-amber-500">Set an Experiment ID to enable batch runs.</p>
+        <p *ngIf="batchError" class="text-xs text-red-500">{{ batchError }}</p>
+
+        <!-- Live status -->
+        <div *ngIf="batchRunStatus === 'running'" class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+          <span class="text-xs text-violet-600 font-medium">Running · {{ batchCompleted }} / {{ batchTotal }}</span>
+        </div>
+        <div *ngIf="batchRunStatus === 'completed'" class="flex items-center gap-2">
+          <span class="text-xs text-green-600 font-medium">✓ Complete · {{ batchCompleted }} / {{ batchTotal }} — switch to Trends to view</span>
+        </div>
+        <div *ngIf="batchRunStatus === 'failed'" class="flex items-center gap-2">
+          <span class="text-xs text-red-500 font-medium">⚠ Batch stopped · {{ batchCompleted }} / {{ batchTotal }} completed</span>
+        </div>
+        <p *ngIf="batchSubmitted && batchId && batchRunStatus === 'idle'" class="text-xs text-gray-400 font-mono break-all">
+          ID: {{ batchId }}
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: REVIEW                                                          -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="sidebarTab==='review'" class="flex flex-col gap-4 px-5 py-4">
+
+      <!-- Scope toggle -->
+      <div>
+        <label class="text-xs font-medium text-gray-600 block mb-1.5">Scope</label>
+        <div class="flex rounded-lg border border-gray-200 overflow-hidden text-[11px] font-semibold">
+          <button (click)="hrFilterMode='experiment'; loadHrData()"
+            [class]="hrFilterMode === 'experiment'
+              ? 'flex-1 py-2 bg-violet-600 text-white'
+              : 'flex-1 py-2 bg-white text-gray-400 hover:bg-gray-50'">
+            Experiment
+          </button>
+          <button (click)="hrFilterMode='batch'; loadHrData()"
+            [class]="hrFilterMode === 'batch'
+              ? 'flex-1 py-2 bg-violet-600 text-white'
+              : 'flex-1 py-2 bg-white text-gray-400 hover:bg-gray-50'">
+            Batch
+          </button>
+        </div>
+        <p *ngIf="hrFilterMode === 'experiment' && experimentId"
+          class="text-[10px] text-gray-400 mt-1">
+          Scoped to <span class="font-mono text-indigo-500">{{ experimentId }}</span>
+        </p>
+        <p *ngIf="hrFilterMode === 'experiment' && !experimentId"
+          class="text-[10px] text-amber-500 mt-1">
+          No experiment loaded — set one in the Experiment tab.
+        </p>
+      </div>
+
+      <!-- Batch ID (batch mode only) -->
+      <div *ngIf="hrFilterMode === 'batch'">
+        <label class="text-xs font-medium text-gray-600 block mb-1.5">Batch ID</label>
+        <input [(ngModel)]="hrBatchId" (ngModelChange)="loadHrData()"
+          placeholder="paste batch ID here"
+          class="w-full text-xs font-mono border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-indigo-400" />
+        <p *ngIf="!hrBatchId && batchId" class="text-[10px] text-gray-400 mt-1">
+          Current batch: <button (click)="hrBatchId = batchId; loadHrData()" class="text-indigo-400 hover:text-indigo-600 font-mono underline">{{ batchId }}</button>
+        </p>
+      </div>
+
+      <!-- Selection rules -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-semibold text-gray-700">Selection Rules</label>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-500 w-32 shrink-0">Min severity</label>
+          <select [(ngModel)]="hrSeverityThreshold"
+            class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-400">
+            <option [ngValue]="null">Off</option>
+            <option [ngValue]="1">1 — Minor+</option>
+            <option [ngValue]="2">2 — Moderate+</option>
+            <option [ngValue]="3">3 — Severe only</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-500 w-32 shrink-0">Failure count ≥</label>
+          <select [(ngModel)]="hrFailureCount"
+            class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-400">
+            <option [ngValue]="null">Off</option>
+            <option [ngValue]="1">1+</option>
+            <option [ngValue]="2">2+</option>
+            <option [ngValue]="3">3+</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-500 w-32 shrink-0">Random sample</label>
+          <select [(ngModel)]="hrRandomPct"
+            class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-400">
+            <option [ngValue]="null">Off</option>
+            <option [ngValue]="0.1">10%</option>
+            <option [ngValue]="0.25">25%</option>
+            <option [ngValue]="0.5">50%</option>
+            <option [ngValue]="1.0">100%</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-500 w-32 shrink-0">Round</label>
+          <input type="number" [(ngModel)]="hrReviewRound" min="1" max="9"
+            class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-400" />
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" [(ngModel)]="hrBlinded" id="hrBlinded" class="accent-violet-500" />
+          <label for="hrBlinded" class="text-xs text-gray-500">Blind model identity</label>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <button (click)="generateHumanReviews()" [disabled]="!canGenerateHr"
+        class="w-full text-sm font-semibold py-2.5 rounded-lg transition-colors"
+        [class]="canGenerateHr
+          ? 'bg-violet-600 text-white hover:bg-violet-700 cursor-pointer'
+          : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
+        {{ hrLoading ? 'Generating…' : 'Generate Review Packets' }}
+      </button>
+      <p *ngIf="hrError" class="text-xs text-red-500 -mt-2">{{ hrError }}</p>
+
+      <!-- Status counts -->
+      <div *ngIf="hrCounts && hrCounts.total > 0" class="grid grid-cols-4 gap-1 text-center">
+        <div class="bg-gray-50 rounded-lg p-2">
+          <div class="text-sm font-bold text-gray-700">{{ hrCounts.pending }}</div>
+          <div class="text-[9px] text-gray-400 uppercase tracking-wide">Pending</div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-2">
+          <div class="text-sm font-bold text-blue-600">{{ hrCounts.exported }}</div>
+          <div class="text-[9px] text-gray-400 uppercase tracking-wide">Sent</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-2">
+          <div class="text-sm font-bold text-green-600">{{ hrCounts.completed }}</div>
+          <div class="text-[9px] text-gray-400 uppercase tracking-wide">Returned</div>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-2">
+          <div class="text-sm font-bold text-gray-500">{{ hrCounts.total }}</div>
+          <div class="text-[9px] text-gray-400 uppercase tracking-wide">Total</div>
+        </div>
+      </div>
+
+      <!-- Packets by article -->
+      <div *ngIf="hrReviewsByArticle.length > 0" class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-700">Packets</span>
+          <span class="text-[10px] text-gray-400">{{ hrReviews.length }} total</span>
+        </div>
+        <div *ngFor="let group of hrReviewsByArticle"
+          class="rounded-lg border border-gray-200 overflow-hidden">
+          <div class="px-2.5 py-1.5 bg-gray-50 border-b border-gray-100">
+            <span class="text-[11px] font-semibold text-gray-600 font-mono">{{ group.itemId }}</span>
+          </div>
+          <div *ngFor="let r of group.reviews"
+            class="flex items-center gap-2 px-2.5 py-1.5 border-b border-gray-100 last:border-0 bg-white">
+            <span class="font-mono text-[10px] text-indigo-500 w-20 shrink-0">{{ r.review_id }}</span>
+            <span class="text-[10px] text-gray-400 truncate flex-1">{{ r.prompt_variant }}</span>
+            <span [class]="'text-[10px] font-bold shrink-0 ' + hrStatusColor(r.review_status)"
+              [title]="r.review_status">{{ hrStatusLabel(r.review_status) }}</span>
+            <button (click)="exportHrHtml(r.review_id)"
+              class="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors">
+              ↓ HTML
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Research exports -->
+      <div *ngIf="hrReviews.length > 0" class="flex flex-col gap-2">
+        <span class="text-xs font-semibold text-gray-700">Research Exports</span>
+        <div class="flex gap-1.5 flex-wrap">
+          <button (click)="exportHrContextCsv()"
+            class="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            title="Spreadsheet of all reviews with source titles, scores, and key findings">
+            Reference CSV
+          </button>
+          <button (click)="exportHrJson()"
+            class="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            title="Full packet data as JSON for downstream analysis">
+            JSON Packets
+          </button>
+        </div>
+      </div>
+
+      <!-- Import responses -->
+      <div *ngIf="hrReviews.length > 0" class="flex flex-col gap-2">
+        <span class="text-xs font-semibold text-gray-700">Import Responses</span>
+        <label class="flex items-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border border-dashed border-gray-300 hover:border-violet-400 hover:bg-violet-50 transition-colors">
+          <span class="text-xs text-gray-500">{{ hrImporting ? 'Importing…' : 'Choose CSV or JSON…' }}</span>
+          <input type="file" accept=".csv,.json" (change)="importHrResponses($event)" class="hidden" [disabled]="hrImporting" />
+        </label>
+        <p *ngIf="hrImportError" class="text-xs text-red-500">{{ hrImportError }}</p>
+        <div *ngIf="hrImportResult" class="text-xs bg-gray-50 rounded-lg p-2 flex flex-col gap-0.5">
+          <span class="text-green-600 font-medium">✓ {{ hrImportResult.imported }} imported, {{ hrImportResult.updated }} updated</span>
+          <span *ngIf="hrImportResult.duplicate_skipped" class="text-amber-500">{{ hrImportResult.duplicate_skipped }} duplicates skipped</span>
+          <span *ngIf="hrImportResult.errors.length" class="text-red-500">{{ hrImportResult.errors.length }} row(s) had errors</span>
+        </div>
+      </div>
+
+      <!-- Agreement mini stats -->
+      <div *ngIf="hrCounts && hrCounts.completed > 0" class="flex flex-col gap-2 pt-2 border-t border-gray-100">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-700">Agreement</span>
+          <div class="flex items-center gap-2">
+            <button (click)="loadHrStats()" class="text-[10px] text-indigo-400 hover:text-indigo-600">Refresh</button>
+            <button (click)="sidebarTab='review'" class="text-[10px] text-gray-400 hover:text-gray-600">Full dashboard →</button>
+          </div>
+        </div>
+        <div *ngIf="!hrStats" class="text-xs text-gray-400 italic">Click Refresh to compute.</div>
+        <div *ngIf="hrStats" class="grid grid-cols-2 gap-1.5 text-center">
+          <div class="bg-green-50 rounded-lg p-1.5 border border-green-100">
+            <div class="text-base font-bold text-green-600">{{ hrAgreementPct('yes_pct') }}</div>
+            <div class="text-[9px] text-gray-400 uppercase tracking-wide">Full Agree</div>
+          </div>
+          <div class="bg-yellow-50 rounded-lg p-1.5 border border-yellow-100">
+            <div class="text-base font-bold text-yellow-500">{{ hrAgreementPct('partially_pct') }}</div>
+            <div class="text-[9px] text-gray-400 uppercase tracking-wide">Partial</div>
+          </div>
+          <div class="bg-red-50 rounded-lg p-1.5 border border-red-100">
+            <div class="text-base font-bold text-red-500">{{ hrAgreementPct('no_pct') }}</div>
+            <div class="text-[9px] text-gray-400 uppercase tracking-wide">Disagree</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-1.5 border border-gray-100">
+            <div class="text-base font-bold text-gray-400">{{ hrAgreementPct('unable_pct') }}</div>
+            <div class="text-[9px] text-gray-400 uppercase tracking-wide">Unable</div>
+          </div>
+        </div>
+        <p *ngIf="hrStats" class="text-[10px] text-gray-400 text-center">
+          {{ hrStats.total_responses }} response{{ hrStats.total_responses !== 1 ? 's' : '' }}
+          across {{ hrStats.total_completed }} review{{ hrStats.total_completed !== 1 ? 's' : '' }}
+        </p>
+      </div>
+
     </div>
   </div>
 

@@ -1,0 +1,383 @@
+<div class="flex flex-col gap-6 p-4 min-h-full bg-gray-50">
+
+  <!-- Scope bar -->
+  <div class="flex items-center gap-3 flex-wrap">
+    <div class="flex gap-1 bg-gray-100 p-0.5 rounded-lg text-xs">
+      <button (click)="filterMode='experiment'; onFilterChange()"
+        class="px-3 py-1.5 rounded-md font-medium transition-colors"
+        [class.bg-white]="filterMode==='experiment'" [class.shadow-sm]="filterMode==='experiment'"
+        [class.text-gray-900]="filterMode==='experiment'" [class.text-gray-500]="filterMode!=='experiment'">
+        Experiment
+      </button>
+      <button (click)="filterMode='batch'; onFilterChange()"
+        class="px-3 py-1.5 rounded-md font-medium transition-colors"
+        [class.bg-white]="filterMode==='batch'" [class.shadow-sm]="filterMode==='batch'"
+        [class.text-gray-900]="filterMode==='batch'" [class.text-gray-500]="filterMode!=='batch'">
+        Batch
+      </button>
+    </div>
+
+    <div *ngIf="filterMode==='experiment'" class="text-xs text-gray-500 bg-white border border-gray-200 rounded px-3 py-1.5">
+      <span class="text-gray-400">Experiment:</span>
+      <span class="ml-1 font-mono font-medium text-gray-700">{{ experimentId || '—' }}</span>
+    </div>
+
+    <div *ngIf="filterMode==='batch'" class="flex items-center gap-2">
+      <input [(ngModel)]="batchId" (change)="onBatchIdChange()"
+        placeholder="Batch ID"
+        class="text-xs border border-gray-200 rounded px-3 py-1.5 font-mono w-72 focus:outline-none focus:ring-1 focus:ring-blue-300" />
+    </div>
+
+    <input type="number" [(ngModel)]="reviewRound" (change)="load()" placeholder="Round"
+      class="text-xs border border-gray-200 rounded px-3 py-1.5 w-20 focus:outline-none focus:ring-1 focus:ring-blue-300" />
+
+    <button (click)="load()" class="text-xs text-blue-600 hover:text-blue-800 font-medium px-3 py-1.5 border border-blue-200 rounded hover:bg-blue-50 transition-colors">
+      ↺ Refresh
+    </button>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!experimentId && filterMode==='experiment'" class="text-center py-16 text-gray-400 text-sm">
+    Select an experiment in the sidebar to view its Human Review dashboard.
+  </div>
+
+  <ng-container *ngIf="experimentId || (filterMode==='batch' && batchId)">
+
+    <!-- ── Stats summary ────────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+        <div class="text-2xl font-bold text-gray-800">{{ stats?.total_assigned ?? '—' }}</div>
+        <div class="text-xs text-gray-500 mt-1">Assigned</div>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+        <div class="text-2xl font-bold text-gray-800">{{ stats?.total_completed ?? '—' }}</div>
+        <div class="text-xs text-gray-500 mt-1">Completed</div>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+        <div class="text-2xl font-bold" [class.text-green-600]="completionPct>=60" [class.text-yellow-600]="completionPct<60 && completionPct>=30" [class.text-gray-500]="completionPct<30">
+          {{ completionPct }}%
+        </div>
+        <div class="text-xs text-gray-500 mt-1">Completion rate</div>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+        <div class="text-2xl font-bold" [class.text-green-600]="agreementPct>=70" [class.text-yellow-600]="agreementPct<70 && agreementPct>=40" [class.text-red-600]="agreementPct<40">
+          {{ agreementPct }}%
+        </div>
+        <div class="text-xs text-gray-500 mt-1">Full agreement</div>
+      </div>
+    </div>
+
+    <!-- Agreement bar -->
+    <div *ngIf="stats && stats.total_responses > 0" class="bg-white rounded-lg border border-gray-200 p-4">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Agreement breakdown</span>
+        <span class="text-xs text-gray-400">{{ stats.total_responses }} response{{ stats.total_responses !== 1 ? 's' : '' }}</span>
+      </div>
+      <div class="flex rounded overflow-hidden h-5 gap-0.5">
+        <div *ngIf="agreementPct > 0" class="bg-green-400 flex items-center justify-center text-white text-[10px] font-medium transition-all"
+          [style.width]="barWidth(agreementPct)">{{ agreementPct > 8 ? agreementPct + '%' : '' }}</div>
+        <div *ngIf="partialPct > 0" class="bg-yellow-400 flex items-center justify-center text-white text-[10px] font-medium transition-all"
+          [style.width]="barWidth(partialPct)">{{ partialPct > 8 ? partialPct + '%' : '' }}</div>
+        <div *ngIf="disagreePct > 0" class="bg-red-400 flex items-center justify-center text-white text-[10px] font-medium transition-all"
+          [style.width]="barWidth(disagreePct)">{{ disagreePct > 8 ? disagreePct + '%' : '' }}</div>
+      </div>
+      <div class="flex gap-4 mt-2 text-xs text-gray-500">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>Yes ({{ stats.agreement.yes }})</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>Partially ({{ stats.agreement.partially }})</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>No ({{ stats.agreement.no }})</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span>N/A ({{ stats.agreement.unable_to_determine }})</span>
+      </div>
+    </div>
+
+    <!-- ── Two-column layout: review queue + stat panels ──────────────────── -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+      <!-- Review queue -->
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+          <span class="text-sm font-semibold text-gray-700">Review Queue</span>
+          <div class="flex gap-2">
+            <button (click)="downloadJson()" class="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1 hover:bg-gray-50">
+              ↓ JSON
+            </button>
+            <button (click)="downloadContextCsv()" class="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-1 hover:bg-gray-50">
+              ↓ Context CSV
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="loadingReviews" class="p-8 text-center text-gray-400 text-sm">Loading…</div>
+        <div *ngIf="!loadingReviews && reviews.length === 0" class="p-8 text-center text-gray-400 text-sm">
+          No reviews found. Generate reviews from the sidebar.
+        </div>
+
+        <div *ngIf="!loadingReviews && reviews.length > 0" class="overflow-y-auto max-h-96">
+          <div *ngFor="let group of reviewGroups" class="border-b border-gray-50 last:border-0">
+            <div class="px-4 py-2 bg-gray-50 border-b border-gray-100">
+              <span class="text-xs font-medium text-gray-700 truncate block" [title]="group.title">{{ group.title }}</span>
+              <span class="text-[10px] text-gray-400 font-mono">{{ group.item_id }}</span>
+            </div>
+            <div *ngFor="let r of group.reviews" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer" (click)="openDetail(r.review_id)">
+              <span class="font-mono text-xs text-blue-700 shrink-0">{{ r.review_id }}</span>
+              <span class="text-[10px] text-gray-400 shrink-0">Rd {{ r.review_round }}</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0" [class]="statusColor(r.review_status)">{{ r.review_status }}</span>
+              <span class="flex-1"></span>
+              <button (click)="$event.stopPropagation(); downloadHtml(r.review_id)"
+                class="text-[10px] text-blue-600 hover:text-blue-800 border border-blue-200 rounded px-2 py-0.5 hover:bg-blue-50 shrink-0">
+                ↓ HTML
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agreement breakdown tabs -->
+      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div class="flex items-center gap-1 px-4 py-3 border-b border-gray-100">
+          <span class="text-sm font-semibold text-gray-700 mr-2">Agreement by</span>
+          <button (click)="statsTab='category'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+            [class.bg-blue-100]="statsTab==='category'" [class.text-blue-700]="statsTab==='category'"
+            [class.text-gray-500]="statsTab!=='category'" [class.hover:bg-gray-100]="statsTab!=='category'">
+            Category
+          </button>
+          <button (click)="statsTab='severity'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+            [class.bg-blue-100]="statsTab==='severity'" [class.text-blue-700]="statsTab==='severity'"
+            [class.text-gray-500]="statsTab!=='severity'" [class.hover:bg-gray-100]="statsTab!=='severity'">
+            Severity
+          </button>
+          <button (click)="statsTab='reviewer'"
+            class="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+            [class.bg-blue-100]="statsTab==='reviewer'" [class.text-blue-700]="statsTab==='reviewer'"
+            [class.text-gray-500]="statsTab!=='reviewer'" [class.hover:bg-gray-100]="statsTab!=='reviewer'">
+            Reviewer
+          </button>
+        </div>
+
+        <div *ngIf="loadingStats" class="p-8 text-center text-gray-400 text-sm">Loading…</div>
+
+        <!-- By category -->
+        <div *ngIf="!loadingStats && statsTab==='category' && stats" class="overflow-y-auto max-h-96 p-4">
+          <div *ngIf="categoryKeys(stats.by_category).length === 0" class="text-xs text-gray-400 text-center py-8">
+            No category data yet — import reviewer responses to see breakdown.
+          </div>
+          <div *ngFor="let catId of categoryKeys(stats.by_category)" class="mb-3">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs text-gray-700 font-medium">{{ categoryLabel(catId) }}</span>
+              <span class="text-xs text-gray-400">{{ agreePctForBucket(stats.by_category[catId]) }}% agree · {{ stats.by_category[catId]['total'] }} responses</span>
+            </div>
+            <div class="flex h-2 rounded overflow-hidden bg-gray-100 gap-0.5">
+              <div class="bg-green-400 transition-all" [style.width]="barWidth(agreePctForBucket(stats.by_category[catId]))"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- By severity -->
+        <div *ngIf="!loadingStats && statsTab==='severity' && stats" class="overflow-y-auto max-h-96 p-4">
+          <div *ngIf="categoryKeys(stats.by_severity_level).length === 0" class="text-xs text-gray-400 text-center py-8">
+            No severity data yet.
+          </div>
+          <div *ngFor="let sev of severityOrder" class="mb-3">
+            <ng-container *ngIf="stats.by_severity_level[sev]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-gray-700 font-medium">{{ severityLabel(sev) }}</span>
+                <span class="text-xs text-gray-400">{{ agreePctForBucket(stats.by_severity_level[sev]) }}% agree · {{ stats.by_severity_level[sev]['total'] }} responses</span>
+              </div>
+              <div class="flex h-2 rounded overflow-hidden bg-gray-100 gap-0.5">
+                <div [class]="barColor(agreePctForBucket(stats.by_severity_level[sev]))" class="transition-all"
+                  [style.width]="barWidth(agreePctForBucket(stats.by_severity_level[sev]))"></div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- By reviewer -->
+        <div *ngIf="!loadingStats && statsTab==='reviewer' && stats" class="overflow-y-auto max-h-96 p-4">
+          <div *ngIf="categoryKeys(stats.by_reviewer).length === 0" class="text-xs text-gray-400 text-center py-8">
+            No reviewer data yet.
+          </div>
+          <div *ngFor="let rid of categoryKeys(stats.by_reviewer)" class="flex items-center gap-3 mb-2">
+            <span class="text-xs font-mono text-gray-600 w-28 shrink-0 truncate">{{ rid }}</span>
+            <div class="flex-1 h-2 rounded overflow-hidden bg-gray-100">
+              <div class="bg-blue-400 h-2 transition-all" [style.width]="barWidth(agreePctForBucket(stats.by_reviewer[rid]))"></div>
+            </div>
+            <span class="text-xs text-gray-400 w-20 text-right shrink-0">{{ agreePctForBucket(stats.by_reviewer[rid]) }}% · {{ stats.by_reviewer[rid]['total'] }} responses</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Top disagreement reasons + Patterns ────────────────────────────── -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+      <!-- Disagreement types -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="text-sm font-semibold text-gray-700 mb-3">Top Disagreement Reasons</div>
+        <div *ngIf="!stats || stats.top_disagreement_types.length === 0" class="text-xs text-gray-400 text-center py-6">
+          No disagreements recorded yet.
+        </div>
+        <div *ngFor="let pair of stats?.top_disagreement_types || []" class="flex items-center gap-3 mb-2">
+          <span class="text-xs text-gray-600 flex-1">{{ disagreeLabel(pair[0]) }}</span>
+          <div class="w-24 h-2 rounded overflow-hidden bg-gray-100">
+            <div class="bg-orange-400 h-2 transition-all"
+              [style.width]="barWidth(topDisagreePct(pair[1], stats?.total_responses || 0))"></div>
+          </div>
+          <span class="text-xs text-gray-400 w-8 text-right">{{ pair[1] }}</span>
+        </div>
+      </div>
+
+      <!-- Emerging patterns -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="text-sm font-semibold text-gray-700 mb-3">Emerging Patterns</div>
+
+        <div *ngIf="loadingPatterns" class="text-xs text-gray-400 text-center py-6">Loading…</div>
+
+        <ng-container *ngIf="!loadingPatterns && patterns">
+
+          <!-- High-disagreement categories -->
+          <div *ngIf="patterns.high_disagreement_categories.length > 0" class="mb-4">
+            <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Low agreement categories</div>
+            <div *ngFor="let cat of patterns.high_disagreement_categories" class="flex items-center gap-2 mb-1.5">
+              <span class="text-xs text-gray-700 flex-1 truncate" [title]="categoryLabel(cat.category_id)">{{ categoryLabel(cat.category_id) }}</span>
+              <span class="text-[10px] text-red-500 font-medium">{{ (cat.agree_pct * 100).toFixed(0) }}% agree</span>
+              <span class="text-[10px] text-gray-400">{{ cat.total }} responses</span>
+            </div>
+          </div>
+
+          <!-- Disputed articles -->
+          <div *ngIf="patterns.disputed_articles.length > 0" class="mb-4">
+            <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Frequently disputed articles</div>
+            <div *ngFor="let art of patterns.disputed_articles" class="text-xs text-gray-700 flex justify-between gap-2 mb-1">
+              <span class="truncate flex-1" [title]="art.title">{{ art.title }}</span>
+              <span class="text-orange-500 shrink-0">{{ (art.dispute_rate * 100).toFixed(0) }}% disputed</span>
+            </div>
+          </div>
+
+          <!-- Severity calibration -->
+          <div *ngIf="patterns.severity_calibration.length > 0" class="mb-4">
+            <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Agreement by severity</div>
+            <ng-container *ngFor="let sc of patterns.severity_calibration">
+              <div *ngIf="sc.total > 0" class="flex items-center gap-2 mb-1.5">
+                <span class="text-xs text-gray-600 w-20 shrink-0 capitalize">{{ sc.severity }}</span>
+                <div class="flex-1 h-1.5 rounded overflow-hidden bg-gray-100">
+                  <div [class]="barColor((sc.agree_pct || 0) * 100)" class="h-1.5 transition-all"
+                    [style.width]="barWidth((sc.agree_pct || 0) * 100)"></div>
+                </div>
+                <span class="text-[10px] text-gray-400 w-8 text-right">{{ ((sc.agree_pct || 0) * 100).toFixed(0) }}%</span>
+              </div>
+            </ng-container>
+          </div>
+
+          <div *ngIf="patterns.high_disagreement_categories.length === 0 && patterns.disputed_articles.length === 0 && patterns.severity_calibration.length === 0"
+            class="text-xs text-gray-400 text-center py-6">
+            Patterns emerge after more reviews are completed.
+          </div>
+        </ng-container>
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div>
+
+<!-- ── Detail panel (slide-in) ──────────────────────────────────────────────── -->
+<div *ngIf="showDetail"
+  class="fixed inset-0 z-40 flex justify-end"
+  (click)="closeDetail()">
+  <div class="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+  <div class="relative w-full max-w-2xl bg-white h-full overflow-y-auto shadow-2xl z-50"
+    (click)="$event.stopPropagation()">
+
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-start z-10">
+      <div>
+        <div class="text-sm font-bold text-gray-800 font-mono">{{ detailReview?.review_id }}</div>
+        <div class="text-xs text-gray-500 mt-0.5">{{ detailReview?.packet_snapshot?.source_title }}</div>
+      </div>
+      <button (click)="closeDetail()" class="text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5">×</button>
+    </div>
+
+    <div *ngIf="detailLoading" class="p-12 text-center text-gray-400 text-sm">Loading…</div>
+
+    <div *ngIf="!detailLoading && detailReview" class="px-6 py-4 space-y-6">
+
+      <!-- Meta -->
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <span class="text-gray-400">Status</span>
+          <span class="ml-2 px-2 py-0.5 rounded font-medium" [class]="statusColor(detailReview.review_status)">{{ detailReview.review_status }}</span>
+        </div>
+        <div><span class="text-gray-400">Round</span><span class="ml-2 font-medium text-gray-700">{{ detailReview.review_round }}</span></div>
+        <div><span class="text-gray-400">Variant</span><span class="ml-2 font-medium text-gray-700">{{ detailReview.prompt_variant }}</span></div>
+        <div><span class="text-gray-400">Created</span><span class="ml-2 text-gray-600">{{ detailReview.created_at | date:'short' }}</span></div>
+      </div>
+
+      <!-- Selection reasons -->
+      <div *ngIf="detailReview.selection_reasons.length > 0">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Selected because</div>
+        <div class="flex flex-wrap gap-1">
+          <span *ngFor="let r of detailReview.selection_reasons"
+            class="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 rounded px-2 py-0.5">{{ r }}</span>
+        </div>
+      </div>
+
+      <!-- Judge findings -->
+      <div *ngIf="detailReview.packet_snapshot && detailReview.packet_snapshot.judge_findings && detailReview.packet_snapshot.judge_findings.length > 0">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Judge findings</div>
+        <div *ngFor="let f of detailReview.packet_snapshot.judge_findings" class="border border-gray-100 rounded p-3 mb-2 text-xs">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-medium text-gray-700">{{ categoryLabel(f.category_id) }}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px]"
+              [class.bg-red-100]="f.severity===3" [class.text-red-700]="f.severity===3"
+              [class.bg-orange-100]="f.severity===2" [class.text-orange-700]="f.severity===2"
+              [class.bg-yellow-100]="f.severity===1" [class.text-yellow-700]="f.severity===1"
+              [class.bg-gray-100]="f.severity===0" [class.text-gray-500]="f.severity===0">
+              Sev {{ f.severity }}
+            </span>
+            <span class="text-gray-400">{{ f.confidence }} confidence</span>
+          </div>
+          <p class="text-gray-600 leading-relaxed">{{ f.explanation }}</p>
+        </div>
+      </div>
+
+      <!-- Responses -->
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          Reviewer responses ({{ detailResponses.length }})
+        </div>
+        <div *ngIf="detailResponses.length === 0" class="text-xs text-gray-400">No responses imported yet.</div>
+        <div *ngFor="let resp of detailResponses" class="border rounded-lg p-4 mb-3 text-xs space-y-2"
+          [class.border-green-200]="resp.agreement_with_judge==='yes'"
+          [class.border-yellow-200]="resp.agreement_with_judge==='partially'"
+          [class.border-red-200]="resp.agreement_with_judge==='no'"
+          [class.border-gray-200]="resp.agreement_with_judge==='unable_to_determine'">
+          <div class="flex items-center gap-3">
+            <span class="font-mono font-semibold text-gray-800">{{ resp.reviewer_id }}</span>
+            <span class="px-2 py-0.5 rounded font-medium text-[10px]"
+              [class.bg-green-100]="resp.agreement_with_judge==='yes'" [class.text-green-700]="resp.agreement_with_judge==='yes'"
+              [class.bg-yellow-100]="resp.agreement_with_judge==='partially'" [class.text-yellow-700]="resp.agreement_with_judge==='partially'"
+              [class.bg-red-100]="resp.agreement_with_judge==='no'" [class.text-red-700]="resp.agreement_with_judge==='no'"
+              [class.bg-gray-100]="resp.agreement_with_judge==='unable_to_determine'" [class.text-gray-500]="resp.agreement_with_judge==='unable_to_determine'">
+              {{ resp.agreement_with_judge }}
+            </span>
+            <span class="text-gray-400 text-[10px] ml-auto">{{ resp.reviewed_at | date:'short' }}</span>
+          </div>
+          <div *ngIf="resp.disagreement_types && resp.disagreement_types.length > 0" class="flex flex-wrap gap-1">
+            <span *ngFor="let dt of resp.disagreement_types"
+              class="text-[10px] bg-orange-50 text-orange-700 border border-orange-100 rounded px-2 py-0.5">{{ disagreeLabel(dt) }}</span>
+          </div>
+          <p *ngIf="resp.comments" class="text-gray-600">{{ resp.comments }}</p>
+        </div>
+      </div>
+
+      <!-- Download packet -->
+      <button (click)="downloadHtml(detailReview.review_id)"
+        class="w-full text-sm text-blue-600 border border-blue-200 rounded-lg py-2 hover:bg-blue-50 transition-colors font-medium">
+        ↓ Download HTML packet
+      </button>
+
+    </div>
+  </div>
+</div>
