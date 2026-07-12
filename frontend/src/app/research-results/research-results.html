@@ -1,0 +1,236 @@
+<div class="p-6 overflow-auto h-full flex flex-col gap-4">
+
+  <!-- Taxonomy key — always visible -->
+  <div class="flex flex-col gap-0">
+    <button
+      (click)="showTaxonomyKey = !showTaxonomyKey"
+      class="flex items-center gap-1.5 text-xs text-indigo-500 hover:text-indigo-700 self-start font-medium"
+    >
+      <span>{{ showTaxonomyKey ? '▾' : '▸' }}</span> Category Key
+    </button>
+    <div *ngIf="showTaxonomyKey" class="mt-2 p-4 rounded-xl border border-indigo-100 bg-indigo-50">
+      <div class="grid grid-cols-2 gap-x-6 gap-y-1.5">
+        <div *ngFor="let cat of TAXONOMY_KEY" class="flex items-baseline gap-1.5">
+          <span class="text-xs font-mono font-bold text-indigo-700 w-8 shrink-0">{{ cat.id }}</span>
+          <span class="text-xs text-gray-600">{{ cat.name }}</span>
+        </div>
+      </div>
+      <div class="mt-3 pt-3 border-t border-indigo-100 flex flex-wrap gap-3 text-xs text-gray-500">
+        <span><strong class="text-indigo-700">II</strong> = Information Integrity (10 categories)</span>
+        <span><strong class="text-indigo-700">CF</strong> = Cultural Fidelity (4 categories)</span>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+        <span>Severity:</span>
+        <span class="bg-green-100 text-green-700 px-1 rounded">0 Not Present</span>
+        <span class="bg-yellow-100 text-yellow-700 px-1 rounded">1 Minor</span>
+        <span class="bg-orange-100 text-orange-700 px-1 rounded">2 Moderate</span>
+        <span class="bg-red-100 text-red-700 px-1 rounded">3 Severe</span>
+      </div>
+      <div class="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
+        <span>Judge confidence:</span>
+        <span class="bg-blue-100 text-blue-700 px-1 rounded">High</span>
+        <span class="bg-gray-100 text-gray-600 px-1 rounded">Medium</span>
+        <span class="bg-gray-50 text-gray-400 px-1 rounded">Low</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && results.length === 0"
+    class="flex items-center justify-center flex-1 text-gray-400 text-sm">
+    Select an article and run an evaluation to see results.
+  </div>
+
+  <!-- Skeleton loader -->
+  <div *ngIf="loading" class="flex flex-col gap-6">
+    <div class="h-14 bg-gray-100 rounded-xl animate-pulse"></div>
+    <div class="grid grid-cols-3 gap-4">
+      <div *ngFor="let _ of skeletonCards" class="border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
+        <div class="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+        <div class="flex gap-3">
+          <div class="h-10 w-16 bg-gray-100 rounded-lg animate-pulse"></div>
+          <div class="h-10 w-16 bg-gray-100 rounded-lg animate-pulse"></div>
+        </div>
+        <div class="flex flex-col gap-2 pt-2">
+          <div class="h-3 bg-gray-200 rounded animate-pulse"></div>
+          <div class="h-3 bg-gray-200 rounded animate-pulse w-5/6"></div>
+          <div class="h-3 bg-gray-200 rounded animate-pulse w-4/6"></div>
+        </div>
+        <div class="flex flex-col gap-1.5 pt-2 border-t border-gray-100">
+          <div *ngFor="let _ of [1,2,3,4]" class="h-3 bg-gray-100 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-2 text-sm text-gray-400">
+      <svg class="animate-spin h-4 w-4 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      Running models and scoring with Claude…
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="!loading && results.length > 0" class="flex flex-col gap-6">
+
+    <!-- Article context banner -->
+    <div *ngIf="contextResult" class="rounded-xl bg-indigo-50 border border-indigo-100 px-5 py-4 flex flex-col gap-1">
+      <div class="text-sm font-semibold text-indigo-900 leading-snug">{{ contextResult.source_title }}</div>
+      <div class="flex flex-wrap gap-3 text-xs text-indigo-600 mt-1">
+        <span>Variant: <strong class="capitalize">{{ variantLabel }}</strong></span>
+        <span>Temp: <strong class="font-mono">{{ contextResult.temperature }}</strong></span>
+        <span>Models: <strong>{{ results.length }}</strong></span>
+      </div>
+    </div>
+
+    <!-- 3-column model grid -->
+    <div class="grid grid-cols-3 gap-4 items-start">
+      <div *ngFor="let result of results" class="border border-gray-200 rounded-xl flex flex-col divide-y divide-gray-100">
+
+        <!-- Model header -->
+        <div class="flex items-start justify-between px-4 py-3">
+          <span class="font-semibold text-gray-800 text-sm">{{ result.model }}</span>
+          <span class="text-xs text-gray-400 font-mono">{{ formatTimestamp(result.timestamp) }}</span>
+        </div>
+
+        <!-- Aggregate scores -->
+        <div class="flex gap-3 px-4 py-3">
+          <div class="flex-1 flex flex-col items-center bg-gray-50 rounded-lg py-2">
+            <span class="text-xs text-gray-400 uppercase tracking-wide font-medium mb-0.5">Info Integrity</span>
+            <span [class]="'text-xl font-bold ' + scoreColor(result.overall_information_integrity_score)">
+              {{ result.overall_information_integrity_score }}
+            </span>
+            <span class="text-xs text-gray-400">/ 10</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center bg-gray-50 rounded-lg py-2">
+            <span class="text-xs text-gray-400 uppercase tracking-wide font-medium mb-0.5">Cultural Fidelity</span>
+            <span [class]="'text-xl font-bold ' + scoreColor(result.overall_cultural_fidelity_score)">
+              {{ result.overall_cultural_fidelity_score }}
+            </span>
+            <span class="text-xs text-gray-400">/ 10</span>
+          </div>
+        </div>
+
+        <!-- Response text -->
+        <div class="px-4 py-3 flex flex-col gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Response</span>
+          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ displayText(result) }}</p>
+          <button
+            *ngIf="result.response_text.length > TRUNCATE"
+            (click)="toggleResponse(result.model)"
+            class="text-xs text-indigo-500 hover:text-indigo-700 self-start"
+          >
+            {{ isResponseExpanded(result.model) ? 'Show less' : 'Show more' }}
+          </button>
+        </div>
+
+        <!-- Information Integrity dimensions -->
+        <div class="px-4 py-3 flex flex-col gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Information Integrity</span>
+          <div *ngFor="let row of iiRows(result)" class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold ' + severityClass(row.score.severity)">
+                  {{ severityLabel(row.score.severity) }}
+                </span>
+                <span class="text-xs text-gray-700 truncate font-medium" [title]="row.name">{{ row.name }}</span>
+              </div>
+              <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ' + confidenceClass(row.score.confidence)"
+                title="Judge's confidence in this score">
+                conf. {{ row.score.confidence }}
+              </span>
+            </div>
+            <p *ngIf="row.score.severity > 0" class="text-xs text-gray-500 leading-relaxed pl-1">
+              {{ row.score.explanation }}
+            </p>
+            <div *ngIf="row.score.severity > 0">
+              <button
+                (click)="toggleEvidence(result.model, row.id)"
+                class="text-xs text-indigo-400 hover:text-indigo-600"
+              >
+                {{ isEvidenceExpanded(result.model, row.id) ? '▾ Hide evidence' : '▸ Show evidence' }}
+              </button>
+              <div *ngIf="isEvidenceExpanded(result.model, row.id)" class="mt-1.5 flex flex-col gap-1.5 pl-2 border-l-2 border-gray-200">
+                <div *ngIf="row.score.source_evidence !== 'N/A'" class="flex flex-col gap-0.5">
+                  <span class="text-xs font-medium text-gray-400">Source</span>
+                  <blockquote class="text-xs text-gray-600 italic">"{{ row.score.source_evidence }}"</blockquote>
+                </div>
+                <div *ngIf="row.score.output_evidence !== 'N/A'" class="flex flex-col gap-0.5">
+                  <span class="text-xs font-medium text-gray-400">Output</span>
+                  <blockquote class="text-xs text-gray-600 italic">"{{ row.score.output_evidence }}"</blockquote>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cultural Fidelity dimensions -->
+        <div class="px-4 py-3 flex flex-col gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Cultural Fidelity</span>
+          <div *ngFor="let row of cfRows(result)" class="flex flex-col gap-1">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold ' + severityClass(row.score.severity)">
+                  {{ severityLabel(row.score.severity) }}
+                </span>
+                <span class="text-xs text-gray-700 truncate font-medium" [title]="row.name">{{ row.name }}</span>
+              </div>
+              <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ' + confidenceClass(row.score.confidence)"
+                title="Judge's confidence in this score">
+                conf. {{ row.score.confidence }}
+              </span>
+            </div>
+            <p *ngIf="row.score.severity > 0" class="text-xs text-gray-500 leading-relaxed pl-1">
+              {{ row.score.explanation }}
+            </p>
+            <div *ngIf="row.score.severity > 0">
+              <button
+                (click)="toggleEvidence(result.model, row.id)"
+                class="text-xs text-indigo-400 hover:text-indigo-600"
+              >
+                {{ isEvidenceExpanded(result.model, row.id) ? '▾ Hide evidence' : '▸ Show evidence' }}
+              </button>
+              <div *ngIf="isEvidenceExpanded(result.model, row.id)" class="mt-1.5 flex flex-col gap-1.5 pl-2 border-l-2 border-gray-200">
+                <div *ngIf="row.score.source_evidence !== 'N/A'" class="flex flex-col gap-0.5">
+                  <span class="text-xs font-medium text-gray-400">Source</span>
+                  <blockquote class="text-xs text-gray-600 italic">"{{ row.score.source_evidence }}"</blockquote>
+                </div>
+                <div *ngIf="row.score.output_evidence !== 'N/A'" class="flex flex-col gap-0.5">
+                  <span class="text-xs font-medium text-gray-400">Output</span>
+                  <blockquote class="text-xs text-gray-600 italic">"{{ row.score.output_evidence }}"</blockquote>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Executive summary -->
+        <div class="px-4 py-3 flex flex-col gap-1.5">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Executive Summary</span>
+          <p class="text-xs text-gray-600 leading-relaxed italic">{{ result.executive_summary }}</p>
+        </div>
+
+        <!-- Most significant failures -->
+        <div *ngIf="result.most_significant_failures.length > 0" class="px-4 py-3 flex flex-col gap-1.5">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Most Significant Failures</span>
+          <div class="flex flex-wrap gap-1">
+            <span
+              *ngFor="let cat of result.most_significant_failures"
+              class="px-2 py-0.5 text-xs rounded-full bg-rose-50 text-rose-600 font-mono font-medium"
+            >
+              {{ cat }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Suggested improvements -->
+        <div *ngIf="result.suggested_improvements" class="px-4 py-3 flex flex-col gap-1.5">
+          <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Suggested Improvements</span>
+          <p class="text-xs text-gray-500 leading-relaxed">{{ result.suggested_improvements }}</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,431 @@
+<div class="p-6 overflow-auto h-full flex flex-col gap-5">
+
+  <!-- Empty state -->
+  <div *ngIf="!hasData" class="flex items-center justify-center flex-1 text-gray-400 text-sm">
+    Run at least one evaluation to see trends.
+  </div>
+
+  <ng-container *ngIf="hasData">
+
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-4 flex-wrap">
+      <div class="flex flex-col gap-1">
+        <h2 class="text-lg font-bold text-gray-800">Taxonomy Trends</h2>
+        <p class="text-xs text-gray-400">
+          {{ activeExperimentLabel }} ·
+          {{ evalCount }} model eval{{ evalCount !== 1 ? 's' : '' }}
+          across {{ filteredHistory.length }} run{{ filteredHistory.length !== 1 ? 's' : '' }}.
+          <span *ngIf="filteredHistory.length === 0" class="text-indigo-500">No data for this filter yet.</span>
+        </p>
+      </div>
+
+      <!-- Experiment filter -->
+      <div *ngIf="experiments.length > 0" class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">Filter by experiment</label>
+        <select [(ngModel)]="experimentFilter"
+          class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white min-w-40">
+          <option value="">All experiments</option>
+          <option *ngFor="let exp of experiments" [value]="exp">{{ exp }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Section tabs -->
+    <div class="flex gap-1 bg-gray-100 p-0.5 rounded-lg self-start">
+      <button
+        (click)="activeSection = 'dimensions'"
+        class="px-4 py-1.5 rounded-md text-xs font-medium transition-colors"
+        [class.bg-white]="activeSection === 'dimensions'"
+        [class.shadow-sm]="activeSection === 'dimensions'"
+        [class.text-gray-900]="activeSection === 'dimensions'"
+        [class.text-gray-500]="activeSection !== 'dimensions'"
+      >Dimension Frequency</button>
+      <button
+        (click)="activeSection = 'timeline'"
+        class="px-4 py-1.5 rounded-md text-xs font-medium transition-colors"
+        [class.bg-white]="activeSection === 'timeline'"
+        [class.shadow-sm]="activeSection === 'timeline'"
+        [class.text-gray-900]="activeSection === 'timeline'"
+        [class.text-gray-500]="activeSection !== 'timeline'"
+      >Score Timeline</button>
+      <button
+        (click)="activeSection = 'models'"
+        class="px-4 py-1.5 rounded-md text-xs font-medium transition-colors"
+        [class.bg-white]="activeSection === 'models'"
+        [class.shadow-sm]="activeSection === 'models'"
+        [class.text-gray-900]="activeSection === 'models'"
+        [class.text-gray-500]="activeSection !== 'models'"
+      >Model Comparison</button>
+    </div>
+
+    <!-- ── Dimension Frequency ──────────────────────────────────────────── -->
+    <div *ngIf="activeSection === 'dimensions'" class="flex flex-col gap-6">
+
+      <div class="flex gap-3 text-xs text-gray-500 flex-wrap">
+        <span>% of evals where the category was flagged (severity ≥ 1):</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-green-300 inline-block"></span>&lt;25%</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-yellow-400 inline-block"></span>25–49%</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-orange-400 inline-block"></span>50–74%</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-red-400 inline-block"></span>≥75%</span>
+      </div>
+
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+
+        <!-- II dimensions -->
+        <div class="flex flex-col gap-3">
+          <h3 class="text-sm font-semibold text-indigo-700 uppercase tracking-wide">Information Integrity</h3>
+          <div *ngFor="let d of iiStats" class="flex flex-col gap-1">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-gray-600 w-8">{{ d.id }}</span>
+                <span class="text-gray-600">{{ d.name }}</span>
+              </div>
+              <span class="font-semibold" [class]="scoreTextColor(10 - d.avgSeverity * 2.5)">
+                {{ d.pctFlagged }}%
+              </span>
+            </div>
+            <div class="h-4 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500"
+                [class]="barColor(d.pctFlagged)"
+                [style.width]="barWidth(d.pctFlagged)"
+              ></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400">
+              <span>avg severity {{ d.avgSeverity }}/3</span>
+              <span *ngIf="d.pctModerate > 0" class="text-orange-500">{{ d.pctModerate }}% moderate+</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CF dimensions -->
+        <div class="flex flex-col gap-3">
+          <h3 class="text-sm font-semibold text-purple-700 uppercase tracking-wide">Cultural Fidelity</h3>
+          <div *ngFor="let d of cfStats" class="flex flex-col gap-1">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-gray-600 w-8">{{ d.id }}</span>
+                <span class="text-gray-600">{{ d.name }}</span>
+              </div>
+              <span class="font-semibold" [class]="scoreTextColor(10 - d.avgSeverity * 2.5)">
+                {{ d.pctFlagged }}%
+              </span>
+            </div>
+            <div class="h-4 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500"
+                [class]="barColor(d.pctFlagged)"
+                [style.width]="barWidth(d.pctFlagged)"
+              ></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400">
+              <span>avg severity {{ d.avgSeverity }}/3</span>
+              <span *ngIf="d.pctModerate > 0" class="text-orange-500">{{ d.pctModerate }}% moderate+</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Score Timeline ───────────────────────────────────────────────── -->
+    <div *ngIf="activeSection === 'timeline'" class="flex flex-col gap-5">
+
+      <div *ngIf="scoreTimeline.length === 0" class="text-sm text-gray-400">
+        No history yet — run more evaluations to see score trends over time.
+      </div>
+
+      <div *ngIf="scoreTimeline.length > 0" class="flex flex-col gap-6">
+
+        <div class="flex gap-4 text-xs text-gray-500">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-indigo-400 inline-block"></span>Information Integrity</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-purple-400 inline-block"></span>Cultural Fidelity</span>
+        </div>
+
+        <!-- Timeline bars -->
+        <div class="flex flex-col gap-4">
+          <div *ngFor="let pt of scoreTimeline; let i = index" class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-xs text-gray-500">
+              <span class="truncate max-w-xs font-medium text-gray-700">{{ pt.label }}</span>
+              <span class="shrink-0 text-gray-400 ml-2">Run {{ scoreTimeline.length - i }}</span>
+            </div>
+            <!-- II bar -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono text-indigo-600 w-6 shrink-0">II</span>
+              <div class="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-indigo-400 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                  [style.width]="scoreBarWidth(pt.ii)"
+                >
+                  <span class="text-xs font-bold text-white">{{ pt.ii }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- CF bar -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono text-purple-600 w-6 shrink-0">CF</span>
+              <div class="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-purple-400 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                  [style.width]="scoreBarWidth(pt.cf)"
+                >
+                  <span class="text-xs font-bold text-white">{{ pt.cf }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Scale -->
+            <div class="flex ml-8 text-xs text-gray-300 justify-between">
+              <span>0</span><span>5</span><span>10</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Threshold key -->
+        <div class="flex gap-4 text-xs text-gray-400 pt-2 border-t border-gray-100">
+          <span class="text-green-600 font-medium">≥ 8 Strong</span>
+          <span class="text-yellow-500 font-medium">6–7 Acceptable</span>
+          <span class="text-red-500 font-medium">&lt; 6 Needs work</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Model Comparison ─────────────────────────────────────────────── -->
+    <div *ngIf="activeSection === 'models'" class="flex flex-col gap-5">
+
+      <div *ngIf="modelMatrix.models.length === 0" class="text-sm text-gray-400">
+        No results available — run an evaluation first.
+      </div>
+
+      <ng-container *ngIf="modelMatrix.models.length > 0">
+
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <p class="text-xs text-gray-400">
+            Per-dimension severity for each model. Hover a cell for the judge's explanation.
+          </p>
+          <!-- View toggle -->
+          <div class="flex gap-1 bg-gray-100 p-0.5 rounded-lg self-start">
+            <button
+              (click)="modelView = 'matrix'"
+              class="px-3 py-1 rounded-md text-xs font-medium transition-colors"
+              [class.bg-white]="modelView === 'matrix'"
+              [class.shadow-sm]="modelView === 'matrix'"
+              [class.text-gray-900]="modelView === 'matrix'"
+              [class.text-gray-500]="modelView !== 'matrix'"
+            >Matrix</button>
+            <button
+              (click)="modelView = 'chart'"
+              class="px-3 py-1 rounded-md text-xs font-medium transition-colors"
+              [class.bg-white]="modelView === 'chart'"
+              [class.shadow-sm]="modelView === 'chart'"
+              [class.text-gray-900]="modelView === 'chart'"
+              [class.text-gray-500]="modelView !== 'chart'"
+            >Bar Chart</button>
+          </div>
+        </div>
+
+        <!-- Severity legend -->
+        <div class="flex gap-3 text-xs text-gray-500 flex-wrap">
+          <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-green-100 text-green-700 text-center font-bold inline-block leading-4">0</span> Not Present</span>
+          <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-yellow-100 text-yellow-700 text-center font-bold inline-block leading-4">1</span> Minor</span>
+          <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-orange-100 text-orange-700 text-center font-bold inline-block leading-4">2</span> Moderate</span>
+          <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-red-100 text-red-700 text-center font-bold inline-block leading-4">3</span> Severe</span>
+        </div>
+
+        <!-- ── Matrix view ─────────────────────────────────────────────── -->
+        <div *ngIf="modelView === 'matrix'" class="rounded-xl border border-gray-100 overflow-visible">
+          <table class="w-full text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-gray-100">
+                <th class="text-left px-3 py-2 font-semibold text-gray-500 w-40">Dimension</th>
+                <th *ngFor="let m of modelMatrix.models"
+                  class="px-3 py-2 font-mono font-semibold text-gray-700 text-center border-l border-gray-100 min-w-28">
+                  {{ m }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <!-- II group header -->
+              <tr class="bg-indigo-50">
+                <td [attr.colspan]="modelMatrix.models.length + 1"
+                  class="px-3 py-1.5 text-xs font-bold text-indigo-700 uppercase tracking-wide">
+                  Information Integrity
+                </td>
+              </tr>
+
+              <!-- Aggregate II scores -->
+              <tr class="border-b border-gray-100 bg-indigo-50/50">
+                <td class="px-3 py-2 text-gray-500 font-medium italic">Overall II</td>
+                <td *ngFor="let m of modelComparison"
+                  class="px-3 py-2 text-center border-l border-gray-100 font-bold"
+                  [class]="scoreTextColor(m.ii)">
+                  {{ m.ii }}
+                </td>
+              </tr>
+
+              <!-- II dimension rows -->
+              <tr *ngFor="let row of modelMatrix.iiRows"
+                class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td class="px-3 py-2 text-gray-600">
+                  <span class="font-mono font-bold text-gray-500 mr-1.5">{{ row.id }}</span>{{ row.name }}
+                </td>
+                <td *ngFor="let cell of row.cells"
+                  class="relative px-2 py-2 text-center border-l border-gray-100 group/cell">
+                  <span
+                    class="inline-block w-6 h-6 rounded text-xs font-bold leading-6 cursor-pointer"
+                    [class]="severityClass(cell.severity)"
+                  >{{ severityLabel(cell.severity) }}</span>
+                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover/cell:block w-64 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl pointer-events-none leading-relaxed">
+                    <p class="font-semibold text-gray-200 mb-1">{{ row.id }}: {{ row.name }} — Severity {{ cell.severity }}</p>
+                    <p class="text-gray-300">{{ cell.explanation || 'No judge explanation available.' }}</p>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- CF group header -->
+              <tr class="bg-purple-50">
+                <td [attr.colspan]="modelMatrix.models.length + 1"
+                  class="px-3 py-1.5 text-xs font-bold text-purple-700 uppercase tracking-wide">
+                  Cultural Fidelity
+                </td>
+              </tr>
+
+              <!-- Aggregate CF scores -->
+              <tr class="border-b border-gray-100 bg-purple-50/50">
+                <td class="px-3 py-2 text-gray-500 font-medium italic">Overall CF</td>
+                <td *ngFor="let m of modelComparison"
+                  class="px-3 py-2 text-center border-l border-gray-100 font-bold"
+                  [class]="scoreTextColor(m.cf)">
+                  {{ m.cf }}
+                </td>
+              </tr>
+
+              <!-- CF dimension rows -->
+              <tr *ngFor="let row of modelMatrix.cfRows"
+                class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td class="px-3 py-2 text-gray-600">
+                  <span class="font-mono font-bold text-gray-500 mr-1.5">{{ row.id }}</span>{{ row.name }}
+                </td>
+                <td *ngFor="let cell of row.cells"
+                  class="relative px-2 py-2 text-center border-l border-gray-100 group/cell">
+                  <span
+                    class="inline-block w-6 h-6 rounded text-xs font-bold leading-6 cursor-pointer"
+                    [class]="severityClass(cell.severity)"
+                  >{{ severityLabel(cell.severity) }}</span>
+                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover/cell:block w-64 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl pointer-events-none leading-relaxed">
+                    <p class="font-semibold text-gray-200 mb-1">{{ row.id }}: {{ row.name }} — Severity {{ cell.severity }}</p>
+                    <p class="text-gray-300">{{ cell.explanation || 'No judge explanation available.' }}</p>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── Bar chart view ──────────────────────────────────────────── -->
+        <div *ngIf="modelView === 'chart'" class="flex flex-col gap-6">
+
+          <!-- Model color key -->
+          <div class="flex flex-wrap gap-3">
+            <span *ngFor="let m of modelMatrix.models; let i = index"
+              class="flex items-center gap-1.5 text-xs font-medium"
+              [class]="modelTextColor(i)">
+              <span class="w-3 h-3 rounded-sm inline-block" [class]="modelColor(i)"></span>
+              {{ m }}
+            </span>
+          </div>
+
+          <!-- II group -->
+          <div class="flex flex-col gap-3">
+            <h3 class="text-xs font-bold text-indigo-700 uppercase tracking-wide">Information Integrity</h3>
+
+            <!-- Overall II bars -->
+            <div class="flex flex-col gap-1 pb-3 border-b border-gray-100">
+              <span class="text-xs text-gray-500 font-medium italic">Overall II Score (out of 10)</span>
+              <div *ngFor="let m of modelComparison; let i = index" class="flex items-center gap-2">
+                <span class="text-xs w-4 shrink-0" [class]="modelTextColor(i)">●</span>
+                <div class="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                    [class]="modelColor(i)"
+                    [style.width]="scoreBarWidth(m.ii)">
+                  </div>
+                </div>
+                <span class="text-xs font-bold w-6 text-right" [class]="scoreTextColor(m.ii)">{{ m.ii }}</span>
+              </div>
+            </div>
+
+            <div *ngFor="let row of modelMatrix.iiRows" class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                <span class="font-mono font-bold text-gray-500">{{ row.id }}</span>
+                <span>{{ row.name }}</span>
+              </div>
+              <div *ngFor="let cell of row.cells; let i = index" class="flex items-center gap-2">
+                <span class="text-xs w-4 shrink-0" [class]="modelTextColor(i)">●</span>
+                <div class="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [class]="cell.severity === 0 ? 'bg-green-200' : modelColor(i)"
+                    [style.width]="severityBarWidth(cell.severity)"
+                    [title]="cell.explanation || 'No explanation'"
+                  ></div>
+                </div>
+                <span class="text-xs font-mono font-bold w-4 text-right"
+                  [class]="severityClass(cell.severity).split(' ')[1]">
+                  {{ cell.severity }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CF group -->
+          <div class="flex flex-col gap-3">
+            <h3 class="text-xs font-bold text-purple-700 uppercase tracking-wide">Cultural Fidelity</h3>
+
+            <!-- Overall CF bars -->
+            <div class="flex flex-col gap-1 pb-3 border-b border-gray-100">
+              <span class="text-xs text-gray-500 font-medium italic">Overall CF Score (out of 10)</span>
+              <div *ngFor="let m of modelComparison; let i = index" class="flex items-center gap-2">
+                <span class="text-xs w-4 shrink-0" [class]="modelTextColor(i)">●</span>
+                <div class="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                    [class]="modelColor(i)"
+                    [style.width]="scoreBarWidth(m.cf)">
+                  </div>
+                </div>
+                <span class="text-xs font-bold w-6 text-right" [class]="scoreTextColor(m.cf)">{{ m.cf }}</span>
+              </div>
+            </div>
+
+            <div *ngFor="let row of modelMatrix.cfRows" class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                <span class="font-mono font-bold text-gray-500">{{ row.id }}</span>
+                <span>{{ row.name }}</span>
+              </div>
+              <div *ngFor="let cell of row.cells; let i = index" class="flex items-center gap-2">
+                <span class="text-xs w-4 shrink-0" [class]="modelTextColor(i)">●</span>
+                <div class="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [class]="cell.severity === 0 ? 'bg-green-200' : modelColor(i)"
+                    [style.width]="severityBarWidth(cell.severity)"
+                    [title]="cell.explanation || 'No explanation'"
+                  ></div>
+                </div>
+                <span class="text-xs font-mono font-bold w-4 text-right"
+                  [class]="severityClass(cell.severity).split(' ')[1]">
+                  {{ cell.severity }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </ng-container>
+    </div>
+
+  </ng-container>
+</div>
