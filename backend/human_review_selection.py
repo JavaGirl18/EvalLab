@@ -26,6 +26,7 @@ def select_runs_for_review(
     failure_count_threshold: Optional[int] = None,
     random_pct: Optional[float] = None,
     manual_run_keys: Optional[list] = None,
+    representative_sample: bool = False,
     review_round: int = 1,
 ) -> list:
     """
@@ -88,6 +89,29 @@ def select_runs_for_review(
         sample_n = max(1, round(len(all_keys) * random_pct))
         for rk in random.sample(all_keys, min(sample_n, len(all_keys))):
             candidates[rk]["reasons"].add("random_sample")
+
+    # ── Representative sample ─────────────────────────────────────────────────
+    # Guarantees at least one review per document, model, and prompt variant.
+    # Applied last so it only adds coverage for dimensions not already selected.
+    if representative_sample:
+        already_selected = {rk for rk, v in candidates.items() if v["reasons"]}
+
+        def _best_in_group(keys: list[str]) -> str:
+            return max(keys, key=lambda rk: max(
+                (d.get("severity", 0) if isinstance(d, dict) else 0)
+                for d in candidates[rk]["result"].get("dimension_scores", {}).values()
+            ) if candidates[rk]["result"].get("dimension_scores") else 0)
+
+        for dim_key in ("item_id", "prompt_variant", "model"):
+            groups: dict[str, list[str]] = {}
+            for rk, v in candidates.items():
+                val = v["row"].get(dim_key, "")
+                groups.setdefault(val, []).append(rk)
+            for val, group_keys in groups.items():
+                if not any(rk in already_selected for rk in group_keys):
+                    chosen = _best_in_group(group_keys)
+                    candidates[chosen]["reasons"].add("representative_sample")
+                    already_selected.add(chosen)
 
     return [
         {

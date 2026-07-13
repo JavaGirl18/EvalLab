@@ -1,0 +1,53 @@
+{
+  "batch_id": "framework_validation_002_batch_001",
+  "experiment_id": "framework_validation_002",
+
+  "item_ids": [
+    "control_001",
+    "diaspora_001",
+    "diaspora_002",
+    "investigative_001"
+  ],
+
+  "prompt_variants": [
+    "faithful_transformation"
+  ],
+
+  "task_instructions": "Produce a concise professional summary while preserving factual accuracy, attribution, chronology, uncertainty, competing perspectives, and culturally significant context.",
+
+  "models": [
+    "gpt-5.6-sol",
+    "gemini-3.1-flash-lite",
+    "gpt-4o"
+  ],
+
+  "temperature": 1.0,
+  "max_concurrency": 3,
+  "retry_limit": 3,
+  "resume_existing": true,
+  "checkpoint_after_each_run": true,
+  "prevent_duplicate_active_batch": true,
+  "export_summary_on_completion": true,
+  "generate_evaluation_records": true,
+  "apply_human_review_selection": true,
+  "validation_mode": "warn",
+
+  "human_review_selection": {
+    "severity_threshold": 2,
+    "confidence_threshold": "low",
+    "minimum_nonzero_failure_count": 3,
+    "random_sample_percentage": 10,
+    "representative_sample": true,
+    "manual_run_keys": []
+  },
+
+  "expected_runs": 12,
+  "max_runs": 12,
+
+  "status": {
+    "state": "planned",
+    "created_by": "Valencia Cooper",
+    "started_at": null,
+    "completed_at": null
+  }
+}

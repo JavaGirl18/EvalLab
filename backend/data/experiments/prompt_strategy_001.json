@@ -1,0 +1,57 @@
+{
+  "research_phase": "Framework Validation",
+  "experiment_id": "prompt_strategy_001",
+  "experiment_name": "Prompt Variant Evaluation",
+  "research_objective": "Evaluate how different prompting strategies influence the preservation of Information Integrity and Cultural Fidelity during AI-assisted information transformation.",
+  "research_question": "How do different prompt variants affect Information Integrity and Cultural Fidelity failure patterns when applied to the same benchmark documents across multiple language models?",
+  "hypothesis": "Prompt variants explicitly designed to preserve source fidelity will reduce context omission, attribution errors, and Cultural Fidelity failures compared with more general prompting strategies.",
+  "experiment_rationale": "This experiment holds the benchmark corpus, transformation task, judge methodology, and model roster constant while varying only the prompt strategy.",
+  "transformation_task": {
+    "id": "faithful_transformation",
+    "name": "Faithful Transformation",
+    "instructions": "Produce a concise professional summary while preserving factual accuracy, attribution, chronology, uncertainty, competing perspectives, and culturally significant context."
+  },
+  "prompt_variants": [
+    "baseline",
+    "neutral",
+    "safety_first",
+    "faithful_transformation"
+  ],
+  "dataset_item_ids": [
+    "control_001",
+    "diaspora_001",
+    "diaspora_002",
+    "investigative_001"
+  ],
+  "subject_models": [
+    "gpt-5.6-sol",
+    "gemini-3.1-flash-lite",
+    "gpt-4o"
+  ],
+  "judge_model": "claude-sonnet-4-6",
+  "temperature": 1.0,
+  "independent_variable": "prompt_variant",
+  "controlled_variables": [
+    "benchmark documents",
+    "subject models",
+    "transformation task",
+    "judge model",
+    "taxonomy version",
+    "rubric version",
+    "temperature"
+  ],
+  "dependent_variables": [
+    "Information Integrity score",
+    "Cultural Fidelity score",
+    "taxonomy-category severity",
+    "judge confidence",
+    "human-review agreement"
+  ],
+  "status": {
+    "phase": "completed",
+    "started_at": "2026-07-13",
+    "completed_at": "2026-07-13T17:49:41.989073+00:00",
+    "created_by": "Valencia Cooper"
+  },
+  "prompt_variant": "baseline"
+}

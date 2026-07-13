@@ -6,14 +6,25 @@ from pathlib import Path
 from typing import Optional
 import openai
 from openai import OpenAI
-from config import OPENAI_API_KEY, RESEARCH_SUBJECT_MODELS, CANONICAL_SYSTEM_PROMPT
+import anthropic as anthropic_sdk
+from config import OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, RESEARCH_SUBJECT_MODELS, CANONICAL_SYSTEM_PROMPT
 from dataclasses import dataclass, field as dc_field
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 DATA_DIR    = Path(__file__).parent / "data"
 DATASET_PATH = DATA_DIR / "benchmark" / "benchmark_corpus.json"
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+anthropic_client = anthropic_sdk.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+# Gemini client — only initialised if the key is present
+_gemini_client = None
+if GEMINI_API_KEY:
+    try:
+        from google import genai as _genai
+        _gemini_client = _genai.Client(api_key=GEMINI_API_KEY)
+    except ImportError:
+        pass
 
 
 @dataclass
@@ -96,6 +107,11 @@ def get_prompt_variant(
                     ),
                 }
             return v
+    # Fall back to globally-defined standard variants before failing
+    from config import STANDARD_PROMPT_VARIANTS
+    for v in STANDARD_PROMPT_VARIANTS:
+        if v["name"] == variant_name:
+            return v
     available = [v["name"] for v in item.prompt_variants]
     raise ValueError(
         f"Prompt variant '{variant_name}' not found in item '{item.id}'. "
@@ -103,12 +119,9 @@ def get_prompt_variant(
     )
 
 
-def _call_model(
-    model_cfg: dict, item: DatasetItem, variant: dict, temperature: float
-) -> ResearchModelResponse:
+def _call_openai(model_cfg: dict, item: DatasetItem, variant: dict, temperature: float) -> str:
     user_content = f"ARTICLE:\n{item.source_text}\n\n---\n\n{variant['prompt']}"
-
-    api_response = client.chat.completions.create(
+    resp = openai_client.chat.completions.create(
         model=model_cfg["model_id"],
         messages=[
             {"role": "system", "content": item.system_prompt},
@@ -116,6 +129,44 @@ def _call_model(
         ],
         temperature=temperature,
     )
+    return resp.choices[0].message.content
+
+
+def _call_anthropic(model_cfg: dict, item: DatasetItem, variant: dict, temperature: float) -> str:
+    user_content = f"ARTICLE:\n{item.source_text}\n\n---\n\n{variant['prompt']}"
+    resp = anthropic_client.messages.create(
+        model=model_cfg["model_id"],
+        max_tokens=4096,
+        system=item.system_prompt,
+        messages=[{"role": "user", "content": user_content}],
+        temperature=temperature,
+    )
+    return resp.content[0].text
+
+
+def _call_gemini(model_cfg: dict, item: DatasetItem, variant: dict, temperature: float) -> str:
+    if _gemini_client is None:
+        raise RuntimeError("Gemini API key not configured. Add GEMINI_API_KEY to .env.")
+    from google.genai import types as genai_types
+    user_content = f"{item.system_prompt}\n\nARTICLE:\n{item.source_text}\n\n---\n\n{variant['prompt']}"
+    resp = _gemini_client.models.generate_content(
+        model=model_cfg["model_id"],
+        contents=user_content,
+        config=genai_types.GenerateContentConfig(temperature=temperature),
+    )
+    return resp.text
+
+
+def _call_model(
+    model_cfg: dict, item: DatasetItem, variant: dict, temperature: float
+) -> ResearchModelResponse:
+    provider = model_cfg.get("provider", "openai")
+    if provider == "google":
+        response_text = _call_gemini(model_cfg, item, variant, temperature)
+    elif provider == "anthropic":
+        response_text = _call_anthropic(model_cfg, item, variant, temperature)
+    else:
+        response_text = _call_openai(model_cfg, item, variant, temperature)
 
     return ResearchModelResponse(
         model=model_cfg["model_id"],
@@ -126,7 +177,7 @@ def _call_model(
         system_prompt=item.system_prompt,
         eval_prompt=variant["prompt"],
         prompt_variant_name=variant["name"],
-        response_text=api_response.choices[0].message.content,
+        response_text=response_text,
         temperature=temperature,
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
@@ -147,6 +198,10 @@ def _call_model_with_retry(
             last_exc = e
             time.sleep((2 ** attempt) * 2)
         except (openai.APIError, openai.APIConnectionError, openai.APITimeoutError) as e:
+            last_exc = e
+            time.sleep(2 ** attempt)
+        except Exception as e:
+            # Covers Gemini errors and any other provider
             last_exc = e
             time.sleep(2 ** attempt)
     raise last_exc

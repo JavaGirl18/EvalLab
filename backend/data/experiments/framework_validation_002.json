@@ -1,0 +1,80 @@
+{
+  "research_phase": "Framework Validation",
+  "experiment_id": "framework_validation_002",
+  "experiment_name": "Contemporary Model Baseline",
+  "research_objective": "Evaluate how contemporary language models preserve Information Integrity and Cultural Fidelity when performing the same source-grounded transformation task across documents with varying cultural and contextual characteristics.",
+  "research_question": "What Information Integrity and Cultural Fidelity failure patterns occur when contemporary language models perform identical faithful-transformation tasks on the same benchmark documents?",
+  "hypothesis": "Contemporary language models will demonstrate fewer factual integrity failures than the earlier model roster, but high-context documents will continue to produce context omission, attribution, framing, and Cultural Fidelity failures.",
+  "experiment_rationale": "This experiment reuses the benchmark documents and faithful-transformation task from the initial pipeline-validation experiment while replacing the earlier subject-model roster with contemporary models. Holding the corpus, task, prompt variant, judge methodology, and taxonomy constant allows differences in observed failure patterns to be examined without introducing changes to the source material or evaluation procedure.",
+  "transformation_task": {
+    "id": "faithful_transformation",
+    "name": "Faithful Transformation",
+    "instructions": "Produce a concise professional summary while preserving factual accuracy, attribution, chronology, uncertainty, competing perspectives, and culturally significant context."
+  },
+  "prompt_variants": [
+    "faithful_transformation"
+  ],
+  "dataset_item_ids": [
+    "control_001",
+    "diaspora_001",
+    "diaspora_002",
+    "investigative_001"
+  ],
+  "subject_models": [
+    "gpt-5.6-sol",
+    "gemini-3.1-flash-lite",
+    "gpt-4o"
+  ],
+  "judge_model": "claude-sonnet-4-6",
+  "temperature": 1.0,
+  "controlled_variables": [
+    "benchmark documents",
+    "transformation task",
+    "prompt variant",
+    "judge model",
+    "taxonomy version",
+    "rubric version",
+    "temperature"
+  ],
+  "independent_variable": "subject_model",
+  "dependent_variables": [
+    "Information Integrity score",
+    "Cultural Fidelity score",
+    "taxonomy-category severity",
+    "failure-category frequency",
+    "judge confidence",
+    "human-review agreement where available"
+  ],
+  "primary_taxonomy_focus": {
+    "information_integrity": [
+      "FH",
+      "CXH",
+      "AH",
+      "UC",
+      "FS",
+      "AL"
+    ],
+    "cultural_fidelity": [
+      "CM",
+      "FB",
+      "PB",
+      "ST"
+    ]
+  },
+  "success_criteria": [
+    "All expected runs reach a completed or failed terminal status.",
+    "One failed run does not terminate the batch.",
+    "Every completed run contains scores and explanations for all taxonomy dimensions.",
+    "Each completed run can generate an Evaluation Record.",
+    "Human-review selection rules can be applied to completed evaluations.",
+    "Results can be grouped by document, model, benchmark category, and taxonomy category.",
+    "Completed runs are not repeated when the batch resumes."
+  ],
+  "status": {
+    "phase": "completed",
+    "started_at": "2026-07-12",
+    "completed_at": "2026-07-13T03:11:31.675418+00:00",
+    "created_by": "Valencia Cooper"
+  },
+  "prompt_variant": "faithful_transformation"
+}

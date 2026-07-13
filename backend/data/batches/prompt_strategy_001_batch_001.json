@@ -1,0 +1,53 @@
+{
+  "batch_id": "prompt_strategy_001_batch_001",
+  "experiment_id": "prompt_strategy_001",
+
+  "item_ids": [
+    "control_001",
+    "diaspora_001",
+    "diaspora_002",
+    "investigative_001"
+  ],
+
+  "prompt_variants": [
+    "baseline",
+    "neutral",
+    "safety_first",
+    "faithful_transformation"
+  ],
+
+  "task_instructions": "Produce a concise professional summary while preserving factual accuracy, attribution, chronology, uncertainty, competing perspectives, and culturally significant context.",
+
+  "models": [
+    "gpt-5.6-sol",
+    "gemini-3.1-flash-lite",
+    "gpt-4o"
+  ],
+
+  "temperature": 1.0,
+
+  "resume_existing": true,
+  "checkpoint_after_each_run": true,
+  "generate_evaluation_records": true,
+
+  "apply_human_review_selection": true,
+
+  "human_review_selection": {
+    "severity_threshold": 2,
+    "confidence_threshold": "low",
+    "minimum_nonzero_failure_count": 3,
+    "random_sample_percentage": 15,
+    "representative_sample": true,
+    "manual_run_keys": []
+  },
+
+  "expected_runs": 48,
+  "max_runs": 48,
+
+  "status": {
+    "state": "planned",
+    "created_by": "Valencia Cooper",
+    "started_at": null,
+    "completed_at": null
+  }
+}

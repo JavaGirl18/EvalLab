@@ -29,6 +29,11 @@ from human_review_export import (
 from human_review_import import import_from_csv, import_from_json
 from human_review_db import get_responses_for_review as _get_responses_for_review
 from human_review_stats import compute_agreement_summary, compute_emerging_patterns
+from eval_record_export import build_eval_record, render_eval_record_html
+from eval_record_db import (
+    register_run_key, get_by_evaluation_id, get_by_run_key,
+    list_evaluation_records, freeze_snapshot, increment_export_count,
+)
 
 app = FastAPI(title="EvalLab API")
 
@@ -538,6 +543,7 @@ class GenerateReviewsRequest(BaseModel):
     failure_count_threshold: Optional[int] = None
     random_pct:             Optional[float] = None
     manual_run_keys:        Optional[list[str]] = None
+    representative_sample:  bool = False
 
 
 @app.post("/human-reviews/generate", status_code=201)
@@ -552,11 +558,13 @@ def generate_human_reviews(request: GenerateReviewsRequest):
         request.failure_count_threshold is not None,
         request.random_pct is not None,
         request.manual_run_keys,
+        request.representative_sample,
     ]):
         raise HTTPException(
             status_code=400,
             detail="At least one selection rule is required (severity_threshold, "
-                   "confidence_threshold, failure_count_threshold, random_pct, or manual_run_keys).",
+                   "confidence_threshold, failure_count_threshold, random_pct, "
+                   "manual_run_keys, or representative_sample).",
         )
 
     candidates = select_runs_for_review(
@@ -566,6 +574,7 @@ def generate_human_reviews(request: GenerateReviewsRequest):
         failure_count_threshold=request.failure_count_threshold,
         random_pct=request.random_pct,
         manual_run_keys=request.manual_run_keys,
+        representative_sample=request.representative_sample,
         review_round=request.review_round,
     )
 
@@ -775,3 +784,86 @@ def archive_human_review(review_id: str):
         raise HTTPException(status_code=404, detail=f"Review '{review_id}' not found.")
     mark_review_archived(review_id)
     return {"review_id": review_id, "status": "archived"}
+
+
+# ── Evaluation Records ────────────────────────────────────────────────────────
+# Route order matters: /register and list must come before /{evaluation_id}
+
+@app.post("/evaluation-records", status_code=201)
+def register_evaluation_record(body: dict):
+    """
+    Register a run_key and return its stable evaluation_id (EV-YYYY-NNNNNN).
+    Idempotent — calling again for the same run_key returns the same ID.
+    """
+    run_key = (body or {}).get("run_key", "").strip()
+    if not run_key:
+        raise HTTPException(status_code=400, detail="run_key is required.")
+    from batch_db import get_batch_item_by_run_key
+    if not get_batch_item_by_run_key(run_key):
+        raise HTTPException(status_code=404, detail=f"No batch run found for run_key: {run_key}")
+    ev_id = register_run_key(run_key)
+    reg   = get_by_evaluation_id(ev_id)
+    return {
+        "evaluation_id":  ev_id,
+        "run_key":        run_key,
+        "registered_at":  reg["registered_at"] if reg else None,
+        "already_existed": reg["export_count"] > 0 if reg else False,
+    }
+
+
+@app.get("/evaluation-records")
+def list_eval_records(
+    experiment_id: Optional[str] = Query(None),
+    batch_id:      Optional[str] = Query(None),
+    limit:         int           = Query(100, ge=1, le=500),
+):
+    """List registered Evaluation Records, newest first."""
+    return list_evaluation_records(experiment_id=experiment_id, batch_id=batch_id, limit=limit)
+
+
+@app.get("/evaluation-records/{evaluation_id}")
+def get_eval_record_json(evaluation_id: str):
+    """
+    Return the frozen JSON Evaluation Record.
+    If not yet exported, assembles from live sources and returns (but does not freeze).
+    """
+    reg = get_by_evaluation_id(evaluation_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail=f"Evaluation record '{evaluation_id}' not found.")
+    if reg.get("record_snapshot"):
+        import json as _json
+        return _json.loads(reg["record_snapshot"])
+    try:
+        return build_eval_record(reg["run_key"], evaluation_id)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@app.get("/evaluation-records/{evaluation_id}/html")
+def export_eval_record_html(evaluation_id: str):
+    """
+    Download the Evaluation Record as a self-contained, print-ready HTML file.
+    Freezes the snapshot on first export — subsequent exports return the same content.
+    """
+    reg = get_by_evaluation_id(evaluation_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail=f"Evaluation record '{evaluation_id}' not found.")
+
+    if reg.get("record_snapshot"):
+        import json as _json
+        record = _json.loads(reg["record_snapshot"])
+        increment_export_count(evaluation_id)
+    else:
+        try:
+            record = build_eval_record(reg["run_key"], evaluation_id)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        freeze_snapshot(evaluation_id, record)
+
+    html     = render_eval_record_html(record)
+    filename = f"{evaluation_id}.html"
+    return Response(
+        content=html,
+        media_type="text/html",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

@@ -27,6 +27,8 @@ def init_db():
     init_batch_tables()
     from human_review_db import init_human_review_tables
     init_human_review_tables()
+    from eval_record_db import init_eval_record_tables
+    init_eval_record_tables()
 
 
 def save_preference(model: str, task: str, variant: str, user_prompt: str):

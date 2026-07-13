@@ -10,13 +10,13 @@ load_dotenv()
 # imports from config instead of calling os.getenv() everywhere.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # The models we want to compare against each other.
-# This is a Python list — an ordered collection of items in square brackets.
 SUBJECT_MODELS = [
+    "gpt-5.6-sol",
+    "gemini-3.1-flash-lite",
     "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-3.5-turbo",
 ]
 
 # The fixed model that will judge all responses.
@@ -56,22 +56,22 @@ HIGH_STAKES_TASKS = ["tax"]
 # a dated version string (e.g. "gpt-4o-2024-08-06" instead of "gpt-4o").
 RESEARCH_SUBJECT_MODELS = [
     {
+        "model_id": "gpt-5.6-sol",
+        "display_name": "GPT-5.6 Sol",
+        "provider": "openai",
+        "version_note": "Pin to a dated snapshot for full reproducibility.",
+    },
+    {
+        "model_id": "gemini-3.1-flash-lite",
+        "display_name": "Gemini 3.1 Flash Lite",
+        "provider": "google",
+        "version_note": "",
+    },
+    {
         "model_id": "gpt-4o",
         "display_name": "GPT-4o",
         "provider": "openai",
-        "version_note": "Alias. Pin to e.g. gpt-4o-2024-08-06 for full snapshot reproducibility.",
-    },
-    {
-        "model_id": "gpt-4o-mini",
-        "display_name": "GPT-4o Mini",
-        "provider": "openai",
-        "version_note": "Alias. Pin to e.g. gpt-4o-mini-2024-07-18 for full snapshot reproducibility.",
-    },
-    {
-        "model_id": "gpt-3.5-turbo",
-        "display_name": "GPT-3.5 Turbo",
-        "provider": "openai",
-        "version_note": "Alias. Pin to e.g. gpt-3.5-turbo-0125 for full snapshot reproducibility.",
+        "version_note": "Pin to a dated snapshot for full reproducibility.",
     },
 ]
 
