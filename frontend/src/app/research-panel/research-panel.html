@@ -519,7 +519,7 @@
         <span class="text-xs font-semibold text-gray-700">Run Full Dataset as Batch</span>
         <p class="text-xs text-gray-400">
           {{ items.length }} dataset article{{ items.length !== 1 ? 's' : '' }}
-          · <span class="font-mono">{{ experimentVariant || selectedVariant }}</span>
+          · <span class="font-mono">{{ selectedVariants.length > 1 ? selectedVariants.length + ' variants' : (experimentVariant || selectedVariant) }}</span>
           <ng-container *ngIf="hasExperiment"> · {{ experimentId }}</ng-container>
         </p>
         <button (click)="runBatch()" [disabled]="!canRunBatch || batchLoading"
@@ -543,6 +543,26 @@
         <div *ngIf="batchRunStatus === 'failed'" class="flex items-center gap-2">
           <span class="text-xs text-red-500 font-medium">⚠ Batch stopped · {{ batchCompleted }} / {{ batchTotal }} completed</span>
         </div>
+
+        <!-- Per-item failure indicator (shows during run and after) -->
+        <div *ngIf="batchFailed > 0" class="border border-amber-200 rounded-lg overflow-hidden mt-1">
+          <button (click)="batchFailuresExpanded = !batchFailuresExpanded"
+            class="w-full flex items-center justify-between px-3 py-2 bg-amber-50 hover:bg-amber-100 transition-colors text-left">
+            <span class="flex items-center gap-2 text-xs font-medium text-amber-700">
+              <span>⚠</span>
+              <span>{{ batchFailed }} item{{ batchFailed !== 1 ? 's' : '' }} failed — excluded from Trends</span>
+            </span>
+            <span class="text-amber-500 text-xs">{{ batchFailuresExpanded ? '▲' : '▼' }}</span>
+          </button>
+          <div *ngIf="batchFailuresExpanded" class="px-3 py-2 bg-white space-y-2">
+            <div *ngFor="let f of batchFailedItems"
+              class="text-xs border border-amber-100 rounded p-2 bg-amber-50/50">
+              <div class="font-mono font-semibold text-gray-700 mb-0.5">{{ f.item_id }}</div>
+              <div class="text-amber-700 leading-snug">{{ f.error || 'Unknown error' }}</div>
+            </div>
+          </div>
+        </div>
+
         <p *ngIf="batchSubmitted && batchId && batchRunStatus === 'idle'" class="text-xs text-gray-400 font-mono break-all">
           ID: {{ batchId }}
         </p>
@@ -633,6 +653,10 @@
             class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-indigo-400" />
         </div>
         <div class="flex items-center gap-2">
+          <input type="checkbox" [(ngModel)]="hrRepresentativeSample" id="hrRepresentativeSample" class="accent-violet-500" />
+          <label for="hrRepresentativeSample" class="text-xs text-gray-500">Representative sample</label>
+        </div>
+        <div class="flex items-center gap-2">
           <input type="checkbox" [(ngModel)]="hrBlinded" id="hrBlinded" class="accent-violet-500" />
           <label for="hrBlinded" class="text-xs text-gray-500">Blind model identity</label>
         </div>
@@ -711,7 +735,7 @@
       </div>
 
       <!-- Import responses -->
-      <div *ngIf="hrReviews.length > 0" class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2">
         <span class="text-xs font-semibold text-gray-700">Import Responses</span>
         <label class="flex items-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border border-dashed border-gray-300 hover:border-violet-400 hover:bg-violet-50 transition-colors">
           <span class="text-xs text-gray-500">{{ hrImporting ? 'Importing…' : 'Choose CSV or JSON…' }}</span>

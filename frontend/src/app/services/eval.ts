@@ -267,6 +267,33 @@ export interface BatchResults {
   };
 }
 
+// ── External Package types ────────────────────────────────────────────────────
+
+export interface ExternalPackageFile {
+  name: string;
+  size: number;
+  type: string;
+  allowed: boolean;
+}
+
+export interface ExternalPackage {
+  pkg_id: string;
+  status: 'imported' | 'reviewed' | 'approved' | 'rejected';
+  source_label: string;
+  submitted_by: string;
+  received_at: string;
+  reviewed_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  file_manifest: ExternalPackageFile[];
+  detected_meta: Record<string, any>;
+  mapped_meta: Record<string, any>;
+  notes: string;
+  evaluation_id: string | null;
+  storage_dir: string;
+}
+
 // ── Human Review types ────────────────────────────────────────────────────────
 
 export interface GenerateReviewsRequest {
@@ -279,6 +306,7 @@ export interface GenerateReviewsRequest {
   failure_count_threshold?: number | null;
   random_pct?: number | null;
   manual_run_keys?: string[] | null;
+  representative_sample?: boolean;
 }
 
 export interface HumanReviewSummary {
@@ -427,6 +455,42 @@ export interface ImportResult {
   duplicate_skipped: number;
 }
 
+export interface EvalRecord {
+  record_format_version: string;
+  record_exported_at: string;
+  run_key: string;
+  experiment_id: string;
+  batch_id: string;
+  item_id: string;
+  source_title: string;
+  source_publisher: string;
+  source_published_date: string;
+  source_url: string;
+  benchmark_category: string;
+  cultural_significance: string;
+  article_type: string;
+  subject_model: string;
+  prompt_variant: string;
+  temperature: number;
+  response_text: string;
+  judge_model: string;
+  overall_ii_score: number;
+  overall_cf_score: number;
+  executive_summary: string;
+  most_significant_failures: string[];
+  suggested_improvements: string;
+  dimension_scores: Record<string, DimensionScore>;
+  taxonomy_version: string;
+  rubric_version: string;
+  human_validation: {
+    review_id: string;
+    review_round: number;
+    blinded: boolean;
+    selection_reasons: string[];
+    responses: HumanReviewResponse[];
+  } | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -570,5 +634,93 @@ export class EvalService {
     if (params.experiment_id) q.set('experiment_id', params.experiment_id);
     if (params.review_round)  q.set('review_round',  String(params.review_round));
     return this.http.get<EmergingPatterns>(`${this.apiUrl}/human-reviews/patterns?${q}`);
+  }
+
+  // ── Evaluation Records ────────────────────────────────────────────────────────
+
+  registerEvaluationRecord(runKey: string): Observable<{ evaluation_id: string; run_key: string; registered_at: string; already_existed: boolean }> {
+    return this.http.post<{ evaluation_id: string; run_key: string; registered_at: string; already_existed: boolean }>(
+      `${this.apiUrl}/evaluation-records`,
+      { run_key: runKey }
+    );
+  }
+
+  listEvaluationRecords(params: { experiment_id?: string; batch_id?: string; limit?: number } = {}): Observable<Array<{ evaluation_id: string; run_key: string; registered_at: string; first_exported_at: string | null; export_count: number }>> {
+    const q = new URLSearchParams();
+    if (params.experiment_id) q.set('experiment_id', params.experiment_id);
+    if (params.batch_id)      q.set('batch_id',      params.batch_id);
+    if (params.limit)         q.set('limit',         String(params.limit));
+    return this.http.get<Array<{ evaluation_id: string; run_key: string; registered_at: string; first_exported_at: string | null; export_count: number }>>(
+      `${this.apiUrl}/evaluation-records?${q}`
+    );
+  }
+
+  getEvalRecord(evaluationId: string): Observable<EvalRecord> {
+    return this.http.get<EvalRecord>(`${this.apiUrl}/evaluation-records/${encodeURIComponent(evaluationId)}`);
+  }
+
+  exportEvalRecordUrl(evaluationId: string): string {
+    return `${this.apiUrl}/evaluation-records/${encodeURIComponent(evaluationId)}/html`;
+  }
+
+  exportEvalRecordByRunKey(runKey: string): void {
+    this.registerEvaluationRecord(runKey).subscribe({
+      next: (reg) => window.open(this.exportEvalRecordUrl(reg.evaluation_id), '_blank'),
+    });
+  }
+
+  // ── External Packages ───────────────────────────────────────────────────────
+
+  uploadExternalPackage(formData: FormData): Observable<ExternalPackage> {
+    return this.http.post<ExternalPackage>(`${this.apiUrl}/external-packages/upload`, formData);
+  }
+
+  listExternalPackages(): Observable<ExternalPackage[]> {
+    return this.http.get<ExternalPackage[]>(`${this.apiUrl}/external-packages`);
+  }
+
+  getExternalPackage(pkgId: string): Observable<ExternalPackage> {
+    return this.http.get<ExternalPackage>(`${this.apiUrl}/external-packages/${pkgId}`);
+  }
+
+  updateExternalPackageMeta(pkgId: string, mappedMeta: Record<string, any>, notes: string): Observable<ExternalPackage> {
+    return this.http.put<ExternalPackage>(
+      `${this.apiUrl}/external-packages/${pkgId}/meta`,
+      { mapped_meta: mappedMeta, notes }
+    );
+  }
+
+  approveExternalPackage(pkgId: string): Observable<{ evaluation_id: string; pkg_id: string }> {
+    return this.http.post<{ evaluation_id: string; pkg_id: string }>(
+      `${this.apiUrl}/external-packages/${pkgId}/approve`, {}
+    );
+  }
+
+  rejectExternalPackage(pkgId: string, reason: string): Observable<ExternalPackage> {
+    return this.http.post<ExternalPackage>(
+      `${this.apiUrl}/external-packages/${pkgId}/reject`,
+      { reason }
+    );
+  }
+
+  evaluateExternalPackage(pkgId: string, req: {
+    source_file: string;
+    transformation_file: string;
+    source_title?: string;
+    subject_label?: string;
+    task_description?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/external-packages/${pkgId}/evaluate`, req);
+  }
+
+  getExternalPackageResult(pkgId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/external-packages/${pkgId}/evaluate`);
+  }
+
+  exportExternalPackageRecord(pkgId: string, format: 'html' | 'json' = 'html'): Observable<Blob> {
+    const path = format === 'html'
+      ? `${this.apiUrl}/external-packages/${pkgId}/export/html`
+      : `${this.apiUrl}/external-packages/${pkgId}/export`;
+    return this.http.get(path, { responseType: 'blob' });
   }
 }

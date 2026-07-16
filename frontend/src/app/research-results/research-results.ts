@@ -219,4 +219,15 @@ export class ResearchResultsComponent implements OnInit {
       hour: '2-digit', minute: '2-digit',
     });
   }
+
+  exportRecord(result: ResearchScoredResult): void {
+    if (!this.batchData) return;
+    const runKey = [
+      this.batchData.experiment_id,
+      result.item_id,
+      result.prompt_variant_name,
+      result.model,
+    ].join('|');
+    this.evalService.exportEvalRecordByRunKey(runKey);
+  }
 }

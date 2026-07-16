@@ -1,0 +1,19 @@
+Hi Valencia,
+
+The first fixed evidence package is ready and I have uploaded it to the private folder.
+
+I kept the layers separate: parent source, selected WAV, source-reference text, exact ASR input and raw output, visible engine uncertainty, and the machine-versus-reference difference record.
+
+Two limitations are deliberately visible rather than silently repaired:
+
+- the LibriVox recording carries its public-domain-in-the-US / non-US verification caveat, so this private package does not claim universal redistribution authority;
+- I did not fabricate a blind human listening review. That layer is marked NOT_RUN and a clean review template is included. The published source text remains a separate reference layer, not relabelled human evidence.
+
+The package also contains no initial interpretation from our side, so you can record your first observations before either reading pulls the other toward consensus.
+
+ZIP SHA-256:
+[INSERT FINAL ZIP SHA-256]
+
+Looking forward to seeing what EvalLabs preserves differently 😄
+
+Loek

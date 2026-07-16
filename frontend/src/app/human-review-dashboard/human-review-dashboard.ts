@@ -14,6 +14,12 @@ import {
   HumanReviewCounts,
 } from '../services/eval';
 
+interface LifecycleStep {
+  label: string;
+  done: boolean;
+  ts: string | null;
+}
+
 const PLAIN_LABELS: Record<string, string> = {
   FH:  'Fabricated / Hallucinated Facts',
   CXH: 'Context Hallucination',
@@ -274,5 +280,25 @@ export class HumanReviewDashboardComponent implements OnInit, OnDestroy, OnChang
 
   topDisagreePct(n: number, total: number): number {
     return total ? Math.round((n / total) * 100) : 0;
+  }
+
+  lifecycleSteps(review: HumanReviewDetail, responses: HumanReviewResponse[]): LifecycleStep[] {
+    const importedAt = responses.length > 0
+      ? responses.reduce((earliest, r) =>
+          !earliest || r.imported_at < earliest ? r.imported_at : earliest,
+          null as string | null)
+      : null;
+    return [
+      { label: 'Generated',              done: true,                              ts: review.created_at },
+      { label: 'Exported',               done: !!review.exported_at,              ts: review.exported_at ?? null },
+      { label: 'Completed by reviewer',  done: !!review.completed_at,             ts: review.completed_at ?? null },
+      { label: 'Responses imported',     done: !!importedAt,                      ts: importedAt },
+      { label: 'Archived',               done: review.review_status === 'archived', ts: null },
+    ];
+  }
+
+  exportEvalRecord(runKey: string) {
+    if (!runKey) return;
+    this.svc.exportEvalRecordByRunKey(runKey);
   }
 }

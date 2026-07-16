@@ -1,7 +1,9 @@
+import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
-from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File, Query
+from typing import Optional, List
+from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -33,7 +35,16 @@ from eval_record_export import build_eval_record, render_eval_record_html
 from eval_record_db import (
     register_run_key, get_by_evaluation_id, get_by_run_key,
     list_evaluation_records, freeze_snapshot, increment_export_count,
+    register_external_package,
 )
+from external_package_db import (
+    create_package, get_package, list_packages,
+    update_meta, mark_approved, mark_rejected,
+)
+from external_package_importer import is_allowed, mime_label, detect_metadata
+
+EXTERNAL_PACKAGES_DIR = Path(__file__).parent / "data" / "external_packages"
+EXTERNAL_PACKAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="EvalLab API")
 
@@ -862,6 +873,422 @@ def export_eval_record_html(evaluation_id: str):
 
     html     = render_eval_record_html(record)
     filename = f"{evaluation_id}.html"
+    return Response(
+        content=html,
+        media_type="text/html",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ── External Evaluation Packages ─────────────────────────────────────────────
+
+class UpdateExternalMetaRequest(BaseModel):
+    mapped_meta: dict = {}
+    notes: str = ""
+
+
+class RejectExternalPackageRequest(BaseModel):
+    reason: str = ""
+
+
+@app.post("/external-packages/upload", status_code=201)
+async def upload_external_package(
+    files: List[UploadFile] = File(...),
+    source_label: str = Form(""),
+    submitted_by: str = Form(""),
+):
+    rejected = [f.filename for f in files if not is_allowed(f.filename or "")]
+    if rejected:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Rejected file types: {rejected}. "
+                   "Allowed: .json .md .txt .csv .html .pdf .png .jpg .jpeg .gif .svg",
+        )
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided.")
+
+    # Allocate a temporary ID to create storage dir; real ID comes from DB
+    import uuid
+    tmp = uuid.uuid4().hex[:8]
+    tmp_dir = EXTERNAL_PACKAGES_DIR / f"_tmp_{tmp}"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_entries = []
+    text_files = []
+
+    for upload in files:
+        filename = upload.filename or "unnamed"
+        raw = await upload.read()
+        dest = tmp_dir / filename
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(raw)
+
+        entry = {
+            "name": filename,
+            "size": len(raw),
+            "type": mime_label(filename),
+            "allowed": is_allowed(filename),
+        }
+        manifest_entries.append(entry)
+
+        ext = Path(filename).suffix.lower()
+        if ext in {".json", ".md", ".txt", ".csv", ".html", ".htm"}:
+            try:
+                text_files.append({"name": filename, "content_text": raw.decode("utf-8", errors="replace")})
+            except Exception:
+                pass
+
+    detected = detect_metadata(text_files)
+
+    pkg_id = create_package(
+        source_label=source_label or detected.get("title", ""),
+        submitted_by=submitted_by,
+        file_manifest=manifest_entries,
+        detected_meta=detected,
+        storage_dir=str(tmp_dir),
+    )
+
+    # Rename temp dir to final pkg_id dir
+    final_dir = EXTERNAL_PACKAGES_DIR / pkg_id
+    tmp_dir.rename(final_dir)
+
+    # Update storage_dir to final path
+    from external_package_db import _conn as _epkg_conn
+    with _epkg_conn() as conn:
+        conn.execute(
+            "UPDATE external_packages SET storage_dir=? WHERE pkg_id=?",
+            (str(final_dir), pkg_id),
+        )
+
+    pkg = get_package(pkg_id)
+    return pkg
+
+
+@app.get("/external-packages")
+def list_external_packages():
+    return list_packages()
+
+
+@app.get("/external-packages/{pkg_id}")
+def get_external_package(pkg_id: str):
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail=f"Package '{pkg_id}' not found.")
+    return pkg
+
+
+@app.put("/external-packages/{pkg_id}/meta")
+def update_external_package_meta(pkg_id: str, body: UpdateExternalMetaRequest):
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail=f"Package '{pkg_id}' not found.")
+    if pkg["status"] in ("approved", "rejected"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Package is already {pkg['status']} and cannot be edited.",
+        )
+    update_meta(pkg_id, body.mapped_meta, body.notes)
+    return get_package(pkg_id)
+
+
+@app.post("/external-packages/{pkg_id}/approve", status_code=201)
+def approve_external_package(pkg_id: str):
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail=f"Package '{pkg_id}' not found.")
+    if pkg["status"] == "approved":
+        return {"evaluation_id": pkg["evaluation_id"], "pkg_id": pkg_id, "already_approved": True}
+    if pkg["status"] == "rejected":
+        raise HTTPException(status_code=409, detail="Package has been rejected and cannot be approved.")
+
+    snapshot = {
+        "pkg_id":       pkg_id,
+        "source_label": pkg["source_label"],
+        "submitted_by": pkg["submitted_by"],
+        "received_at":  pkg["received_at"],
+        "detected_meta": pkg["detected_meta"],
+        "mapped_meta":   pkg["mapped_meta"],
+        "file_manifest": pkg["file_manifest"],
+        "notes":         pkg["notes"],
+    }
+    ev_id = register_external_package(pkg_id, snapshot)
+    mark_approved(pkg_id, ev_id)
+    return {"evaluation_id": ev_id, "pkg_id": pkg_id}
+
+
+@app.post("/external-packages/{pkg_id}/reject")
+def reject_external_package(pkg_id: str, body: RejectExternalPackageRequest):
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail=f"Package '{pkg_id}' not found.")
+    if pkg["status"] == "approved":
+        raise HTTPException(status_code=409, detail="Package has been approved and cannot be rejected.")
+    mark_rejected(pkg_id, body.reason)
+    return get_package(pkg_id)
+
+
+class EvaluateExternalRequest(BaseModel):
+    source_file:       str            # path relative to package root, e.g. "03_REFERENCE_TEXT/source_reference_transcript.txt"
+    transformation_file: str          # e.g. "04_ASR_RUN/transcript_raw.txt"
+    source_title:      str = ""
+    subject_label:     str = "External System"
+    task_description:  str = "Reproduce the source text accurately."
+
+
+@app.post("/external-packages/{pkg_id}/evaluate", status_code=201)
+def evaluate_external_package(pkg_id: str, body: EvaluateExternalRequest):
+    from research_runner import DatasetItem, ResearchModelResponse, CANONICAL_SYSTEM_PROMPT
+    from research_judge import score_research_response
+    from datetime import datetime, timezone
+    import dataclasses
+
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail=f"Package '{pkg_id}' not found.")
+    if pkg["status"] != "approved":
+        raise HTTPException(status_code=409, detail="Package must be approved before evaluation.")
+
+    storage = Path(pkg["storage_dir"])
+
+    def _find_file(rel: str) -> Path:
+        # Try exact match first, then search recursively
+        exact = storage / rel
+        if exact.exists():
+            return exact
+        matches = list(storage.rglob(Path(rel).name))
+        if matches:
+            return matches[0]
+        raise HTTPException(status_code=404, detail=f"File not found in package: {rel}")
+
+    source_path = _find_file(body.source_file)
+    transformation_path = _find_file(body.transformation_file)
+
+    source_text = source_path.read_text(encoding="utf-8", errors="replace").strip()
+    transformation_text = transformation_path.read_text(encoding="utf-8", errors="replace").strip()
+
+    if not source_text:
+        raise HTTPException(status_code=422, detail="Source file is empty.")
+    if not transformation_text:
+        raise HTTPException(status_code=422, detail="Transformation file is empty.")
+
+    item = DatasetItem(
+        id=pkg_id,
+        article_type="external",
+        source_type="external_package",
+        high_context=True,
+        expected_failure_categories=[],
+        source_title=body.source_title or pkg.get("source_label") or pkg_id,
+        source_url="",
+        source_text=source_text,
+        system_prompt=CANONICAL_SYSTEM_PROMPT,
+        metadata={},
+        prompt_variants=[],
+        benchmark_rationale="",
+        human_notes="",
+        human_override=False,
+    )
+
+    response = ResearchModelResponse(
+        model=body.subject_label,
+        subject_model_config={"model_id": body.subject_label, "provider": "external"},
+        item_id=pkg_id,
+        article_type="external",
+        source_title=item.source_title,
+        system_prompt=CANONICAL_SYSTEM_PROMPT,
+        eval_prompt=body.task_description,
+        prompt_variant_name="external_transformation",
+        response_text=transformation_text,
+        temperature=0.0,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+
+    scored = score_research_response(item, response)
+
+    result = {
+        "pkg_id":          pkg_id,
+        "evaluation_id":   pkg.get("evaluation_id"),
+        "source_file":     body.source_file,
+        "transformation_file": body.transformation_file,
+        "subject_label":   body.subject_label,
+        "judged_at":       response.timestamp,
+        "judge_model":     JUDGE_MODEL,
+        "overall_information_integrity_score": scored.overall_information_integrity_score,
+        "overall_cultural_fidelity_score":     scored.overall_cultural_fidelity_score,
+        "executive_summary":       scored.executive_summary,
+        "most_significant_failures": scored.most_significant_failures,
+        "suggested_improvements":  scored.suggested_improvements,
+        "dimension_scores": {
+            k: dataclasses.asdict(v) for k, v in scored.dimension_scores.items()
+        },
+    }
+
+    # Persist alongside the package artifacts
+    out_path = storage / "EVALLAB_JUDGE_RESULT_001.json"
+    out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+
+    return result
+
+
+@app.get("/external-packages/{pkg_id}/evaluate")
+def get_external_package_result(pkg_id: str):
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail="Package not found")
+    storage = EXTERNAL_PACKAGES_DIR / pkg_id
+    result_path = storage / "EVALLAB_JUDGE_RESULT_001.json"
+    if not result_path.exists():
+        raise HTTPException(status_code=404, detail="No judge result found")
+    return json.loads(result_path.read_text(encoding="utf-8"))
+
+
+_PLAIN_LABELS: dict[str, str] = {
+    "FH": "Fabricated / Hallucinated Facts", "CXH": "Context Hallucination",
+    "CTH": "Cultural Translation Hallucination", "AH": "Attribution Hallucination",
+    "FS": "False Specificity", "UC": "Unsupported Claims", "CL": "Cultural Loss",
+    "EX": "Exoticization", "OC": "Othering / Community Framing",
+    "AL": "Agency / Leadership Erasure", "CM": "Community Voice Marginalization",
+    "FB": "Framing Bias", "PB": "Political / Ideological Bias", "ST": "Stereotyping",
+}
+_SEVERITY_LABELS: dict[int, str] = {0: "Clean", 1: "Minor", 2: "Moderate", 3: "Severe"}
+_CONF_MAP: dict[str, float] = {"High": 1.0, "Medium": 0.67, "Low": 0.33}
+
+
+def _build_external_package_record(pkg_id: str) -> dict:
+    pkg = get_package(pkg_id)
+    if not pkg:
+        raise HTTPException(status_code=404, detail="Package not found")
+    storage = EXTERNAL_PACKAGES_DIR / pkg_id
+    result_path = storage / "EVALLAB_JUDGE_RESULT_001.json"
+    if not result_path.exists():
+        raise HTTPException(status_code=404, detail="No judge result found — run EvalLab Judge first")
+
+    judge = json.loads(result_path.read_text(encoding="utf-8"))
+    dim_scores = judge.get("dimension_scores", {})
+    mapped = pkg.get("mapped_meta") or {}
+    subject_label = judge.get("subject_label", "External System")
+
+    primary_findings = sorted(
+        [
+            {
+                "category_id":    cat_id,
+                "plain_label":    _PLAIN_LABELS.get(cat_id, cat_id),
+                "severity":       s["severity"],
+                "severity_label": _SEVERITY_LABELS.get(s["severity"], str(s["severity"])),
+                "confidence":     s.get("confidence", ""),
+            }
+            for cat_id, s in dim_scores.items()
+            if s.get("severity", 0) > 0
+        ],
+        key=lambda x: x["severity"],
+        reverse=True,
+    )
+
+    flagged = [s for s in dim_scores.values() if s.get("severity", 0) > 0]
+    if flagged:
+        avg_conf = sum(_CONF_MAP.get(s.get("confidence", "Medium"), 0.67) for s in flagged) / len(flagged)
+        overall_judge_confidence = round(avg_conf * 100)
+    else:
+        overall_judge_confidence = 100
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    record = {
+        # Core IDs
+        "evaluation_id":         pkg.get("evaluation_id", ""),
+        "run_key":               f"external|{pkg_id}",
+        "record_type":           "external_package",
+        "record_format_version": "1.1",
+        "eval_status":           "completed",
+        "human_validation_status": "Not performed",
+        "evallab_version":       "1.0.0",
+        "record_registered_at":  pkg.get("approved_at"),
+
+        # Fields the HTML renderer reads for the cover / section 1
+        "experiment_name":   pkg.get("source_label", pkg_id),
+        "research_phase":    "External Package",
+        "subject_model_display": subject_label,
+        "subject_model_id":      subject_label,
+        "subject_type":          "external_system",
+        "judge_model_display":   judge.get("judge_model", ""),
+        "judge_model_id":        judge.get("judge_model", ""),
+        "research_objective":    mapped.get("description") or judge.get("task_description", ""),
+
+        # Summary
+        "primary_findings":         primary_findings,
+        "overall_judge_confidence": overall_judge_confidence,
+
+        # Package provenance
+        "package_id":           pkg_id,
+        "package_source_label": pkg.get("source_label", ""),
+        "package_submitted_by": pkg.get("submitted_by", ""),
+        "package_received_at":  pkg.get("received_at"),
+        "package_approved_at":  pkg.get("approved_at"),
+        "file_manifest":        pkg.get("file_manifest", []),
+
+        # Source info (mapped to renderer fields)
+        "source_title":       mapped.get("title") or (pkg.get("detected_meta") or {}).get("title", ""),
+        "source_publisher":   mapped.get("institution", ""),
+        "source_published_date": mapped.get("date", ""),
+        "source_url":         mapped.get("contact", ""),
+        "source_type":        "external_package",
+        "article_type":       mapped.get("methodology", ""),
+
+        # Transformation config fields
+        "transformation_task": judge.get("task_description", ""),
+        "source_file":         judge.get("source_file", ""),
+        "transformation_file": judge.get("transformation_file", ""),
+        "subject_provider":    "external",
+        "temperature":         None,
+        "generation_timestamp": pkg.get("received_at", ""),
+
+        # Source text shown as the reference file path
+        "source_text": judge.get("source_file", ""),
+        "response_text": judge.get("transformation_file", ""),
+
+        # Judge scores
+        "judge_model":           judge.get("judge_model", ""),
+        "judged_at":             judge.get("judged_at", ""),
+        "overall_ii_score":      judge.get("overall_information_integrity_score"),
+        "overall_cf_score":      judge.get("overall_cultural_fidelity_score"),
+        "executive_summary":     judge.get("executive_summary", ""),
+        "most_significant_failures": judge.get("most_significant_failures", []),
+        "suggested_improvements":    judge.get("suggested_improvements", ""),
+        "dimension_scores":          dim_scores,
+
+        # Taxonomy / reproducibility
+        "taxonomy_version": "v1.0",
+        "rubric_version":   "v1",
+
+        # Export metadata
+        "record_exported_at":    now,
+        "export_format_version": "1.1",
+        "generated_by":          "EvalLab 1.0.0",
+    }
+
+    record["checksum"] = hashlib.sha256(
+        json.dumps({k: v for k, v in record.items() if k != "checksum"}, sort_keys=True).encode()
+    ).hexdigest()
+    return record
+
+
+@app.get("/external-packages/{pkg_id}/export")
+def export_external_package_record(pkg_id: str):
+    record = _build_external_package_record(pkg_id)
+    pkg = get_package(pkg_id)
+    filename = f"{pkg_id}_{pkg.get('evaluation_id', 'eval')}_evaluation_record.json"
+    return Response(
+        content=json.dumps(record, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/external-packages/{pkg_id}/export/html")
+def export_external_package_record_html(pkg_id: str):
+    record = _build_external_package_record(pkg_id)
+    pkg = get_package(pkg_id)
+    html = render_eval_record_html(record)
+    filename = f"{pkg_id}_{pkg.get('evaluation_id', 'eval')}_evaluation_record.html"
     return Response(
         content=html,
         media_type="text/html",

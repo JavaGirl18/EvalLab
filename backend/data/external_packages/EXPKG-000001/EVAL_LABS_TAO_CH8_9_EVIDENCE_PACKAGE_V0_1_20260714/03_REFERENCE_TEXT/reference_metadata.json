@@ -1,0 +1,18 @@
+{
+  "work": "The Tao Teh King, or the Tao and its Characteristics",
+  "traditional_author_attribution": "Laozi",
+  "translator": "James Legge",
+  "reader": "Eric S. Piotrowski",
+  "libriVox_catalog_url": "https://librivox.org/the-tao-teh-king-by-lao-tze/",
+  "project_gutenberg_text_url": "https://www.gutenberg.org/cache/epub/216/pg216-images.html",
+  "parent_audio_section": "Chapters 1-9",
+  "selected_content": "Chapter 8 section 2 through Chapter 9 section 2, plus spoken headers/end marker",
+  "parent_audio_sha256": "918b5a849f3ce365def9c0b5bb30a6376677b052d846e395dece6205d669268a",
+  "selected_source_sha256": "d750254fd4db8751077a52222f5684cfe7c2308cb9c0885acf3e2da4f678b3d3",
+  "reference_text_sha256": "26e03928c9f0445881b5ba992c7851c84839f9a8ad84980c71700d5007667e23",
+  "selected_duration_seconds": 88.259615,
+  "parent_duration_seconds": 536.8875,
+  "estimated_parent_alignment_start_seconds": 448.604875,
+  "estimated_parent_alignment_method": "audio cross-correlation after mono/8 kHz conversion; strongest match aligns selected source to the end of the parent file",
+  "alignment_status": "ESTIMATED_NOT_SAMPLE_EXACT"
+}

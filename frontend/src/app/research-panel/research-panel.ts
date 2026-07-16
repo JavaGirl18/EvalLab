@@ -78,9 +78,10 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   // Common
   readonly variants = STANDARD_VARIANTS;
   selectedVariant = 'baseline';
+  selectedVariants: string[] = [];   // multi-variant batch selection
   taskInstructions = '';
   humanNotes = '';
-  temperature = 0.7;
+  temperature = 1.0;
 
   // Eval
   loading = false;
@@ -125,6 +126,38 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
     this.loadCustomItems();
     this.loadExperimentConfig();
     this.loadExperimentFiles();
+    this.resumeRunningBatch();
+  }
+
+  private resumeRunningBatch() {
+    this.evalService.listBatches().subscribe({
+      next: (batches) => {
+        const running = batches.find((b) => b.status === 'running');
+        if (running) {
+          this.batchId        = running.batch_id;
+          if (!this.hrBatchId) this.hrBatchId = running.batch_id;
+          this.batchTotal     = running.total;
+          this.batchCompleted = running.completed;
+          this.batchFailed    = running.failed ?? 0;
+          this.batchRunStatus = 'running';
+          this.startBatchPolling(running.batch_id);
+          this.cdr.detectChanges();
+          return;
+        }
+        // Restore last batch for this experiment (for Human Review panel access after navigation)
+        if (this.experimentId && !this.batchId) {
+          const expBatches = batches
+            .filter((b) => b.experiment_id === this.experimentId)
+            .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+          if (expBatches.length > 0) {
+            this.batchId = expBatches[0].batch_id;
+            if (!this.hrBatchId) this.hrBatchId = this.batchId;
+            this.cdr.detectChanges();
+          }
+        }
+      },
+      error: () => {},
+    });
   }
 
   loadExperimentFiles() {
@@ -144,7 +177,11 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
         this.experimentObjective   = exp.research_objective ?? '';
         this.experimentQuestion    = exp.research_question ?? '';
         this.experimentHypothesis  = exp.hypothesis ?? '';
-        this.experimentVariant     = exp.prompt_variant ?? '';
+        const expVariants = (exp as any).prompt_variants;
+        this.experimentVariant = exp.prompt_variant || expVariants?.[0] || '';
+        if (this.experimentVariant) this.selectedVariant = this.experimentVariant;
+        this.selectedVariants = expVariants?.length > 1 ? expVariants : (this.experimentVariant ? [this.experimentVariant] : []);
+        if ((exp as any).temperature !== undefined) this.temperature = (exp as any).temperature;
         this.taskInstructions      = exp.transformation_task?.instructions ?? '';
         this.experimentModels      = exp.subject_models ?? [];
         this.experimentStatusPhase = exp.status?.phase ?? 'planned';
@@ -216,7 +253,11 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
         this.experimentQuestion    = cfg.research_question  ?? '';
         this.experimentHypothesis  = cfg.hypothesis         ?? '';
         this.experimentSourceId    = cfg.source_id          ?? '';
-        this.experimentVariant     = cfg.prompt_variant      ?? '';
+        const cfgVariants = (cfg as any).prompt_variants;
+        this.experimentVariant = cfg.prompt_variant || cfgVariants?.[0] || '';
+        if (this.experimentVariant) this.selectedVariant = this.experimentVariant;
+        this.selectedVariants = cfgVariants?.length > 1 ? cfgVariants : (this.experimentVariant ? [this.experimentVariant] : []);
+        if ((cfg as any).temperature !== undefined) this.temperature = (cfg as any).temperature;
         this.taskInstructions      = cfg.task_instructions  ?? '';
         this.experimentModels      = cfg.models             ?? [];
         this.experimentStatusPhase = cfg.status?.phase        ?? 'planned';
@@ -513,6 +554,9 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   batchError = '';
   batchTotal = 0;
   batchCompleted = 0;
+  batchFailed = 0;
+  batchFailedItems: { item_id: string; error: string | null }[] = [];
+  batchFailuresExpanded = false;
   batchRunStatus: 'idle' | 'running' | 'completed' | 'failed' = 'idle';
   private batchPollRef: ReturnType<typeof setInterval> | null = null;
 
@@ -526,6 +570,10 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
         next: (s) => {
           this.batchTotal     = s.total;
           this.batchCompleted = s.completed;
+          this.batchFailed    = s.failed ?? 0;
+          this.batchFailedItems = (s.items ?? [])
+            .filter((i) => i.status === 'failed')
+            .map((i) => ({ item_id: i.item_id, error: i.error }));
           if (s.status === 'completed' || s.status === 'failed' || s.status === 'cancelled') {
             this.batchRunStatus = s.status === 'completed' ? 'completed' : 'failed';
             this.clearBatchPoll();
@@ -563,8 +611,8 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
     const request = {
       experiment_id:   this.experimentId.trim(),
       item_ids:        itemIds,
-      prompt_variants: [this.experimentVariant || this.selectedVariant],
-      models:          this.experimentModels.length > 0 ? this.experimentModels : ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+      prompt_variants: this.selectedVariants.length > 0 ? this.selectedVariants : [this.experimentVariant || this.selectedVariant],
+      models:          this.experimentModels.length > 0 ? this.experimentModels : ['gpt-5.6-sol', 'gemini-3.1-flash-lite', 'gpt-4o'],
       temperature:     this.temperature,
       ...(this.taskInstructions.trim() ? { task_instructions: this.taskInstructions.trim() } : {}),
       experiment_meta: this.currentExperiment,
@@ -606,6 +654,7 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   hrFailureCount: number | null        = null;
   hrReviewRound                        = 1;
   hrBlinded                            = true;
+  hrRepresentativeSample               = false;
   hrCounts: HumanReviewCounts | null   = null;
   hrReviews: HumanReviewSummary[]      = [];
   hrStats: HumanReviewStats | null     = null;
@@ -660,7 +709,8 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
 
   get canGenerateHr(): boolean {
     return !this.hrLoading && !!this.hrBatchId.trim() &&
-      (this.hrSeverityThreshold !== null || this.hrRandomPct !== null || this.hrFailureCount !== null);
+      (this.hrSeverityThreshold !== null || this.hrRandomPct !== null ||
+       this.hrFailureCount !== null || this.hrRepresentativeSample);
   }
 
   generateHumanReviews() {
@@ -675,6 +725,7 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
       severity_threshold:      this.hrSeverityThreshold,
       random_pct:              this.hrRandomPct,
       failure_count_threshold: this.hrFailureCount,
+      representative_sample:   this.hrRepresentativeSample,
     }).subscribe({
       next: (result) => {
         this.hrLoading = false;

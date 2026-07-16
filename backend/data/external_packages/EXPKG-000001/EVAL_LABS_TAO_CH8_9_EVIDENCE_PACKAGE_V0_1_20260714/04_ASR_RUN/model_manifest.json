@@ -1,0 +1,60 @@
+{
+  "model_root": "/opt/pyvenv/lib/python3.13/site-packages/pocketsphinx/model",
+  "files": [
+    {
+      "path": "en-us/cmudict-en-us.dict",
+      "sha256": "20b5c293e1f311fb375fe067e500ec5636f4fc7af5594967263696def9b23bfe",
+      "size": 3275645
+    },
+    {
+      "path": "en-us/en-us-phone.lm.bin",
+      "sha256": "c57e0fa4191b096b1279cfe3a77927f52568fdecfc6624ddb5cec9527c763a54",
+      "size": 857195
+    },
+    {
+      "path": "en-us/en-us.lm.bin",
+      "sha256": "db21d0642286677699e6dbc859d2e5395570222361999387ce60f6e1d01995d6",
+      "size": 27114385
+    },
+    {
+      "path": "en-us/en-us/README",
+      "sha256": "8b88de980568509c646d0527b8414beef136964391903b40996d32f737bf752e",
+      "size": 1617
+    },
+    {
+      "path": "en-us/en-us/feat.params",
+      "sha256": "c982c5f75e2a30c34d2c9ef1f6b129a5a00e67e3e927565076b58664cc2404c9",
+      "size": 164
+    },
+    {
+      "path": "en-us/en-us/mdef",
+      "sha256": "2360f9a86889c1cfee8bd618a0269387911e5fb2920a594f506b18b8c79683b0",
+      "size": 2959176
+    },
+    {
+      "path": "en-us/en-us/means",
+      "sha256": "832019e32cac12eb318964f96f469034acb12d0348eeddc3831831a100cb4dd4",
+      "size": 838732
+    },
+    {
+      "path": "en-us/en-us/noisedict",
+      "sha256": "7295b07df2c204c4f87c6782b6be1a3859d7006d4e3864181c955d6dab105a33",
+      "size": 56
+    },
+    {
+      "path": "en-us/en-us/sendump",
+      "sha256": "8c9564c0d5bef69ca9d9bf1014abe162f071644cf02cf1fa8a483c3dc165a7a8",
+      "size": 1969024
+    },
+    {
+      "path": "en-us/en-us/transition_matrices",
+      "sha256": "c1f7f28ea43177be734be1f88bd7f1b9a853d0e660f8599c67c6eaeca8bb539a",
+      "size": 2080
+    },
+    {
+      "path": "en-us/en-us/variances",
+      "sha256": "b00d696f85e96834fc10f8e5f06428d8c4db6bffdbe5845b6f69bf6efbc48fa5",
+      "size": 838732
+    }
+  ]
+}

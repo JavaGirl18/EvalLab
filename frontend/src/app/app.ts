@@ -8,6 +8,7 @@ import { ResearchPanelComponent } from './research-panel/research-panel';
 import { ResearchResultsComponent } from './research-results/research-results';
 import { ResearchTrendsComponent } from './research-trends/research-trends';
 import { HumanReviewDashboardComponent } from './human-review-dashboard/human-review-dashboard';
+import { ExternalPackagesComponent } from './external-packages/external-packages';
 import {
   EvalResponse,
   ResearchEvalResponse,
@@ -30,6 +31,7 @@ const MAX_HISTORY = 10;
     ResearchResultsComponent,
     ResearchTrendsComponent,
     HumanReviewDashboardComponent,
+    ExternalPackagesComponent,
     NgIcon,
   ],
   providers: [provideIcons({ lucideGavel })],
@@ -38,7 +40,7 @@ const MAX_HISTORY = 10;
 })
 export class App {
   mode: 'eval' | 'research' = 'research';
-  researchView: 'results' | 'trends' | 'reviews' = 'results';
+  researchView: 'results' | 'trends' | 'reviews' | 'import' = 'results';
   sidebarCollapsed = false;
   currentExperimentId = '';
 

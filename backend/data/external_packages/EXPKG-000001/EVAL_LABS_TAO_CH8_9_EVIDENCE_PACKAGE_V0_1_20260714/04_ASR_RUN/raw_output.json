@@ -1,0 +1,1854 @@
+{
+  "run_id": "EVAL_LABS_ASR_RUN_001",
+  "engine": "PocketSphinx",
+  "engine_version": "5.1.1",
+  "python_version": "3.13.5 (main, May  5 2026, 21:05:52) [GCC 14.2.0]",
+  "input_original_filename": "tao_ch8_2_to_ch9_2_selected_source.wav",
+  "input_original_sha256": "d750254fd4db8751077a52222f5684cfe7c2308cb9c0885acf3e2da4f678b3d3",
+  "input_derivative_filename": "input_16k_mono_pcm16.wav",
+  "input_derivative_sha256": "bcd3a42eec5cec0e3cbcecf777737e88ec88e8c4b41e6aa71f90660cafe6df2a",
+  "audio_conversion_command": "ffmpeg -i <source.wav> -ac 1 -ar 16000 -sample_fmt s16 input_16k_mono_pcm16.wav",
+  "decoder_configuration": {
+    "hmm": "model/en-us/en-us",
+    "lm": "model/en-us/en-us.lm.bin",
+    "dict": "model/en-us/cmudict-en-us.dict",
+    "language": "en-US",
+    "search": "default n-gram language model"
+  },
+  "hypothesis": "chapter eight section to the excellence of our residence is in the suitability of the place that of the mind is an abysmal stillness that an association says in there being with the virtuous that of government is in its securing good order that of the conduct of affairs is in his ability and that of the initiation of any movement is in its timeliness chapter eight section three and one one with the highest excellence does not bring goal but his low position no one finds fault with him chapter nine section one it is better to leave a vessel on the field than to attempt to carry it when it does fall if you keep feeling appointed has been sharpened the point cannot long preserve it sharpens chapter nine section two when colin jade fill the hole there possess irked cannot keep them safe one well fed on earth lead to arrogance see this brings its evil on itself when the work is don and one's name is becoming distinguished to withdraw into obscurity is the way of heaven and of chapter nine",
+  "segments": [
+    {
+      "word": "<s>",
+      "start_frame": 0,
+      "end_frame": 7,
+      "start_seconds": 0.0,
+      "end_seconds": 0.08,
+      "engine_probability": 1.0039074191472304
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 8,
+      "end_frame": 255,
+      "start_seconds": 0.08,
+      "end_seconds": 2.56,
+      "engine_probability": 0.7178580538222349
+    },
+    {
+      "word": "[NOISE]",
+      "start_frame": 256,
+      "end_frame": 277,
+      "start_seconds": 2.56,
+      "end_seconds": 2.78,
+      "engine_probability": 0.9069253692526137
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 278,
+      "end_frame": 281,
+      "start_seconds": 2.78,
+      "end_seconds": 2.82,
+      "engine_probability": 0.5767349470755432
+    },
+    {
+      "word": "chapter",
+      "start_frame": 282,
+      "end_frame": 327,
+      "start_seconds": 2.82,
+      "end_seconds": 3.28,
+      "engine_probability": 1.0040078098891452
+    },
+    {
+      "word": "eight",
+      "start_frame": 328,
+      "end_frame": 364,
+      "start_seconds": 3.28,
+      "end_seconds": 3.65,
+      "engine_probability": 0.9452581774152861
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 365,
+      "end_frame": 369,
+      "start_seconds": 3.65,
+      "end_seconds": 3.7,
+      "engine_probability": 0.6004508455394513
+    },
+    {
+      "word": "section",
+      "start_frame": 370,
+      "end_frame": 420,
+      "start_seconds": 3.7,
+      "end_seconds": 4.21,
+      "engine_probability": 0.9433696446477673
+    },
+    {
+      "word": "to",
+      "start_frame": 421,
+      "end_frame": 458,
+      "start_seconds": 4.21,
+      "end_seconds": 4.59,
+      "engine_probability": 0.6425067981602934
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 459,
+      "end_frame": 603,
+      "start_seconds": 4.59,
+      "end_seconds": 6.04,
+      "engine_probability": 1.004208621491201
+    },
+    {
+      "word": "the(2)",
+      "start_frame": 604,
+      "end_frame": 623,
+      "start_seconds": 6.04,
+      "end_seconds": 6.24,
+      "engine_probability": 0.7236960240264044
+    },
+    {
+      "word": "excellence",
+      "start_frame": 624,
+      "end_frame": 678,
+      "start_seconds": 6.24,
+      "end_seconds": 6.79,
+      "engine_probability": 0.8524915170640812
+    },
+    {
+      "word": "of",
+      "start_frame": 679,
+      "end_frame": 690,
+      "start_seconds": 6.79,
+      "end_seconds": 6.91,
+      "engine_probability": 0.841313127620947
+    },
+    {
+      "word": "our(3)",
+      "start_frame": 691,
+      "end_frame": 701,
+      "start_seconds": 6.91,
+      "end_seconds": 7.02,
+      "engine_probability": 0.08874582419364302
+    },
+    {
+      "word": "residence",
+      "start_frame": 702,
+      "end_frame": 759,
+      "start_seconds": 7.02,
+      "end_seconds": 7.6,
+      "engine_probability": 0.14292964947558381
+    },
+    {
+      "word": "is",
+      "start_frame": 760,
+      "end_frame": 779,
+      "start_seconds": 7.6,
+      "end_seconds": 7.8,
+      "engine_probability": 0.19775646790163254
+    },
+    {
+      "word": "in",
+      "start_frame": 780,
+      "end_frame": 795,
+      "start_seconds": 7.8,
+      "end_seconds": 7.96,
+      "engine_probability": 0.887280581423264
+    },
+    {
+      "word": "the",
+      "start_frame": 796,
+      "end_frame": 803,
+      "start_seconds": 7.96,
+      "end_seconds": 8.04,
+      "engine_probability": 1.0015010504551363
+    },
+    {
+      "word": "suitability",
+      "start_frame": 804,
+      "end_frame": 887,
+      "start_seconds": 8.04,
+      "end_seconds": 8.88,
+      "engine_probability": 1.0006001500200015
+    },
+    {
+      "word": "of",
+      "start_frame": 888,
+      "end_frame": 899,
+      "start_seconds": 8.88,
+      "end_seconds": 9.0,
+      "engine_probability": 1.0046103651963316
+    },
+    {
+      "word": "the",
+      "start_frame": 900,
+      "end_frame": 908,
+      "start_seconds": 9.0,
+      "end_seconds": 9.09,
+      "engine_probability": 0.935572469486366
+    },
+    {
+      "word": "place",
+      "start_frame": 909,
+      "end_frame": 984,
+      "start_seconds": 9.09,
+      "end_seconds": 9.85,
+      "engine_probability": 0.9757013140602208
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 985,
+      "end_frame": 1042,
+      "start_seconds": 9.85,
+      "end_seconds": 10.43,
+      "engine_probability": 1.0045099142049112
+    },
+    {
+      "word": "that",
+      "start_frame": 1043,
+      "end_frame": 1071,
+      "start_seconds": 10.43,
+      "end_seconds": 10.72,
+      "engine_probability": 0.8881682613874412
+    },
+    {
+      "word": "of",
+      "start_frame": 1072,
+      "end_frame": 1081,
+      "start_seconds": 10.72,
+      "end_seconds": 10.82,
+      "engine_probability": 0.4045197378434126
+    },
+    {
+      "word": "the",
+      "start_frame": 1082,
+      "end_frame": 1089,
+      "start_seconds": 10.82,
+      "end_seconds": 10.9,
+      "engine_probability": 0.7337517513224178
+    },
+    {
+      "word": "mind",
+      "start_frame": 1090,
+      "end_frame": 1148,
+      "start_seconds": 10.9,
+      "end_seconds": 11.49,
+      "engine_probability": 0.5759857162108374
+    },
+    {
+      "word": "is",
+      "start_frame": 1149,
+      "end_frame": 1172,
+      "start_seconds": 11.49,
+      "end_seconds": 11.73,
+      "engine_probability": 0.9211836173056039
+    },
+    {
+      "word": "an",
+      "start_frame": 1173,
+      "end_frame": 1185,
+      "start_seconds": 11.73,
+      "end_seconds": 11.86,
+      "engine_probability": 0.8237482598457433
+    },
+    {
+      "word": "abysmal",
+      "start_frame": 1186,
+      "end_frame": 1245,
+      "start_seconds": 11.86,
+      "end_seconds": 12.46,
+      "engine_probability": 1.0045099142049112
+    },
+    {
+      "word": "stillness",
+      "start_frame": 1246,
+      "end_frame": 1339,
+      "start_seconds": 12.46,
+      "end_seconds": 13.4,
+      "engine_probability": 0.4715347811987567
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 1340,
+      "end_frame": 1409,
+      "start_seconds": 13.4,
+      "end_seconds": 14.1,
+      "engine_probability": 1.0044094732575855
+    },
+    {
+      "word": "that",
+      "start_frame": 1410,
+      "end_frame": 1432,
+      "start_seconds": 14.1,
+      "end_seconds": 14.33,
+      "engine_probability": 0.48429369549929036
+    },
+    {
+      "word": "an(2)",
+      "start_frame": 1433,
+      "end_frame": 1446,
+      "start_seconds": 14.33,
+      "end_seconds": 14.47,
+      "engine_probability": 0.021644403587000465
+    },
+    {
+      "word": "association",
+      "start_frame": 1447,
+      "end_frame": 1537,
+      "start_seconds": 14.47,
+      "end_seconds": 15.38,
+      "engine_probability": 0.9112888568470346
+    },
+    {
+      "word": "says(2)",
+      "start_frame": 1538,
+      "end_frame": 1562,
+      "start_seconds": 15.38,
+      "end_seconds": 15.63,
+      "engine_probability": 0.8989798348970051
+    },
+    {
+      "word": "in",
+      "start_frame": 1563,
+      "end_frame": 1577,
+      "start_seconds": 15.63,
+      "end_seconds": 15.78,
+      "engine_probability": 0.7319197544925813
+    },
+    {
+      "word": "there",
+      "start_frame": 1578,
+      "end_frame": 1598,
+      "start_seconds": 15.78,
+      "end_seconds": 15.99,
+      "engine_probability": 0.5653719267900432
+    },
+    {
+      "word": "being",
+      "start_frame": 1599,
+      "end_frame": 1641,
+      "start_seconds": 15.99,
+      "end_seconds": 16.42,
+      "engine_probability": 1.0045099142049112
+    },
+    {
+      "word": "with",
+      "start_frame": 1642,
+      "end_frame": 1656,
+      "start_seconds": 16.42,
+      "end_seconds": 16.57,
+      "engine_probability": 0.9003292489873356
+    },
+    {
+      "word": "the",
+      "start_frame": 1657,
+      "end_frame": 1665,
+      "start_seconds": 16.57,
+      "end_seconds": 16.66,
+      "engine_probability": 0.6990156861237996
+    },
+    {
+      "word": "virtuous",
+      "start_frame": 1666,
+      "end_frame": 1749,
+      "start_seconds": 16.66,
+      "end_seconds": 17.5,
+      "engine_probability": 0.9693801376503953
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 1750,
+      "end_frame": 1797,
+      "start_seconds": 17.5,
+      "end_seconds": 17.98,
+      "engine_probability": 1.0048112973154746
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 1798,
+      "end_frame": 1811,
+      "start_seconds": 17.98,
+      "end_seconds": 18.12,
+      "engine_probability": 0.8545398513079709
+    },
+    {
+      "word": "that",
+      "start_frame": 1812,
+      "end_frame": 1846,
+      "start_seconds": 18.12,
+      "end_seconds": 18.47,
+      "engine_probability": 0.9101960206925419
+    },
+    {
+      "word": "of",
+      "start_frame": 1847,
+      "end_frame": 1862,
+      "start_seconds": 18.47,
+      "end_seconds": 18.63,
+      "engine_probability": 0.8503630563770586
+    },
+    {
+      "word": "government(2)",
+      "start_frame": 1863,
+      "end_frame": 1922,
+      "start_seconds": 18.63,
+      "end_seconds": 19.23,
+      "engine_probability": 0.7192951346788876
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 1923,
+      "end_frame": 1942,
+      "start_seconds": 19.23,
+      "end_seconds": 19.43,
+      "engine_probability": 0.660948538361283
+    },
+    {
+      "word": "is",
+      "start_frame": 1943,
+      "end_frame": 1958,
+      "start_seconds": 19.43,
+      "end_seconds": 19.59,
+      "engine_probability": 0.6587052412598475
+    },
+    {
+      "word": "in",
+      "start_frame": 1959,
+      "end_frame": 1969,
+      "start_seconds": 19.59,
+      "end_seconds": 19.7,
+      "engine_probability": 0.4810118334367431
+    },
+    {
+      "word": "its",
+      "start_frame": 1970,
+      "end_frame": 1988,
+      "start_seconds": 19.7,
+      "end_seconds": 19.89,
+      "engine_probability": 0.3421362006874497
+    },
+    {
+      "word": "securing",
+      "start_frame": 1989,
+      "end_frame": 2044,
+      "start_seconds": 19.89,
+      "end_seconds": 20.45,
+      "engine_probability": 1.0049117784452062
+    },
+    {
+      "word": "good",
+      "start_frame": 2045,
+      "end_frame": 2063,
+      "start_seconds": 20.45,
+      "end_seconds": 20.64,
+      "engine_probability": 0.27713907048352227
+    },
+    {
+      "word": "order",
+      "start_frame": 2064,
+      "end_frame": 2115,
+      "start_seconds": 20.64,
+      "end_seconds": 21.16,
+      "engine_probability": 1.0048112973154746
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 2116,
+      "end_frame": 2209,
+      "start_seconds": 21.16,
+      "end_seconds": 22.1,
+      "engine_probability": 1.0048112973154746
+    },
+    {
+      "word": "that",
+      "start_frame": 2210,
+      "end_frame": 2246,
+      "start_seconds": 22.1,
+      "end_seconds": 22.47,
+      "engine_probability": 1.004208621491201
+    },
+    {
+      "word": "of",
+      "start_frame": 2247,
+      "end_frame": 2258,
+      "start_seconds": 22.47,
+      "end_seconds": 22.59,
+      "engine_probability": 0.389320318572712
+    },
+    {
+      "word": "the",
+      "start_frame": 2259,
+      "end_frame": 2267,
+      "start_seconds": 22.59,
+      "end_seconds": 22.68,
+      "engine_probability": 0.9908426462737453
+    },
+    {
+      "word": "conduct",
+      "start_frame": 2268,
+      "end_frame": 2322,
+      "start_seconds": 22.68,
+      "end_seconds": 23.23,
+      "engine_probability": 1.0047108262328512
+    },
+    {
+      "word": "of",
+      "start_frame": 2323,
+      "end_frame": 2333,
+      "start_seconds": 23.23,
+      "end_seconds": 23.34,
+      "engine_probability": 1.0046103651963316
+    },
+    {
+      "word": "affairs",
+      "start_frame": 2334,
+      "end_frame": 2401,
+      "start_seconds": 23.34,
+      "end_seconds": 24.02,
+      "engine_probability": 1.0046103651963316
+    },
+    {
+      "word": "is",
+      "start_frame": 2402,
+      "end_frame": 2419,
+      "start_seconds": 24.02,
+      "end_seconds": 24.2,
+      "engine_probability": 0.9809840876741325
+    },
+    {
+      "word": "in",
+      "start_frame": 2420,
+      "end_frame": 2429,
+      "start_seconds": 24.2,
+      "end_seconds": 24.3,
+      "engine_probability": 0.9670565309417595
+    },
+    {
+      "word": "his",
+      "start_frame": 2430,
+      "end_frame": 2447,
+      "start_seconds": 24.3,
+      "end_seconds": 24.48,
+      "engine_probability": 0.9065626897793143
+    },
+    {
+      "word": "ability",
+      "start_frame": 2448,
+      "end_frame": 2516,
+      "start_seconds": 24.48,
+      "end_seconds": 25.17,
+      "engine_probability": 1.0022023115407315
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 2517,
+      "end_frame": 2600,
+      "start_seconds": 25.17,
+      "end_seconds": 26.01,
+      "engine_probability": 1.0049117784452062
+    },
+    {
+      "word": "and(2)",
+      "start_frame": 2601,
+      "end_frame": 2628,
+      "start_seconds": 26.01,
+      "end_seconds": 26.29,
+      "engine_probability": 0.9584883412172891
+    },
+    {
+      "word": "that",
+      "start_frame": 2629,
+      "end_frame": 2659,
+      "start_seconds": 26.29,
+      "end_seconds": 26.6,
+      "engine_probability": 0.9582966722998625
+    },
+    {
+      "word": "of",
+      "start_frame": 2660,
+      "end_frame": 2672,
+      "start_seconds": 26.6,
+      "end_seconds": 26.73,
+      "engine_probability": 0.06327518877179143
+    },
+    {
+      "word": "the(2)",
+      "start_frame": 2673,
+      "end_frame": 2682,
+      "start_seconds": 26.73,
+      "end_seconds": 26.83,
+      "engine_probability": 0.7886851156260137
+    },
+    {
+      "word": "initiation",
+      "start_frame": 2683,
+      "end_frame": 2762,
+      "start_seconds": 26.83,
+      "end_seconds": 27.63,
+      "engine_probability": 1.005112770850013
+    },
+    {
+      "word": "of",
+      "start_frame": 2763,
+      "end_frame": 2772,
+      "start_seconds": 27.63,
+      "end_seconds": 27.73,
+      "engine_probability": 1.000800280056007
+    },
+    {
+      "word": "any",
+      "start_frame": 2773,
+      "end_frame": 2799,
+      "start_seconds": 27.73,
+      "end_seconds": 28.0,
+      "engine_probability": 1.0050122696230506
+    },
+    {
+      "word": "movement",
+      "start_frame": 2800,
+      "end_frame": 2870,
+      "start_seconds": 28.0,
+      "end_seconds": 28.71,
+      "engine_probability": 0.9913381666910556
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 2871,
+      "end_frame": 2879,
+      "start_seconds": 28.71,
+      "end_seconds": 28.8,
+      "engine_probability": 0.7296544295856746
+    },
+    {
+      "word": "is",
+      "start_frame": 2880,
+      "end_frame": 2897,
+      "start_seconds": 28.8,
+      "end_seconds": 28.98,
+      "engine_probability": 0.9672499519185132
+    },
+    {
+      "word": "in",
+      "start_frame": 2898,
+      "end_frame": 2909,
+      "start_seconds": 28.98,
+      "end_seconds": 29.1,
+      "engine_probability": 0.5863881645915966
+    },
+    {
+      "word": "its",
+      "start_frame": 2910,
+      "end_frame": 2926,
+      "start_seconds": 29.1,
+      "end_seconds": 29.27,
+      "engine_probability": 0.48750044418558064
+    },
+    {
+      "word": "timeliness",
+      "start_frame": 2927,
+      "end_frame": 3022,
+      "start_seconds": 29.27,
+      "end_seconds": 30.23,
+      "engine_probability": 0.45938754176207963
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 3023,
+      "end_frame": 3130,
+      "start_seconds": 30.23,
+      "end_seconds": 31.31,
+      "engine_probability": 1.0049117784452062
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 3131,
+      "end_frame": 3177,
+      "start_seconds": 31.31,
+      "end_seconds": 31.78,
+      "engine_probability": 1.0048112973154746
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 3178,
+      "end_frame": 3247,
+      "start_seconds": 31.78,
+      "end_seconds": 32.48,
+      "engine_probability": 1.0047108262328512
+    },
+    {
+      "word": "[NOISE]",
+      "start_frame": 3248,
+      "end_frame": 3274,
+      "start_seconds": 32.48,
+      "end_seconds": 32.75,
+      "engine_probability": 0.595011799982093
+    },
+    {
+      "word": "chapter",
+      "start_frame": 3275,
+      "end_frame": 3322,
+      "start_seconds": 32.75,
+      "end_seconds": 33.23,
+      "engine_probability": 1.0048112973154746
+    },
+    {
+      "word": "eight",
+      "start_frame": 3323,
+      "end_frame": 3346,
+      "start_seconds": 33.23,
+      "end_seconds": 33.47,
+      "engine_probability": 0.9751160981144337
+    },
+    {
+      "word": "section",
+      "start_frame": 3347,
+      "end_frame": 3396,
+      "start_seconds": 33.47,
+      "end_seconds": 33.97,
+      "engine_probability": 0.9842265201157054
+    },
+    {
+      "word": "three",
+      "start_frame": 3397,
+      "end_frame": 3439,
+      "start_seconds": 33.97,
+      "end_seconds": 34.4,
+      "engine_probability": 0.583872234404602
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 3440,
+      "end_frame": 3613,
+      "start_seconds": 34.4,
+      "end_seconds": 36.14,
+      "engine_probability": 1.0050122696230506
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 3614,
+      "end_frame": 3627,
+      "start_seconds": 36.14,
+      "end_seconds": 36.28,
+      "engine_probability": 0.8411448902314519
+    },
+    {
+      "word": "and(2)",
+      "start_frame": 3628,
+      "end_frame": 3655,
+      "start_seconds": 36.28,
+      "end_seconds": 36.56,
+      "engine_probability": 1.002803783278048
+    },
+    {
+      "word": "one",
+      "start_frame": 3656,
+      "end_frame": 3678,
+      "start_seconds": 36.56,
+      "end_seconds": 36.79,
+      "engine_probability": 0.2285669291620251
+    },
+    {
+      "word": "one",
+      "start_frame": 3679,
+      "end_frame": 3708,
+      "start_seconds": 36.79,
+      "end_seconds": 37.09,
+      "engine_probability": 0.7483492441973785
+    },
+    {
+      "word": "with",
+      "start_frame": 3709,
+      "end_frame": 3726,
+      "start_seconds": 37.09,
+      "end_seconds": 37.27,
+      "engine_probability": 0.7322125663124913
+    },
+    {
+      "word": "the",
+      "start_frame": 3727,
+      "end_frame": 3733,
+      "start_seconds": 37.27,
+      "end_seconds": 37.34,
+      "engine_probability": 0.9859010444174776
+    },
+    {
+      "word": "highest",
+      "start_frame": 3734,
+      "end_frame": 3786,
+      "start_seconds": 37.34,
+      "end_seconds": 37.87,
+      "engine_probability": 1.0053138034553106
+    },
+    {
+      "word": "excellence",
+      "start_frame": 3787,
+      "end_frame": 3842,
+      "start_seconds": 37.87,
+      "end_seconds": 38.43,
+      "engine_probability": 0.3543223725023849
+    },
+    {
+      "word": "does(2)",
+      "start_frame": 3843,
+      "end_frame": 3860,
+      "start_seconds": 38.43,
+      "end_seconds": 38.61,
+      "engine_probability": 0.45504424062076115
+    },
+    {
+      "word": "not",
+      "start_frame": 3861,
+      "end_frame": 3887,
+      "start_seconds": 38.61,
+      "end_seconds": 38.88,
+      "engine_probability": 1.005112770850013
+    },
+    {
+      "word": "bring",
+      "start_frame": 3888,
+      "end_frame": 3916,
+      "start_seconds": 38.88,
+      "end_seconds": 39.17,
+      "engine_probability": 0.32496304892013383
+    },
+    {
+      "word": "goal",
+      "start_frame": 3917,
+      "end_frame": 3940,
+      "start_seconds": 39.17,
+      "end_seconds": 39.41,
+      "engine_probability": 0.07107157587605453
+    },
+    {
+      "word": "but",
+      "start_frame": 3941,
+      "end_frame": 3961,
+      "start_seconds": 39.41,
+      "end_seconds": 39.62,
+      "engine_probability": 0.8658074013177189
+    },
+    {
+      "word": "his",
+      "start_frame": 3962,
+      "end_frame": 3978,
+      "start_seconds": 39.62,
+      "end_seconds": 39.79,
+      "engine_probability": 0.45033653838103305
+    },
+    {
+      "word": "low",
+      "start_frame": 3979,
+      "end_frame": 4003,
+      "start_seconds": 39.79,
+      "end_seconds": 40.04,
+      "engine_probability": 0.7929553209219111
+    },
+    {
+      "word": "position",
+      "start_frame": 4004,
+      "end_frame": 4068,
+      "start_seconds": 40.04,
+      "end_seconds": 40.69,
+      "engine_probability": 1.00430904235335
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4069,
+      "end_frame": 4135,
+      "start_seconds": 40.69,
+      "end_seconds": 41.36,
+      "engine_probability": 1.0050122696230506
+    },
+    {
+      "word": "no",
+      "start_frame": 4136,
+      "end_frame": 4157,
+      "start_seconds": 41.36,
+      "end_seconds": 41.58,
+      "engine_probability": 0.949141497145775
+    },
+    {
+      "word": "one",
+      "start_frame": 4158,
+      "end_frame": 4178,
+      "start_seconds": 41.58,
+      "end_seconds": 41.79,
+      "engine_probability": 0.9947142838016878
+    },
+    {
+      "word": "finds",
+      "start_frame": 4179,
+      "end_frame": 4219,
+      "start_seconds": 41.79,
+      "end_seconds": 42.2,
+      "engine_probability": 0.9570517582399939
+    },
+    {
+      "word": "fault",
+      "start_frame": 4220,
+      "end_frame": 4248,
+      "start_seconds": 42.2,
+      "end_seconds": 42.49,
+      "engine_probability": 0.849088531650174
+    },
+    {
+      "word": "with(2)",
+      "start_frame": 4249,
+      "end_frame": 4263,
+      "start_seconds": 42.49,
+      "end_seconds": 42.64,
+      "engine_probability": 0.6168830331122022
+    },
+    {
+      "word": "him",
+      "start_frame": 4264,
+      "end_frame": 4292,
+      "start_seconds": 42.64,
+      "end_seconds": 42.93,
+      "engine_probability": 0.8951227132143188
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4293,
+      "end_frame": 4432,
+      "start_seconds": 42.93,
+      "end_seconds": 44.33,
+      "engine_probability": 1.0048112973154746
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4433,
+      "end_frame": 4573,
+      "start_seconds": 44.33,
+      "end_seconds": 45.74,
+      "engine_probability": 1.0049117784452062
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4574,
+      "end_frame": 4589,
+      "start_seconds": 45.74,
+      "end_seconds": 45.9,
+      "engine_probability": 0.6657908735993023
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4590,
+      "end_frame": 4609,
+      "start_seconds": 45.9,
+      "end_seconds": 46.1,
+      "engine_probability": 1.0040078098891452
+    },
+    {
+      "word": "chapter",
+      "start_frame": 4610,
+      "end_frame": 4653,
+      "start_seconds": 46.1,
+      "end_seconds": 46.54,
+      "engine_probability": 0.968604982400831
+    },
+    {
+      "word": "nine",
+      "start_frame": 4654,
+      "end_frame": 4707,
+      "start_seconds": 46.54,
+      "end_seconds": 47.08,
+      "engine_probability": 0.5729985133025833
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4708,
+      "end_frame": 4719,
+      "start_seconds": 47.08,
+      "end_seconds": 47.2,
+      "engine_probability": 0.6939317049172884
+    },
+    {
+      "word": "section",
+      "start_frame": 4720,
+      "end_frame": 4769,
+      "start_seconds": 47.2,
+      "end_seconds": 47.7,
+      "engine_probability": 1.004208621491201
+    },
+    {
+      "word": "one",
+      "start_frame": 4770,
+      "end_frame": 4807,
+      "start_seconds": 47.7,
+      "end_seconds": 48.08,
+      "engine_probability": 0.8414813986596025
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4808,
+      "end_frame": 4860,
+      "start_seconds": 48.08,
+      "end_seconds": 48.61,
+      "engine_probability": 1.004208621491201
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 4861,
+      "end_frame": 4932,
+      "start_seconds": 48.61,
+      "end_seconds": 49.33,
+      "engine_probability": 1.004108210670134
+    },
+    {
+      "word": "[NOISE]",
+      "start_frame": 4933,
+      "end_frame": 4957,
+      "start_seconds": 49.33,
+      "end_seconds": 49.58,
+      "engine_probability": 0.8886124343438431
+    },
+    {
+      "word": "it",
+      "start_frame": 4958,
+      "end_frame": 4975,
+      "start_seconds": 49.58,
+      "end_seconds": 49.76,
+      "engine_probability": 0.8652015784901593
+    },
+    {
+      "word": "is",
+      "start_frame": 4976,
+      "end_frame": 4993,
+      "start_seconds": 49.76,
+      "end_seconds": 49.94,
+      "engine_probability": 0.9989006597141001
+    },
+    {
+      "word": "better",
+      "start_frame": 4994,
+      "end_frame": 5022,
+      "start_seconds": 49.94,
+      "end_seconds": 50.23,
+      "engine_probability": 1.0040078098891452
+    },
+    {
+      "word": "to(3)",
+      "start_frame": 5023,
+      "end_frame": 5035,
+      "start_seconds": 50.23,
+      "end_seconds": 50.36,
+      "engine_probability": 0.8103496273825859
+    },
+    {
+      "word": "leave",
+      "start_frame": 5036,
+      "end_frame": 5069,
+      "start_seconds": 50.36,
+      "end_seconds": 50.7,
+      "engine_probability": 1.0040078098891452
+    },
+    {
+      "word": "a",
+      "start_frame": 5070,
+      "end_frame": 5079,
+      "start_seconds": 50.7,
+      "end_seconds": 50.8,
+      "engine_probability": 0.37100103623031533
+    },
+    {
+      "word": "vessel",
+      "start_frame": 5080,
+      "end_frame": 5123,
+      "start_seconds": 50.8,
+      "end_seconds": 51.24,
+      "engine_probability": 0.7177145037443411
+    },
+    {
+      "word": "on(2)",
+      "start_frame": 5124,
+      "end_frame": 5138,
+      "start_seconds": 51.24,
+      "end_seconds": 51.39,
+      "engine_probability": 0.175062387111585
+    },
+    {
+      "word": "the",
+      "start_frame": 5139,
+      "end_frame": 5147,
+      "start_seconds": 51.39,
+      "end_seconds": 51.48,
+      "engine_probability": 0.3140377463915687
+    },
+    {
+      "word": "field",
+      "start_frame": 5148,
+      "end_frame": 5208,
+      "start_seconds": 51.48,
+      "end_seconds": 52.09,
+      "engine_probability": 0.27736085935437055
+    },
+    {
+      "word": "than(2)",
+      "start_frame": 5209,
+      "end_frame": 5237,
+      "start_seconds": 52.09,
+      "end_seconds": 52.38,
+      "engine_probability": 0.07767108412802817
+    },
+    {
+      "word": "to",
+      "start_frame": 5238,
+      "end_frame": 5253,
+      "start_seconds": 52.38,
+      "end_seconds": 52.54,
+      "engine_probability": 0.8320266515067871
+    },
+    {
+      "word": "attempt",
+      "start_frame": 5254,
+      "end_frame": 5301,
+      "start_seconds": 52.54,
+      "end_seconds": 53.02,
+      "engine_probability": 0.7820882361745936
+    },
+    {
+      "word": "to(2)",
+      "start_frame": 5302,
+      "end_frame": 5311,
+      "start_seconds": 53.02,
+      "end_seconds": 53.12,
+      "engine_probability": 0.8259752739146285
+    },
+    {
+      "word": "carry(2)",
+      "start_frame": 5312,
+      "end_frame": 5354,
+      "start_seconds": 53.12,
+      "end_seconds": 53.55,
+      "engine_probability": 0.7092956623807686
+    },
+    {
+      "word": "it",
+      "start_frame": 5355,
+      "end_frame": 5366,
+      "start_seconds": 53.55,
+      "end_seconds": 53.67,
+      "engine_probability": 0.45006643100346433
+    },
+    {
+      "word": "when(2)",
+      "start_frame": 5367,
+      "end_frame": 5383,
+      "start_seconds": 53.67,
+      "end_seconds": 53.84,
+      "engine_probability": 0.2642833477576933
+    },
+    {
+      "word": "it",
+      "start_frame": 5384,
+      "end_frame": 5391,
+      "start_seconds": 53.84,
+      "end_seconds": 53.92,
+      "engine_probability": 0.9938194884036154
+    },
+    {
+      "word": "does(2)",
+      "start_frame": 5392,
+      "end_frame": 5411,
+      "start_seconds": 53.92,
+      "end_seconds": 54.12,
+      "engine_probability": 0.028321846900222405
+    },
+    {
+      "word": "fall",
+      "start_frame": 5412,
+      "end_frame": 5457,
+      "start_seconds": 54.12,
+      "end_seconds": 54.58,
+      "engine_probability": 0.07097924747022508
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 5458,
+      "end_frame": 5549,
+      "start_seconds": 54.58,
+      "end_seconds": 55.5,
+      "engine_probability": 1.0033052854600941
+    },
+    {
+      "word": "if",
+      "start_frame": 5550,
+      "end_frame": 5563,
+      "start_seconds": 55.5,
+      "end_seconds": 55.64,
+      "engine_probability": 0.9951122292020443
+    },
+    {
+      "word": "you",
+      "start_frame": 5564,
+      "end_frame": 5579,
+      "start_seconds": 55.64,
+      "end_seconds": 55.8,
+      "engine_probability": 1.002904063656376
+    },
+    {
+      "word": "keep",
+      "start_frame": 5580,
+      "end_frame": 5611,
+      "start_seconds": 55.8,
+      "end_seconds": 56.12,
+      "engine_probability": 1.0033052854600941
+    },
+    {
+      "word": "feeling",
+      "start_frame": 5612,
+      "end_frame": 5654,
+      "start_seconds": 56.12,
+      "end_seconds": 56.55,
+      "engine_probability": 1.0032049649635977
+    },
+    {
+      "word": "appointed",
+      "start_frame": 5655,
+      "end_frame": 5709,
+      "start_seconds": 56.55,
+      "end_seconds": 57.1,
+      "engine_probability": 0.4911211465174515
+    },
+    {
+      "word": "has",
+      "start_frame": 5710,
+      "end_frame": 5733,
+      "start_seconds": 57.1,
+      "end_seconds": 57.34,
+      "engine_probability": 0.9303481665683611
+    },
+    {
+      "word": "been",
+      "start_frame": 5734,
+      "end_frame": 5746,
+      "start_seconds": 57.34,
+      "end_seconds": 57.47,
+      "engine_probability": 0.5313319126520822
+    },
+    {
+      "word": "sharpened",
+      "start_frame": 5747,
+      "end_frame": 5810,
+      "start_seconds": 57.47,
+      "end_seconds": 58.11,
+      "engine_probability": 0.6776119220344743
+    },
+    {
+      "word": "[NOISE]",
+      "start_frame": 5811,
+      "end_frame": 5829,
+      "start_seconds": 58.11,
+      "end_seconds": 58.3,
+      "engine_probability": 0.9278397398377523
+    },
+    {
+      "word": "the",
+      "start_frame": 5830,
+      "end_frame": 5839,
+      "start_seconds": 58.3,
+      "end_seconds": 58.4,
+      "engine_probability": 0.9598310974683694
+    },
+    {
+      "word": "point",
+      "start_frame": 5840,
+      "end_frame": 5872,
+      "start_seconds": 58.4,
+      "end_seconds": 58.73,
+      "engine_probability": 1.002803783278048
+    },
+    {
+      "word": "cannot",
+      "start_frame": 5873,
+      "end_frame": 5916,
+      "start_seconds": 58.73,
+      "end_seconds": 59.17,
+      "engine_probability": 0.29672803877331944
+    },
+    {
+      "word": "long",
+      "start_frame": 5917,
+      "end_frame": 5954,
+      "start_seconds": 59.17,
+      "end_seconds": 59.55,
+      "engine_probability": 1.0027035129267554
+    },
+    {
+      "word": "preserve(2)",
+      "start_frame": 5955,
+      "end_frame": 6003,
+      "start_seconds": 59.55,
+      "end_seconds": 60.04,
+      "engine_probability": 0.6294072021449794
+    },
+    {
+      "word": "it",
+      "start_frame": 6004,
+      "end_frame": 6014,
+      "start_seconds": 60.04,
+      "end_seconds": 60.15,
+      "engine_probability": 1.0027035129267554
+    },
+    {
+      "word": "sharpens",
+      "start_frame": 6015,
+      "end_frame": 6096,
+      "start_seconds": 60.15,
+      "end_seconds": 60.97,
+      "engine_probability": 1.0027035129267554
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 6097,
+      "end_frame": 6396,
+      "start_seconds": 60.97,
+      "end_seconds": 63.97,
+      "engine_probability": 1.0025030023012653
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 6397,
+      "end_frame": 6420,
+      "start_seconds": 63.97,
+      "end_seconds": 64.21,
+      "engine_probability": 1.0024027620250628
+    },
+    {
+      "word": "chapter",
+      "start_frame": 6421,
+      "end_frame": 6459,
+      "start_seconds": 64.21,
+      "end_seconds": 64.6,
+      "engine_probability": 1.0023025317718857
+    },
+    {
+      "word": "nine",
+      "start_frame": 6460,
+      "end_frame": 6510,
+      "start_seconds": 64.6,
+      "end_seconds": 65.11,
+      "engine_probability": 0.6900567411393506
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 6511,
+      "end_frame": 6513,
+      "start_seconds": 65.11,
+      "end_seconds": 65.14,
+      "engine_probability": 0.6233941027098617
+    },
+    {
+      "word": "section",
+      "start_frame": 6514,
+      "end_frame": 6563,
+      "start_seconds": 65.14,
+      "end_seconds": 65.64,
+      "engine_probability": 1.0023025317718857
+    },
+    {
+      "word": "two",
+      "start_frame": 6564,
+      "end_frame": 6601,
+      "start_seconds": 65.64,
+      "end_seconds": 66.02,
+      "engine_probability": 0.24401404967741536
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 6602,
+      "end_frame": 6709,
+      "start_seconds": 66.02,
+      "end_seconds": 67.1,
+      "engine_probability": 1.0023025317718857
+    },
+    {
+      "word": "when",
+      "start_frame": 6710,
+      "end_frame": 6737,
+      "start_seconds": 67.1,
+      "end_seconds": 67.38,
+      "engine_probability": 0.18046572819966877
+    },
+    {
+      "word": "colin",
+      "start_frame": 6738,
+      "end_frame": 6786,
+      "start_seconds": 67.38,
+      "end_seconds": 67.87,
+      "engine_probability": 0.1736328162650446
+    },
+    {
+      "word": "jade",
+      "start_frame": 6787,
+      "end_frame": 6830,
+      "start_seconds": 67.87,
+      "end_seconds": 68.31,
+      "engine_probability": 0.005233696972558149
+    },
+    {
+      "word": "fill",
+      "start_frame": 6831,
+      "end_frame": 6863,
+      "start_seconds": 68.31,
+      "end_seconds": 68.64,
+      "engine_probability": 0.5175407219420329
+    },
+    {
+      "word": "the",
+      "start_frame": 6864,
+      "end_frame": 6871,
+      "start_seconds": 68.64,
+      "end_seconds": 68.72,
+      "engine_probability": 0.7028706711429601
+    },
+    {
+      "word": "hole",
+      "start_frame": 6872,
+      "end_frame": 6933,
+      "start_seconds": 68.72,
+      "end_seconds": 69.34,
+      "engine_probability": 0.027889053162054648
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 6934,
+      "end_frame": 6936,
+      "start_seconds": 69.34,
+      "end_seconds": 69.37,
+      "engine_probability": 0.5353852155686485
+    },
+    {
+      "word": "there",
+      "start_frame": 6937,
+      "end_frame": 6956,
+      "start_seconds": 69.37,
+      "end_seconds": 69.57,
+      "engine_probability": 0.2538449961629142
+    },
+    {
+      "word": "possess",
+      "start_frame": 6957,
+      "end_frame": 7001,
+      "start_seconds": 69.57,
+      "end_seconds": 70.02,
+      "engine_probability": 0.34685548395743393
+    },
+    {
+      "word": "irked",
+      "start_frame": 7002,
+      "end_frame": 7017,
+      "start_seconds": 70.02,
+      "end_seconds": 70.18,
+      "engine_probability": 1.0017013606802379
+    },
+    {
+      "word": "cannot",
+      "start_frame": 7018,
+      "end_frame": 7053,
+      "start_seconds": 70.18,
+      "end_seconds": 70.54,
+      "engine_probability": 0.8312782017951811
+    },
+    {
+      "word": "keep",
+      "start_frame": 7054,
+      "end_frame": 7078,
+      "start_seconds": 70.54,
+      "end_seconds": 70.79,
+      "engine_probability": 0.8468838789890313
+    },
+    {
+      "word": "them(2)",
+      "start_frame": 7079,
+      "end_frame": 7093,
+      "start_seconds": 70.79,
+      "end_seconds": 70.94,
+      "engine_probability": 0.9235816909538096
+    },
+    {
+      "word": "safe",
+      "start_frame": 7094,
+      "end_frame": 7147,
+      "start_seconds": 70.94,
+      "end_seconds": 71.48,
+      "engine_probability": 0.9559996326864695
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 7148,
+      "end_frame": 7221,
+      "start_seconds": 71.48,
+      "end_seconds": 72.22,
+      "engine_probability": 1.0016012005601818
+    },
+    {
+      "word": "one",
+      "start_frame": 7222,
+      "end_frame": 7241,
+      "start_seconds": 72.22,
+      "end_seconds": 72.42,
+      "engine_probability": 0.22028692891623333
+    },
+    {
+      "word": "well",
+      "start_frame": 7242,
+      "end_frame": 7265,
+      "start_seconds": 72.42,
+      "end_seconds": 72.66,
+      "engine_probability": 0.34237576788850904
+    },
+    {
+      "word": "fed",
+      "start_frame": 7266,
+      "end_frame": 7284,
+      "start_seconds": 72.66,
+      "end_seconds": 72.85,
+      "engine_probability": 0.15278767503602186
+    },
+    {
+      "word": "on(2)",
+      "start_frame": 7285,
+      "end_frame": 7308,
+      "start_seconds": 72.85,
+      "end_seconds": 73.09,
+      "engine_probability": 0.8738091810781001
+    },
+    {
+      "word": "earth",
+      "start_frame": 7309,
+      "end_frame": 7331,
+      "start_seconds": 73.09,
+      "end_seconds": 73.32,
+      "engine_probability": 0.9253380763866219
+    },
+    {
+      "word": "lead(2)",
+      "start_frame": 7332,
+      "end_frame": 7357,
+      "start_seconds": 73.32,
+      "end_seconds": 73.58,
+      "engine_probability": 0.567410831609714
+    },
+    {
+      "word": "to(2)",
+      "start_frame": 7358,
+      "end_frame": 7365,
+      "start_seconds": 73.58,
+      "end_seconds": 73.66,
+      "engine_probability": 0.4344569937968643
+    },
+    {
+      "word": "arrogance",
+      "start_frame": 7366,
+      "end_frame": 7425,
+      "start_seconds": 73.66,
+      "end_seconds": 74.26,
+      "engine_probability": 0.9895554520497445
+    },
+    {
+      "word": "see",
+      "start_frame": 7426,
+      "end_frame": 7455,
+      "start_seconds": 74.26,
+      "end_seconds": 74.56,
+      "engine_probability": 0.41683857271778396
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 7456,
+      "end_frame": 7477,
+      "start_seconds": 74.56,
+      "end_seconds": 74.78,
+      "engine_probability": 0.6982472300195678
+    },
+    {
+      "word": "this",
+      "start_frame": 7478,
+      "end_frame": 7501,
+      "start_seconds": 74.78,
+      "end_seconds": 75.02,
+      "engine_probability": 1.0013007802860714
+    },
+    {
+      "word": "brings",
+      "start_frame": 7502,
+      "end_frame": 7537,
+      "start_seconds": 75.02,
+      "end_seconds": 75.38,
+      "engine_probability": 0.9962074001301189
+    },
+    {
+      "word": "its",
+      "start_frame": 7538,
+      "end_frame": 7553,
+      "start_seconds": 75.38,
+      "end_seconds": 75.54,
+      "engine_probability": 0.5395773386745545
+    },
+    {
+      "word": "evil",
+      "start_frame": 7554,
+      "end_frame": 7588,
+      "start_seconds": 75.54,
+      "end_seconds": 75.89,
+      "engine_probability": 0.5999707009532899
+    },
+    {
+      "word": "on(2)",
+      "start_frame": 7589,
+      "end_frame": 7606,
+      "start_seconds": 75.89,
+      "end_seconds": 76.07,
+      "engine_probability": 0.31640176528059033
+    },
+    {
+      "word": "itself",
+      "start_frame": 7607,
+      "end_frame": 7684,
+      "start_seconds": 76.07,
+      "end_seconds": 76.85,
+      "engine_probability": 0.9186080394455259
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 7685,
+      "end_frame": 7768,
+      "start_seconds": 76.85,
+      "end_seconds": 77.69,
+      "engine_probability": 1.001000450120021
+    },
+    {
+      "word": "when",
+      "start_frame": 7769,
+      "end_frame": 7786,
+      "start_seconds": 77.69,
+      "end_seconds": 77.87,
+      "engine_probability": 0.4515088781461219
+    },
+    {
+      "word": "the",
+      "start_frame": 7787,
+      "end_frame": 7794,
+      "start_seconds": 77.87,
+      "end_seconds": 77.95,
+      "engine_probability": 0.9724869670279723
+    },
+    {
+      "word": "work",
+      "start_frame": 7795,
+      "end_frame": 7824,
+      "start_seconds": 77.95,
+      "end_seconds": 78.25,
+      "engine_probability": 0.9868873892356939
+    },
+    {
+      "word": "is",
+      "start_frame": 7825,
+      "end_frame": 7842,
+      "start_seconds": 78.25,
+      "end_seconds": 78.43,
+      "engine_probability": 0.9647384939244417
+    },
+    {
+      "word": "don",
+      "start_frame": 7843,
+      "end_frame": 7893,
+      "start_seconds": 78.43,
+      "end_seconds": 78.94,
+      "engine_probability": 0.2968764324684774
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 7894,
+      "end_frame": 7906,
+      "start_seconds": 78.94,
+      "end_seconds": 79.07,
+      "engine_probability": 0.8400521669334333
+    },
+    {
+      "word": "and(2)",
+      "start_frame": 7907,
+      "end_frame": 7927,
+      "start_seconds": 79.07,
+      "end_seconds": 79.28,
+      "engine_probability": 0.9499960662638849
+    },
+    {
+      "word": "one's",
+      "start_frame": 7928,
+      "end_frame": 7960,
+      "start_seconds": 79.28,
+      "end_seconds": 79.61,
+      "engine_probability": 0.850022996173809
+    },
+    {
+      "word": "name",
+      "start_frame": 7961,
+      "end_frame": 7988,
+      "start_seconds": 79.61,
+      "end_seconds": 79.89,
+      "engine_probability": 0.999500149965007
+    },
+    {
+      "word": "is",
+      "start_frame": 7989,
+      "end_frame": 8001,
+      "start_seconds": 79.89,
+      "end_seconds": 80.02,
+      "engine_probability": 1.0003000300009999
+    },
+    {
+      "word": "becoming",
+      "start_frame": 8002,
+      "end_frame": 8047,
+      "start_seconds": 80.02,
+      "end_seconds": 80.48,
+      "engine_probability": 1.0001
+    },
+    {
+      "word": "distinguished",
+      "start_frame": 8048,
+      "end_frame": 8126,
+      "start_seconds": 80.48,
+      "end_seconds": 81.27,
+      "engine_probability": 0.8851537675642195
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 8127,
+      "end_frame": 8135,
+      "start_seconds": 81.27,
+      "end_seconds": 81.36,
+      "engine_probability": 0.9501860749770984
+    },
+    {
+      "word": "to",
+      "start_frame": 8136,
+      "end_frame": 8153,
+      "start_seconds": 81.36,
+      "end_seconds": 81.54,
+      "engine_probability": 0.9984013591843877
+    },
+    {
+      "word": "withdraw(2)",
+      "start_frame": 8154,
+      "end_frame": 8214,
+      "start_seconds": 81.54,
+      "end_seconds": 82.15,
+      "engine_probability": 0.8403042077859184
+    },
+    {
+      "word": "into",
+      "start_frame": 8215,
+      "end_frame": 8246,
+      "start_seconds": 82.15,
+      "end_seconds": 82.47,
+      "engine_probability": 1.00020001
+    },
+    {
+      "word": "obscurity",
+      "start_frame": 8247,
+      "end_frame": 8328,
+      "start_seconds": 82.47,
+      "end_seconds": 83.29,
+      "engine_probability": 1.0
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 8329,
+      "end_frame": 8341,
+      "start_seconds": 83.29,
+      "end_seconds": 83.42,
+      "engine_probability": 0.8665002897133367
+    },
+    {
+      "word": "is",
+      "start_frame": 8342,
+      "end_frame": 8364,
+      "start_seconds": 83.42,
+      "end_seconds": 83.65,
+      "engine_probability": 0.9913381666910556
+    },
+    {
+      "word": "the",
+      "start_frame": 8365,
+      "end_frame": 8372,
+      "start_seconds": 83.65,
+      "end_seconds": 83.73,
+      "engine_probability": 0.9999000099990001
+    },
+    {
+      "word": "way",
+      "start_frame": 8373,
+      "end_frame": 8418,
+      "start_seconds": 83.73,
+      "end_seconds": 84.19,
+      "engine_probability": 0.9999000099990001
+    },
+    {
+      "word": "of",
+      "start_frame": 8419,
+      "end_frame": 8434,
+      "start_seconds": 84.19,
+      "end_seconds": 84.35,
+      "engine_probability": 0.07157795426244573
+    },
+    {
+      "word": "heaven",
+      "start_frame": 8435,
+      "end_frame": 8486,
+      "start_seconds": 84.35,
+      "end_seconds": 84.87,
+      "engine_probability": 0.01731993361826506
+    },
+    {
+      "word": "<sil>",
+      "start_frame": 8487,
+      "end_frame": 8622,
+      "start_seconds": 84.87,
+      "end_seconds": 86.23,
+      "engine_probability": 0.9999000099990001
+    },
+    {
+      "word": "and(2)",
+      "start_frame": 8623,
+      "end_frame": 8657,
+      "start_seconds": 86.23,
+      "end_seconds": 86.58,
+      "engine_probability": 0.9947142838016878
+    },
+    {
+      "word": "of",
+      "start_frame": 8658,
+      "end_frame": 8670,
+      "start_seconds": 86.58,
+      "end_seconds": 86.71,
+      "engine_probability": 0.16781203655782526
+    },
+    {
+      "word": "chapter",
+      "start_frame": 8671,
+      "end_frame": 8716,
+      "start_seconds": 86.71,
+      "end_seconds": 87.17,
+      "engine_probability": 0.9727787422936621
+    },
+    {
+      "word": "nine",
+      "start_frame": 8717,
+      "end_frame": 8763,
+      "start_seconds": 87.17,
+      "end_seconds": 87.64,
+      "engine_probability": 0.3298739890870922
+    },
+    {
+      "word": "</s>",
+      "start_frame": 8764,
+      "end_frame": 8824,
+      "start_seconds": 87.64,
+      "end_seconds": 88.25,
+      "engine_probability": 1.0
+    }
+  ],
+  "claim_boundary": "One deterministic local decode with the recorded PocketSphinx package and bundled model hashes. Segment probabilities are engine-reported and not calibrated human confidence."
+}

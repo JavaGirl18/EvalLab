@@ -1,0 +1,17 @@
+{
+  "claim_id": "TRANSCRIPT_FIDELITY_CLAIM_001",
+  "claim_text": "The raw ASR transcript faithfully represents the selected recording and makes uncertainty visible.",
+  "status": "CONTESTED_BY_DIFFERENCE_RECORD",
+  "evidence": {
+    "selected_audio_sha256": "d750254fd4db8751077a52222f5684cfe7c2308cb9c0885acf3e2da4f678b3d3",
+    "raw_asr_output": "04_ASR_RUN/raw_output.json",
+    "source_reference": "03_REFERENCE_TEXT/source_reference_transcript.txt",
+    "difference_record": "07_DIFFERENCE/asr_vs_source_alignment.json",
+    "uncertainty_record": "05_UNCERTAINTY/engine_uncertainty.json"
+  },
+  "limits": [
+    "No blind human review has been completed.",
+    "Source text is not direct acoustic evidence for every spoken token.",
+    "Audio reuse outside this private comparison is not claimed."
+  ]
+}

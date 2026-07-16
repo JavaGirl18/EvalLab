@@ -1,0 +1,129 @@
+{
+  "discovered_regular_files": 23,
+  "opened_regular_files": 23,
+  "total_bytes_read": 27068577,
+  "unreadable_files": [],
+  "symlinks": [],
+  "exclusions": [
+    "09_RECEIPTS/READ_RECEIPT.json",
+    "09_RECEIPTS/MANIFEST.sha256"
+  ],
+  "files": [
+    {
+      "path": "00_PACKAGE/MESSAGE_TO_VALENCIA.txt",
+      "sha256": "29d0191014341f389cc2d9f8979bb847312d2e56c4c75889ed838103c3415ed0",
+      "bytes": 1033
+    },
+    {
+      "path": "00_PACKAGE/PACKAGE_METADATA.json",
+      "sha256": "16de141347d866b4d664f6629a4bb658a7f6e842e92523dc3ae9df7c4d10cc80",
+      "bytes": 760
+    },
+    {
+      "path": "01_PARENT_SOURCE/RIGHTS_AND_REUSE_BOUNDARY.md",
+      "sha256": "6fb9d16b393d2c32a4d30aa396877e3fdde9e36fb1a178605e81bf2484491480",
+      "bytes": 1276
+    },
+    {
+      "path": "01_PARENT_SOURCE/tao_teh_king_01-09_lao-tze.mp3",
+      "sha256": "918b5a849f3ce365def9c0b5bb30a6376677b052d846e395dece6205d669268a",
+      "bytes": 8592413
+    },
+    {
+      "path": "02_SELECTED_SOURCE/TRANSFORMATION_RECORD.md",
+      "sha256": "218b59fc9fa71faaf4293aa1dada5d9c14dca3cdc61fa1bd0b16df30fcffad83",
+      "bytes": 1027
+    },
+    {
+      "path": "02_SELECTED_SOURCE/tao_ch8_2_to_ch9_2_selected_source.wav",
+      "sha256": "d750254fd4db8751077a52222f5684cfe7c2308cb9c0885acf3e2da4f678b3d3",
+      "bytes": 15569180
+    },
+    {
+      "path": "03_REFERENCE_TEXT/reference_metadata.json",
+      "sha256": "91f5fa9601db6d96cc51f6f2562139ae7127cc64fcf2df2a0ad4fe4c0d98888b",
+      "bytes": 1138
+    },
+    {
+      "path": "03_REFERENCE_TEXT/source_reference_transcript.txt",
+      "sha256": "26e03928c9f0445881b5ba992c7851c84839f9a8ad84980c71700d5007667e23",
+      "bytes": 1021
+    },
+    {
+      "path": "04_ASR_RUN/input_16k_mono_pcm16.wav",
+      "sha256": "bcd3a42eec5cec0e3cbcecf777737e88ec88e8c4b41e6aa71f90660cafe6df2a",
+      "bytes": 2824386
+    },
+    {
+      "path": "04_ASR_RUN/model_manifest.json",
+      "sha256": "9e3def6c131c8220191c35e77ccc3edad0e431c49649cbf82a75aa175bf33dae",
+      "bytes": 1821
+    },
+    {
+      "path": "04_ASR_RUN/raw_output.json",
+      "sha256": "99267292fe2d754822ee0943f5c82aef00ed26e6bd557b2c967a7ce1e04703f4",
+      "bytes": 46031
+    },
+    {
+      "path": "04_ASR_RUN/transcript_raw.txt",
+      "sha256": "b00204c582d8ff03a15aed85c1346462ecb1feed2c86dd72a1393dfcb246e4d5",
+      "bytes": 999
+    },
+    {
+      "path": "05_UNCERTAINTY/UNCERTAINTY_NOTE.md",
+      "sha256": "6738ff661dbe498ea562bc0ce4fd709c9b32ff3098b9839ae8aba176ce11c8af",
+      "bytes": 448
+    },
+    {
+      "path": "05_UNCERTAINTY/engine_uncertainty.json",
+      "sha256": "cd8995cba30587af0f7a887b664230ac331c96e1acb5993886d55528e05ad57b",
+      "bytes": 4225
+    },
+    {
+      "path": "06_HUMAN_REVIEW/BLIND_REVIEW_TEMPLATE.md",
+      "sha256": "8b5ae67b9ae58dac6de5a0bf0a8decfb08a37f2c941b8ab6986a6564b2a02e27",
+      "bytes": 457
+    },
+    {
+      "path": "06_HUMAN_REVIEW/HUMAN_REVIEW_STATUS.md",
+      "sha256": "2295ba4f7299fae0fdd9ba2911f90fed69e73855212843557a68ed191c3d508c",
+      "bytes": 550
+    },
+    {
+      "path": "07_DIFFERENCE/asr_vs_source_alignment.json",
+      "sha256": "8fa57fbffec19d88084a643ca488db90fa6c3da95c5cc8b2fa30abf0328bda9e",
+      "bytes": 17141
+    },
+    {
+      "path": "07_DIFFERENCE/difference_summary.md",
+      "sha256": "3351b178521281bac44e1e16951f68569e804553852ac31993c67280f7ee4872",
+      "bytes": 546
+    },
+    {
+      "path": "08_PROTOCOL/CLAIM.json",
+      "sha256": "c0cb774d58c70f8057310f12ab0c99b491b0a327f88ca8b3aa3a230d79922f30",
+      "bytes": 808
+    },
+    {
+      "path": "08_PROTOCOL/COMPARISON_QUESTION.md",
+      "sha256": "aefbf9f26bc4c66d608529c8462abd47ff937c718df20c51b4aafcdc633003ab",
+      "bytes": 262
+    },
+    {
+      "path": "08_PROTOCOL/INDEPENDENT_FIRST_READ_PROTOCOL.md",
+      "sha256": "cae6311fb14df261d883f7fc4f3fa814c2f44408f97daae859ebac93215b407e",
+      "bytes": 408
+    },
+    {
+      "path": "09_RECEIPTS/PACKAGE_CONTENTS.txt",
+      "sha256": "294c3eeebc9ef543f9ad5b15819e7a0d92c3ec80bf593cc78925c7156c415dec",
+      "bytes": 828
+    },
+    {
+      "path": "README.md",
+      "sha256": "b22843f22dbeb2bb793a3f96374ca0491f0deabfaf02695ee9a553142f336c50",
+      "bytes": 1819
+    }
+  ],
+  "all_regular_files_read": true
+}

@@ -1,0 +1,954 @@
+{
+  "normalization": "lowercase NFKC; tokens matching [a-z0-9\\']+; punctuation ignored",
+  "reference_word_count": 182,
+  "hypothesis_word_count": 185,
+  "counts": {
+    "equal": 151,
+    "substitute": 28,
+    "delete": 3,
+    "insert": 6
+  },
+  "word_error_rate": 0.2032967032967033,
+  "alignment": [
+    {
+      "op": "equal",
+      "reference": "chapter",
+      "hypothesis": "chapter"
+    },
+    {
+      "op": "equal",
+      "reference": "eight",
+      "hypothesis": "eight"
+    },
+    {
+      "op": "equal",
+      "reference": "section",
+      "hypothesis": "section"
+    },
+    {
+      "op": "substitute",
+      "reference": "two",
+      "hypothesis": "to"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "excellence",
+      "hypothesis": "excellence"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "substitute",
+      "reference": "a",
+      "hypothesis": "our"
+    },
+    {
+      "op": "equal",
+      "reference": "residence",
+      "hypothesis": "residence"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "in",
+      "hypothesis": "in"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "suitability",
+      "hypothesis": "suitability"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "place",
+      "hypothesis": "place"
+    },
+    {
+      "op": "equal",
+      "reference": "that",
+      "hypothesis": "that"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "mind",
+      "hypothesis": "mind"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "substitute",
+      "reference": "in",
+      "hypothesis": "an"
+    },
+    {
+      "op": "equal",
+      "reference": "abysmal",
+      "hypothesis": "abysmal"
+    },
+    {
+      "op": "equal",
+      "reference": "stillness",
+      "hypothesis": "stillness"
+    },
+    {
+      "op": "equal",
+      "reference": "that",
+      "hypothesis": "that"
+    },
+    {
+      "op": "substitute",
+      "reference": "of",
+      "hypothesis": "an"
+    },
+    {
+      "op": "substitute",
+      "reference": "associations",
+      "hypothesis": "association"
+    },
+    {
+      "op": "substitute",
+      "reference": "is",
+      "hypothesis": "says"
+    },
+    {
+      "op": "equal",
+      "reference": "in",
+      "hypothesis": "in"
+    },
+    {
+      "op": "substitute",
+      "reference": "their",
+      "hypothesis": "there"
+    },
+    {
+      "op": "equal",
+      "reference": "being",
+      "hypothesis": "being"
+    },
+    {
+      "op": "equal",
+      "reference": "with",
+      "hypothesis": "with"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "virtuous",
+      "hypothesis": "virtuous"
+    },
+    {
+      "op": "equal",
+      "reference": "that",
+      "hypothesis": "that"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "government",
+      "hypothesis": "government"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "in",
+      "hypothesis": "in"
+    },
+    {
+      "op": "equal",
+      "reference": "its",
+      "hypothesis": "its"
+    },
+    {
+      "op": "equal",
+      "reference": "securing",
+      "hypothesis": "securing"
+    },
+    {
+      "op": "equal",
+      "reference": "good",
+      "hypothesis": "good"
+    },
+    {
+      "op": "equal",
+      "reference": "order",
+      "hypothesis": "order"
+    },
+    {
+      "op": "equal",
+      "reference": "that",
+      "hypothesis": "that"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "conduct",
+      "hypothesis": "conduct"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "affairs",
+      "hypothesis": "affairs"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "in",
+      "hypothesis": "in"
+    },
+    {
+      "op": "substitute",
+      "reference": "its",
+      "hypothesis": "his"
+    },
+    {
+      "op": "equal",
+      "reference": "ability",
+      "hypothesis": "ability"
+    },
+    {
+      "op": "equal",
+      "reference": "and",
+      "hypothesis": "and"
+    },
+    {
+      "op": "equal",
+      "reference": "that",
+      "hypothesis": "that"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "initiation",
+      "hypothesis": "initiation"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "any",
+      "hypothesis": "any"
+    },
+    {
+      "op": "equal",
+      "reference": "movement",
+      "hypothesis": "movement"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "in",
+      "hypothesis": "in"
+    },
+    {
+      "op": "equal",
+      "reference": "its",
+      "hypothesis": "its"
+    },
+    {
+      "op": "equal",
+      "reference": "timeliness",
+      "hypothesis": "timeliness"
+    },
+    {
+      "op": "equal",
+      "reference": "chapter",
+      "hypothesis": "chapter"
+    },
+    {
+      "op": "equal",
+      "reference": "eight",
+      "hypothesis": "eight"
+    },
+    {
+      "op": "equal",
+      "reference": "section",
+      "hypothesis": "section"
+    },
+    {
+      "op": "equal",
+      "reference": "three",
+      "hypothesis": "three"
+    },
+    {
+      "op": "equal",
+      "reference": "and",
+      "hypothesis": "and"
+    },
+    {
+      "op": "substitute",
+      "reference": "when",
+      "hypothesis": "one"
+    },
+    {
+      "op": "equal",
+      "reference": "one",
+      "hypothesis": "one"
+    },
+    {
+      "op": "equal",
+      "reference": "with",
+      "hypothesis": "with"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "highest",
+      "hypothesis": "highest"
+    },
+    {
+      "op": "equal",
+      "reference": "excellence",
+      "hypothesis": "excellence"
+    },
+    {
+      "op": "equal",
+      "reference": "does",
+      "hypothesis": "does"
+    },
+    {
+      "op": "equal",
+      "reference": "not",
+      "hypothesis": "not"
+    },
+    {
+      "op": "substitute",
+      "reference": "wrangle",
+      "hypothesis": "bring"
+    },
+    {
+      "op": "substitute",
+      "reference": "about",
+      "hypothesis": "goal"
+    },
+    {
+      "op": "insert",
+      "reference": null,
+      "hypothesis": "but"
+    },
+    {
+      "op": "equal",
+      "reference": "his",
+      "hypothesis": "his"
+    },
+    {
+      "op": "equal",
+      "reference": "low",
+      "hypothesis": "low"
+    },
+    {
+      "op": "equal",
+      "reference": "position",
+      "hypothesis": "position"
+    },
+    {
+      "op": "equal",
+      "reference": "no",
+      "hypothesis": "no"
+    },
+    {
+      "op": "equal",
+      "reference": "one",
+      "hypothesis": "one"
+    },
+    {
+      "op": "equal",
+      "reference": "finds",
+      "hypothesis": "finds"
+    },
+    {
+      "op": "equal",
+      "reference": "fault",
+      "hypothesis": "fault"
+    },
+    {
+      "op": "equal",
+      "reference": "with",
+      "hypothesis": "with"
+    },
+    {
+      "op": "equal",
+      "reference": "him",
+      "hypothesis": "him"
+    },
+    {
+      "op": "equal",
+      "reference": "chapter",
+      "hypothesis": "chapter"
+    },
+    {
+      "op": "equal",
+      "reference": "nine",
+      "hypothesis": "nine"
+    },
+    {
+      "op": "equal",
+      "reference": "section",
+      "hypothesis": "section"
+    },
+    {
+      "op": "equal",
+      "reference": "one",
+      "hypothesis": "one"
+    },
+    {
+      "op": "equal",
+      "reference": "it",
+      "hypothesis": "it"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "better",
+      "hypothesis": "better"
+    },
+    {
+      "op": "equal",
+      "reference": "to",
+      "hypothesis": "to"
+    },
+    {
+      "op": "equal",
+      "reference": "leave",
+      "hypothesis": "leave"
+    },
+    {
+      "op": "equal",
+      "reference": "a",
+      "hypothesis": "a"
+    },
+    {
+      "op": "equal",
+      "reference": "vessel",
+      "hypothesis": "vessel"
+    },
+    {
+      "op": "substitute",
+      "reference": "unfilled",
+      "hypothesis": "on"
+    },
+    {
+      "op": "insert",
+      "reference": null,
+      "hypothesis": "the"
+    },
+    {
+      "op": "insert",
+      "reference": null,
+      "hypothesis": "field"
+    },
+    {
+      "op": "equal",
+      "reference": "than",
+      "hypothesis": "than"
+    },
+    {
+      "op": "equal",
+      "reference": "to",
+      "hypothesis": "to"
+    },
+    {
+      "op": "equal",
+      "reference": "attempt",
+      "hypothesis": "attempt"
+    },
+    {
+      "op": "equal",
+      "reference": "to",
+      "hypothesis": "to"
+    },
+    {
+      "op": "equal",
+      "reference": "carry",
+      "hypothesis": "carry"
+    },
+    {
+      "op": "equal",
+      "reference": "it",
+      "hypothesis": "it"
+    },
+    {
+      "op": "equal",
+      "reference": "when",
+      "hypothesis": "when"
+    },
+    {
+      "op": "equal",
+      "reference": "it",
+      "hypothesis": "it"
+    },
+    {
+      "op": "substitute",
+      "reference": "is",
+      "hypothesis": "does"
+    },
+    {
+      "op": "substitute",
+      "reference": "full",
+      "hypothesis": "fall"
+    },
+    {
+      "op": "equal",
+      "reference": "if",
+      "hypothesis": "if"
+    },
+    {
+      "op": "equal",
+      "reference": "you",
+      "hypothesis": "you"
+    },
+    {
+      "op": "equal",
+      "reference": "keep",
+      "hypothesis": "keep"
+    },
+    {
+      "op": "equal",
+      "reference": "feeling",
+      "hypothesis": "feeling"
+    },
+    {
+      "op": "substitute",
+      "reference": "a",
+      "hypothesis": "appointed"
+    },
+    {
+      "op": "delete",
+      "reference": "point",
+      "hypothesis": null
+    },
+    {
+      "op": "delete",
+      "reference": "that",
+      "hypothesis": null
+    },
+    {
+      "op": "equal",
+      "reference": "has",
+      "hypothesis": "has"
+    },
+    {
+      "op": "equal",
+      "reference": "been",
+      "hypothesis": "been"
+    },
+    {
+      "op": "equal",
+      "reference": "sharpened",
+      "hypothesis": "sharpened"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "point",
+      "hypothesis": "point"
+    },
+    {
+      "op": "equal",
+      "reference": "cannot",
+      "hypothesis": "cannot"
+    },
+    {
+      "op": "equal",
+      "reference": "long",
+      "hypothesis": "long"
+    },
+    {
+      "op": "equal",
+      "reference": "preserve",
+      "hypothesis": "preserve"
+    },
+    {
+      "op": "substitute",
+      "reference": "its",
+      "hypothesis": "it"
+    },
+    {
+      "op": "substitute",
+      "reference": "sharpness",
+      "hypothesis": "sharpens"
+    },
+    {
+      "op": "equal",
+      "reference": "chapter",
+      "hypothesis": "chapter"
+    },
+    {
+      "op": "equal",
+      "reference": "nine",
+      "hypothesis": "nine"
+    },
+    {
+      "op": "equal",
+      "reference": "section",
+      "hypothesis": "section"
+    },
+    {
+      "op": "equal",
+      "reference": "two",
+      "hypothesis": "two"
+    },
+    {
+      "op": "equal",
+      "reference": "when",
+      "hypothesis": "when"
+    },
+    {
+      "op": "substitute",
+      "reference": "gold",
+      "hypothesis": "colin"
+    },
+    {
+      "op": "delete",
+      "reference": "and",
+      "hypothesis": null
+    },
+    {
+      "op": "equal",
+      "reference": "jade",
+      "hypothesis": "jade"
+    },
+    {
+      "op": "equal",
+      "reference": "fill",
+      "hypothesis": "fill"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "substitute",
+      "reference": "hall",
+      "hypothesis": "hole"
+    },
+    {
+      "op": "substitute",
+      "reference": "their",
+      "hypothesis": "there"
+    },
+    {
+      "op": "substitute",
+      "reference": "possessor",
+      "hypothesis": "possess"
+    },
+    {
+      "op": "insert",
+      "reference": null,
+      "hypothesis": "irked"
+    },
+    {
+      "op": "equal",
+      "reference": "cannot",
+      "hypothesis": "cannot"
+    },
+    {
+      "op": "equal",
+      "reference": "keep",
+      "hypothesis": "keep"
+    },
+    {
+      "op": "equal",
+      "reference": "them",
+      "hypothesis": "them"
+    },
+    {
+      "op": "equal",
+      "reference": "safe",
+      "hypothesis": "safe"
+    },
+    {
+      "op": "substitute",
+      "reference": "when",
+      "hypothesis": "one"
+    },
+    {
+      "op": "substitute",
+      "reference": "wealth",
+      "hypothesis": "well"
+    },
+    {
+      "op": "substitute",
+      "reference": "and",
+      "hypothesis": "fed"
+    },
+    {
+      "op": "substitute",
+      "reference": "honours",
+      "hypothesis": "on"
+    },
+    {
+      "op": "insert",
+      "reference": null,
+      "hypothesis": "earth"
+    },
+    {
+      "op": "equal",
+      "reference": "lead",
+      "hypothesis": "lead"
+    },
+    {
+      "op": "equal",
+      "reference": "to",
+      "hypothesis": "to"
+    },
+    {
+      "op": "substitute",
+      "reference": "arrogancy",
+      "hypothesis": "arrogance"
+    },
+    {
+      "op": "insert",
+      "reference": null,
+      "hypothesis": "see"
+    },
+    {
+      "op": "equal",
+      "reference": "this",
+      "hypothesis": "this"
+    },
+    {
+      "op": "equal",
+      "reference": "brings",
+      "hypothesis": "brings"
+    },
+    {
+      "op": "equal",
+      "reference": "its",
+      "hypothesis": "its"
+    },
+    {
+      "op": "equal",
+      "reference": "evil",
+      "hypothesis": "evil"
+    },
+    {
+      "op": "equal",
+      "reference": "on",
+      "hypothesis": "on"
+    },
+    {
+      "op": "equal",
+      "reference": "itself",
+      "hypothesis": "itself"
+    },
+    {
+      "op": "equal",
+      "reference": "when",
+      "hypothesis": "when"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "work",
+      "hypothesis": "work"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "substitute",
+      "reference": "done",
+      "hypothesis": "don"
+    },
+    {
+      "op": "equal",
+      "reference": "and",
+      "hypothesis": "and"
+    },
+    {
+      "op": "equal",
+      "reference": "one's",
+      "hypothesis": "one's"
+    },
+    {
+      "op": "equal",
+      "reference": "name",
+      "hypothesis": "name"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "becoming",
+      "hypothesis": "becoming"
+    },
+    {
+      "op": "equal",
+      "reference": "distinguished",
+      "hypothesis": "distinguished"
+    },
+    {
+      "op": "equal",
+      "reference": "to",
+      "hypothesis": "to"
+    },
+    {
+      "op": "equal",
+      "reference": "withdraw",
+      "hypothesis": "withdraw"
+    },
+    {
+      "op": "equal",
+      "reference": "into",
+      "hypothesis": "into"
+    },
+    {
+      "op": "equal",
+      "reference": "obscurity",
+      "hypothesis": "obscurity"
+    },
+    {
+      "op": "equal",
+      "reference": "is",
+      "hypothesis": "is"
+    },
+    {
+      "op": "equal",
+      "reference": "the",
+      "hypothesis": "the"
+    },
+    {
+      "op": "equal",
+      "reference": "way",
+      "hypothesis": "way"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "heaven",
+      "hypothesis": "heaven"
+    },
+    {
+      "op": "substitute",
+      "reference": "end",
+      "hypothesis": "and"
+    },
+    {
+      "op": "equal",
+      "reference": "of",
+      "hypothesis": "of"
+    },
+    {
+      "op": "equal",
+      "reference": "chapter",
+      "hypothesis": "chapter"
+    },
+    {
+      "op": "equal",
+      "reference": "nine",
+      "hypothesis": "nine"
+    }
+  ]
+}

@@ -29,6 +29,8 @@ def init_db():
     init_human_review_tables()
     from eval_record_db import init_eval_record_tables
     init_eval_record_tables()
+    from external_package_db import init_external_package_tables
+    init_external_package_tables()
 
 
 def save_preference(model: str, task: str, variant: str, user_prompt: str):

@@ -131,12 +131,19 @@
           <div *ngFor="let result of article.results" class="flex flex-col">
 
             <!-- Compact summary row -->
-            <div class="px-4 py-3 flex items-start gap-3">
-              <!-- Model name -->
-              <span class="text-xs font-semibold font-mono text-gray-700 w-24 shrink-0 pt-0.5 truncate leading-snug"
-                [title]="result.model">
-                {{ result.model.split('/').pop() ?? result.model }}
-              </span>
+            <div class="px-4 py-3 flex items-center gap-3">
+              <!-- Model name + variant -->
+              <div class="w-24 shrink-0 flex flex-col gap-0.5 pt-0.5">
+                <span class="text-xs font-semibold font-mono text-gray-700 truncate leading-snug"
+                  [title]="result.model">
+                  {{ result.model.split('/').pop() ?? result.model }}
+                </span>
+                <span *ngIf="result.prompt_variant_name"
+                  class="text-[9px] font-medium text-indigo-400 truncate leading-none"
+                  [title]="result.prompt_variant_name">
+                  {{ result.prompt_variant_name.replace(/_/g, ' ') }}
+                </span>
+              </div>
               <!-- II + CF scores -->
               <div class="flex gap-1.5 shrink-0">
                 <div class="flex flex-col items-center bg-gray-50 rounded px-2 py-1 min-w-[2.25rem]">
@@ -166,12 +173,19 @@
                   {{ result.executive_summary }}
                 </p>
               </div>
-              <!-- Detail toggle -->
-              <button (click)="toggleModelDetail(article.itemId, result.model); $event.stopPropagation()"
-                class="shrink-0 text-[10px] text-indigo-400 hover:text-indigo-600 pt-1"
-                [title]="isModelDetailExpanded(article.itemId, result.model) ? 'Hide dimensions' : 'Show dimensions'">
-                {{ isModelDetailExpanded(article.itemId, result.model) ? '▾' : '▸' }}
-              </button>
+              <!-- Detail toggle + export -->
+              <div class="flex items-start gap-2 shrink-0">
+                <button (click)="exportRecord(result); $event.stopPropagation()"
+                  class="text-[10px] text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-300 rounded px-1.5 py-0.5 transition-colors"
+                  title="Export Evaluation Record">
+                  ↓ Record
+                </button>
+                <button (click)="toggleModelDetail(article.itemId, result.model); $event.stopPropagation()"
+                  class="text-[10px] text-indigo-400 hover:text-indigo-600 pt-1"
+                  [title]="isModelDetailExpanded(article.itemId, result.model) ? 'Hide dimensions' : 'Show dimensions'">
+                  {{ isModelDetailExpanded(article.itemId, result.model) ? '▾' : '▸' }}
+                </button>
+              </div>
             </div>
 
             <!-- Dimension detail (expandable) -->
@@ -180,24 +194,32 @@
               <!-- II dimensions -->
               <div class="flex flex-col gap-1.5">
                 <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Information Integrity</span>
-                <div *ngFor="let row of iiRows(result)" class="flex items-start gap-1.5">
+                <div *ngFor="let row of iiRows(result)" class="flex gap-1.5"
+                  [ngClass]="{'items-center': row.score.severity === 0, 'opacity-40': row.score.severity === 0, 'items-start': row.score.severity > 0}">
                   <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold ' + severityClass(row.score.severity)">
                     {{ row.id }}
                   </span>
                   <span *ngIf="row.score.severity > 0" class="text-xs text-gray-500 leading-relaxed">
                     {{ row.score.explanation }}
+                  </span>
+                  <span *ngIf="row.score.severity === 0" class="text-[10px] text-gray-400 italic">
+                    Not detected
                   </span>
                 </div>
               </div>
               <!-- CF dimensions -->
               <div class="flex flex-col gap-1.5">
                 <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Cultural Fidelity</span>
-                <div *ngFor="let row of cfRows(result)" class="flex items-start gap-1.5">
+                <div *ngFor="let row of cfRows(result)" class="flex gap-1.5"
+                  [ngClass]="{'items-center': row.score.severity === 0, 'opacity-40': row.score.severity === 0, 'items-start': row.score.severity > 0}">
                   <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold ' + severityClass(row.score.severity)">
                     {{ row.id }}
                   </span>
                   <span *ngIf="row.score.severity > 0" class="text-xs text-gray-500 leading-relaxed">
                     {{ row.score.explanation }}
+                  </span>
+                  <span *ngIf="row.score.severity === 0" class="text-[10px] text-gray-400 italic">
+                    Not detected
                   </span>
                 </div>
               </div>
@@ -303,7 +325,8 @@
         <!-- Information Integrity dimensions -->
         <div class="px-4 py-3 flex flex-col gap-2">
           <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Information Integrity</span>
-          <div *ngFor="let row of iiRows(result)" class="flex flex-col gap-1">
+          <div *ngFor="let row of iiRows(result)" class="flex flex-col gap-1"
+            [class.opacity-40]="row.score.severity === 0">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 min-w-0">
                 <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold ' + severityClass(row.score.severity)">
@@ -311,7 +334,8 @@
                 </span>
                 <span class="text-xs text-gray-700 truncate font-medium" [title]="row.name">{{ row.name }}</span>
               </div>
-              <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ' + confidenceClass(row.score.confidence)"
+              <span *ngIf="row.score.severity > 0"
+                [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ' + confidenceClass(row.score.confidence)"
                 title="Judge's confidence in this score">
                 conf. {{ row.score.confidence }}
               </span>
@@ -343,7 +367,8 @@
         <!-- Cultural Fidelity dimensions -->
         <div class="px-4 py-3 flex flex-col gap-2">
           <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Cultural Fidelity</span>
-          <div *ngFor="let row of cfRows(result)" class="flex flex-col gap-1">
+          <div *ngFor="let row of cfRows(result)" class="flex flex-col gap-1"
+            [class.opacity-40]="row.score.severity === 0">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 min-w-0">
                 <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold ' + severityClass(row.score.severity)">
@@ -351,7 +376,8 @@
                 </span>
                 <span class="text-xs text-gray-700 truncate font-medium" [title]="row.name">{{ row.name }}</span>
               </div>
-              <span [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ' + confidenceClass(row.score.confidence)"
+              <span *ngIf="row.score.severity > 0"
+                [class]="'shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ' + confidenceClass(row.score.confidence)"
                 title="Judge's confidence in this score">
                 conf. {{ row.score.confidence }}
               </span>

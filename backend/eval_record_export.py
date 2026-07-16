@@ -49,6 +49,23 @@ SEVERITY_COLORS  = {0: "#6b7280", 1: "#d97706", 2: "#ea580c", 3: "#dc2626"}
 SEVERITY_BG      = {0: "#f3f4f6", 1: "#fffbeb", 2: "#fff7ed", 3: "#fff5f5"}
 SEVERITY_BORDER  = {0: "#e5e7eb", 1: "#fde68a", 2: "#fdba74", 3: "#fca5a5"}
 
+
+def _na(reason: str = "External Submission") -> str:
+    return f'<span class="field-na">Not applicable ({_esc(reason)})</span>'
+
+
+def _notprovided() -> str:
+    return '<span class="field-unknown">Not provided by submitter</span>'
+
+
+def _extfield(value: Optional[str], is_ext: bool, na_reason: Optional[str] = None) -> str:
+    v = str(value).strip() if value is not None else ""
+    if v and v not in ("—", "None", "null", "N/A"):
+        return _esc(v)
+    if not is_ext:
+        return "—"
+    return _na(na_reason) if na_reason else _notprovided()
+
 DISAGREE_LABELS: dict[str, str] = {
     "failure_not_present":          "Failure not present",
     "failure_category_incorrect":   "Wrong category",
@@ -345,6 +362,7 @@ def _fmt_date(iso: Optional[str], fmt: str = "%B %-d, %Y") -> str:
 
 
 def render_eval_record_html(record: dict) -> str:
+    is_ext        = record.get("record_type") == "external_package"
     ev_id         = _esc(record.get("evaluation_id", "—"))
     exp_name      = _esc(record.get("experiment_name", "—"))
     research_phase = _esc(record.get("research_phase", "—"))
@@ -381,23 +399,23 @@ def render_eval_record_html(record: dict) -> str:
 
     <div class="cover-grid">
       <div class="cover-field">
-        <div class="cf-label">Experiment ID</div>
-        <div class="cf-value mono">{_esc(record.get('experiment_id', '—'))}</div>
+        <div class="cf-label">{'Package ID' if is_ext else 'Experiment ID'}</div>
+        <div class="cf-value mono">{_esc(record.get('package_id') if is_ext else record.get('experiment_id', '—'))}</div>
       </div>
       <div class="cover-field">
-        <div class="cf-label">Research Phase</div>
-        <div class="cf-value">{research_phase}</div>
+        <div class="cf-label">{'Record Type' if is_ext else 'Research Phase'}</div>
+        <div class="cf-value">{'External Package' if is_ext else research_phase}</div>
       </div>
       <div class="cover-field">
-        <div class="cf-label">Item</div>
-        <div class="cf-value mono">{_esc(record.get('item_id', '—'))}</div>
+        <div class="cf-label">{'Submitting Framework' if is_ext else 'Item'}</div>
+        <div class="cf-value {'small' if is_ext else 'mono'}">{_esc('Independent External Package') if is_ext else _esc(record.get('item_id', '—'))}</div>
       </div>
       <div class="cover-field">
-        <div class="cf-label">Prompt Variant</div>
-        <div class="cf-value">{_esc(record.get('prompt_variant', '—'))}</div>
+        <div class="cf-label">{'Submitted By' if is_ext else 'Prompt Variant'}</div>
+        <div class="cf-value">{_esc(record.get('package_submitted_by') or '—') if is_ext else _esc(record.get('prompt_variant', '—'))}</div>
       </div>
       <div class="cover-field">
-        <div class="cf-label">Subject Model</div>
+        <div class="cf-label">{'Subject System Under Evaluation' if is_ext else 'Subject Model'}</div>
         <div class="cf-value strong">{subject_model}</div>
       </div>
       <div class="cover-field">
@@ -460,9 +478,15 @@ def render_eval_record_html(record: dict) -> str:
             hv_summary_label = "Pending"
             hv_summary_color = "#d97706"
 
+    if is_ext:
+        eval_philosophy_html = '<div class="eval-philosophy">This Evaluation Record preserves the submitted External Evaluation Package unchanged and adds an independent EvalLab evaluation layer. The original artifacts remain unmodified and continue to serve as the authoritative evidence package.</div>'
+    else:
+        eval_philosophy_html = ""
+
     s_exec = f"""
   <section class="exec-summary-section">
     <h2>Evaluation Summary</h2>
+    {eval_philosophy_html}
     <div class="exec-grid">
 
       <div class="exec-block">
@@ -519,14 +543,25 @@ def render_eval_record_html(record: dict) -> str:
     hr_complete = _fmt_date(hv.get("completed_at")) if hv else ""
     has_responses = bool(hv and hv.get("responses"))
 
-    lifecycle_html = (
-        _lc_step(bool(run_started),   "Generation started",           run_started)
-        + _lc_step(bool(run_completed), "Judge evaluation completed",  run_completed)
-        + _lc_step(bool(rec_created),   "Evaluation Record created",   rec_created)
-        + _lc_step(bool(hv),            "Human Review packet generated", hr_created)
-        + _lc_step(bool(hr_exported),   "Packet exported to reviewer", hr_exported)
-        + _lc_step(has_responses,       "Human validation complete",   hr_complete)
-    )
+    if is_ext:
+        pkg_received  = _fmt_date(record.get("package_received_at"))
+        pkg_approved  = _fmt_date(record.get("package_approved_at"))
+        judged_at_fmt = _fmt_date(record.get("judged_at"))
+        lifecycle_html = (
+            _lc_step(bool(pkg_received),  "Package received",              pkg_received)
+            + _lc_step(bool(pkg_approved), "Package approved — EV record created", pkg_approved)
+            + _lc_step(bool(judged_at_fmt), "EvalLab Judge evaluation completed", judged_at_fmt)
+            + _lc_step(has_responses,       "Human validation complete",   hr_complete)
+        )
+    else:
+        lifecycle_html = (
+            _lc_step(bool(run_started),   "Generation started",           run_started)
+            + _lc_step(bool(run_completed), "Judge evaluation completed",  run_completed)
+            + _lc_step(bool(rec_created),   "Evaluation Record created",   rec_created)
+            + _lc_step(bool(hv),            "Human Review packet generated", hr_created)
+            + _lc_step(bool(hr_exported),   "Packet exported to reviewer", hr_exported)
+            + _lc_step(has_responses,       "Human validation complete",   hr_complete)
+        )
 
     s1 = f"""
   <section>
@@ -536,10 +571,10 @@ def render_eval_record_html(record: dict) -> str:
       <table class="mt">
         <tr><th>Evaluation ID</th><td class="mono">{_esc(record.get('evaluation_id','—'))}</td></tr>
         <tr><th>Run Key</th><td class="mono small">{_esc(record.get('run_key','—'))}</td></tr>
-        <tr><th>Experiment ID</th><td class="mono">{_esc(record.get('experiment_id','—'))}</td></tr>
-        <tr><th>Batch ID</th><td class="mono">{_esc(record.get('batch_id','—'))}</td></tr>
-        <tr><th>Experiment Name</th><td>{_esc(record.get('experiment_name','—'))}</td></tr>
-        <tr><th>Research Phase</th><td>{_esc(record.get('research_phase','—'))}</td></tr>
+        <tr><th>{'Package ID' if is_ext else 'Experiment ID'}</th><td class="mono">{_esc(record.get('package_id') if is_ext else record.get('experiment_id','—'))}</td></tr>
+        <tr><th>{'Submitted By' if is_ext else 'Batch ID'}</th><td class="{'mono' if not is_ext else ''}">{_esc(record.get('package_submitted_by') or '—') if is_ext else _esc(record.get('batch_id','—'))}</td></tr>
+        <tr><th>{'Source Label' if is_ext else 'Experiment Name'}</th><td>{_esc(record.get('package_source_label') if is_ext else record.get('experiment_name','—'))}</td></tr>
+        <tr><th>{'Record Type' if is_ext else 'Research Phase'}</th><td>{'External Package' if is_ext else _esc(record.get('research_phase','—'))}</td></tr>
         <tr><th>Export Timestamp</th><td>{exported_fmt}</td></tr>
         <tr><th>EvalLab Version</th><td>{_esc(record.get('evallab_version','—'))}</td></tr>
       </table>
@@ -551,7 +586,31 @@ def render_eval_record_html(record: dict) -> str:
   </section>"""
 
     # ── Section 2: Source Information ─────────────────────────────────────────
-    s2 = f"""
+    if is_ext:
+        mapped = record.get("mapped_meta") or {}
+        s2 = f"""
+  <section>
+    <div class="section-num">02</div>
+    <h2>Source Information</h2>
+    <table class="mt" style="margin-bottom:20px">
+      <tr><th>Title</th><td>{_extfield(record.get('source_title'), is_ext)}</td></tr>
+      <tr><th>Researcher</th><td>{_extfield(record.get('researcher'), is_ext)}</td></tr>
+      <tr><th>Institution</th><td>{_extfield(record.get('institution'), is_ext)}</td></tr>
+      <tr><th>Methodology</th><td>{_extfield(record.get('methodology'), is_ext)}</td></tr>
+      <tr><th>Date</th><td>{_extfield(record.get('source_published_date'), is_ext)}</td></tr>
+      <tr><th>Contact</th><td>{_extfield(record.get('source_url'), is_ext)}</td></tr>
+      <tr><th>Source Type</th><td>External Package</td></tr>
+    </table>
+    <div class="source-block">
+      <div class="source-block-label">Source Artifact</div>
+      <div class="artifact-ref">
+        <span class="artifact-path">{_esc(record.get('source_file','—'))}</span>
+        <span class="artifact-note">File reference within the submitted package. Not rendered — open the original artifact for full content.</span>
+      </div>
+    </div>
+  </section>"""
+    else:
+        s2 = f"""
   <section>
     <div class="section-num">02</div>
     <h2>Source Information</h2>
@@ -580,8 +639,31 @@ def render_eval_record_html(record: dict) -> str:
     </div>
   </section>"""
 
-    # ── Section 3: Transformation Configuration ───────────────────────────────
-    s3 = f"""
+    # ── Section 3: Transformation / System Configuration ─────────────────────
+    if is_ext:
+        s3 = f"""
+  <section>
+    <div class="section-num">03</div>
+    <h2>System Configuration</h2>
+    <table class="mt" style="margin-bottom:20px">
+      <tr><th>Evaluation Task</th><td>{_extfield(record.get('transformation_task'), is_ext)}</td></tr>
+      <tr><th>Source System</th><td class="strong">{subject_model}</td></tr>
+      <tr><th>System Identifier</th><td class="mono">{_extfield(record.get('subject_label'), is_ext)}</td></tr>
+      <tr><th>System Type</th><td>External System (non-LLM)</td></tr>
+      <tr><th>Prompt Variant</th><td>{_na('ASR evaluation — no prompt used')}</td></tr>
+      <tr><th>Temperature</th><td>{_na('ASR evaluation — not applicable')}</td></tr>
+      <tr><th>Run Timestamp</th><td>{_extfield(record.get('generation_timestamp'), is_ext)}</td></tr>
+    </table>
+    <div class="source-block">
+      <div class="source-block-label">Transformation Artifact</div>
+      <div class="artifact-ref">
+        <span class="artifact-path">{_esc(record.get('transformation_file','—'))}</span>
+        <span class="artifact-note">Output file produced by the source system. Not rendered — open the original artifact for full content.</span>
+      </div>
+    </div>
+  </section>"""
+    else:
+        s3 = f"""
   <section>
     <div class="section-num">03</div>
     <h2>Transformation Configuration</h2>
@@ -601,8 +683,20 @@ def render_eval_record_html(record: dict) -> str:
     <div class="prompt-block">{_esc(record.get('eval_prompt',''))}</div>
   </section>"""
 
-    # ── Section 4: Generated Output ───────────────────────────────────────────
-    s4 = f"""
+    # ── Section 4: Output ─────────────────────────────────────────────────────
+    if is_ext:
+        s4 = f"""
+  <section>
+    <div class="section-num">04</div>
+    <h2>Transformation Output</h2>
+    <p class="section-note">Reference to the transformation artifact as submitted. The full content is preserved within the package directory.</p>
+    <div class="artifact-ref" style="margin-top:8px">
+      <span class="artifact-path">{_esc(record.get('transformation_file','—'))}</span>
+      <span class="artifact-note">Open the package artifact directly to review the full transformation output.</span>
+    </div>
+  </section>"""
+    else:
+        s4 = f"""
   <section>
     <div class="section-num">04</div>
     <h2>Generated Output</h2>
@@ -610,7 +704,85 @@ def render_eval_record_html(record: dict) -> str:
     <div class="response-block">{_esc(record.get('response_text',''))}</div>
   </section>"""
 
-    # ── Section 5: Automated Evaluation ──────────────────────────────────────
+    # ── Section 5: Evidence Relationships ────────────────────────────────────
+    def _ev_node(label: str, detail: str = "", cls: str = "") -> str:
+        detail_html = f'<span class="ev-node-detail">{_esc(detail)}</span>' if detail else ""
+        return f'<div class="ev-node {cls}"><span class="ev-node-label">{_esc(label)}</span>{detail_html}</div>'
+
+    def _ev_arrow() -> str:
+        return '<div class="ev-arrow">↓</div>'
+
+    if is_ext:
+        # Derive artifact layers from file_manifest folder prefixes
+        manifest = record.get("file_manifest") or []
+        folders: dict[str, list[str]] = {}
+        for f in manifest:
+            name = f.get("name", "")
+            parts = name.split("/")
+            # Find the numbered folder (e.g. "04_ASR_RUN")
+            for part in parts[1:]:  # skip the top-level package folder
+                if part and part[0].isdigit() and "_" in part:
+                    folders.setdefault(part, []).append(name.split("/")[-1])
+                    break
+
+        # Build chain from sorted folder names
+        chain_nodes = []
+        for folder in sorted(folders.keys()):
+            num, _, name = folder.partition("_")
+            label = name.replace("_", " ").title()
+            files = folders[folder]
+            sample = files[0] if files else ""
+            chain_nodes.append(_ev_node(label, sample))
+
+        if not chain_nodes:
+            # Fallback: derive from source/transformation file paths
+            src = record.get("source_file", "")
+            tfm = record.get("transformation_file", "")
+            chain_nodes = [
+                _ev_node("Source Artifact", src),
+                _ev_node("Transformation Artifact", tfm, "ev-evallab"),
+            ]
+
+        chain_nodes.append(_ev_node("EvalLab Judge Assessment",
+                                    record.get("judge_model", ""), "ev-evallab"))
+        hv_cls = "ev-done" if has_responses else "ev-pending"
+        hv_detail = "Not performed" if not hv else ("Complete" if has_responses else "Pending")
+        chain_nodes.append(_ev_node("Human Validation", hv_detail, hv_cls))
+
+        chain_html = _ev_arrow().join(chain_nodes)
+        s_evidence = f"""
+  <section>
+    <div class="section-num">05</div>
+    <h2>Evidence Relationships</h2>
+    <p class="section-note">
+      The chain below shows how each preserved artifact relates to the next.
+      Each layer is a distinct, unmodified record of a specific stage of the evaluation.
+    </p>
+    <div class="evidence-chain">{chain_html}</div>
+  </section>"""
+    else:
+        hv_cls = "ev-done" if has_responses else ("ev-pending" if not hv else "ev-exported")
+        hv_detail = "Not requested" if not hv else ("Complete" if has_responses else "Exported — awaiting responses")
+        std_chain = _ev_arrow().join([
+            _ev_node("Original Source Text", _esc(record.get("source_title", ""))[:60]),
+            _ev_node("Prompt", record.get("prompt_variant", "") or record.get("prompt_variant_name", "")),
+            _ev_node("Model Output", record.get("subject_model_display") or record.get("subject_model_id", ""), "ev-evallab"),
+            _ev_node("Judge Evaluation", record.get("judge_model_display") or record.get("judge_model_id", ""), "ev-evallab"),
+            _ev_node("Evaluation Record", record.get("evaluation_id", ""), "ev-evallab"),
+            _ev_node("Human Validation", hv_detail, hv_cls),
+        ])
+        s_evidence = f"""
+  <section>
+    <div class="section-num">05</div>
+    <h2>Evidence Relationships</h2>
+    <p class="section-note">
+      The chain below shows how each preserved artifact relates to the next,
+      from the original source through automated and human validation.
+    </p>
+    <div class="evidence-chain">{std_chain}</div>
+  </section>"""
+
+    # ── Section 6: Automated Evaluation ──────────────────────────────────────
     dim_rows = ""
     dim_scores = record.get("dimension_scores") or {}
     for cat_id, score in dim_scores.items():
@@ -659,7 +831,7 @@ def render_eval_record_html(record: dict) -> str:
 
     s5 = f"""
   <section>
-    <div class="section-num">05</div>
+    <div class="section-num">06</div>
     <h2>Automated Evaluation</h2>
     <div class="score-row">
       <div class="score-card">
@@ -688,7 +860,7 @@ def render_eval_record_html(record: dict) -> str:
     {clean_html}
   </section>"""
 
-    # ── Section 6: Human Validation ───────────────────────────────────────────
+    # ── Section 7: Human Validation ───────────────────────────────────────────
     if hv:
         resp_html = ""
         for resp in hv.get("responses", []):
@@ -731,7 +903,7 @@ def render_eval_record_html(record: dict) -> str:
 
         s6 = f"""
   <section>
-    <div class="section-num">06</div>
+    <div class="section-num">07</div>
     <h2>Human Validation</h2>
     <div class="two-col" style="margin-bottom:24px">
       <table class="mt">
@@ -753,47 +925,58 @@ def render_eval_record_html(record: dict) -> str:
     else:
         s6 = """
   <section>
-    <div class="section-num">06</div>
+    <div class="section-num">07</div>
     <h2>Human Validation</h2>
     <p class="muted">No human validation was performed for this evaluation.</p>
   </section>"""
 
-    # ── Section 7: Reproducibility Metadata ──────────────────────────────────
+    # ── Section 8: Reproducibility Metadata ──────────────────────────────────
     model_list_html = "".join(
         f"<li>{_esc(m)}</li>" for m in (record.get("experiment_models") or [])
     )
+    prompt_variant_val = _na("External Submission") if is_ext else _esc(record.get('prompt_variant','—'))
+    temperature_val    = _na("External Submission") if is_ext else _esc(str(record.get('temperature','—')))
+    objective_val      = _extfield(record.get('research_objective'), is_ext)
+    rq_val             = _na("External Submission") if is_ext else _extfield(record.get('research_question'), False)
+    hypothesis_val     = _na("External Submission") if is_ext else _extfield(record.get('hypothesis'), False)
+
+    if is_ext:
+        exp_snapshot_html = f'<p class="muted">{_na("External Submission")} — no experiment configuration snapshot for external packages.</p>'
+        s7_note = "This section documents the methodology used by the external system and EvalLab judge."
+    else:
+        model_list_part = f'<ul class="model-list">{model_list_html}</ul>' if model_list_html else ""
+        config_json = _esc(json.dumps(record.get("experiment_config_snapshot", {}), indent=2))
+        exp_snapshot_html = f'{model_list_part}<pre class="config-dump">{config_json}</pre>'
+        s7_note = "This section documents the methodology. It does not claim deterministic reproducibility of LLM outputs, which are non-deterministic by design."
+
     s7 = f"""
   <section>
-    <div class="section-num">07</div>
+    <div class="section-num">08</div>
     <h2>Reproducibility Metadata</h2>
-    <p class="section-note">
-      This section documents the methodology. It does not claim deterministic
-      reproducibility of LLM outputs, which are non-deterministic by design.
-    </p>
+    <p class="section-note">{s7_note}</p>
     <table class="mt" style="margin-bottom:20px">
       <tr><th>Taxonomy Version</th><td>{_esc(record.get('taxonomy_version','—'))}</td></tr>
       <tr><th>Rubric Version</th><td>{_esc(record.get('rubric_version','—'))}</td></tr>
-      <tr><th>Prompt Variant</th><td>{_esc(record.get('prompt_variant','—'))}</td></tr>
-      <tr><th>Temperature</th><td>{_esc(str(record.get('temperature','—')))}</td></tr>
-      <tr><th>Subject Model Note</th><td>{_esc(record.get('subject_version_note','—') or '—')}</td></tr>
-      <tr><th>Judge Model Note</th><td>{_esc(record.get('judge_version_note','—') or '—')}</td></tr>
+      <tr><th>Prompt Variant</th><td>{prompt_variant_val}</td></tr>
+      <tr><th>Temperature</th><td>{temperature_val}</td></tr>
+      <tr><th>{'System Note' if is_ext else 'Subject Model Note'}</th><td>{_extfield(record.get('subject_version_note'), is_ext)}</td></tr>
+      <tr><th>Judge Model Note</th><td>{_extfield(record.get('judge_version_note'), is_ext)}</td></tr>
     </table>
     <h3>Research Context</h3>
     <table class="mt" style="margin-bottom:20px">
-      <tr><th>Objective</th><td>{_esc(record.get('research_objective','—') or '—')}</td></tr>
-      <tr><th>Research Question</th><td>{_esc(record.get('research_question','—') or '—')}</td></tr>
-      <tr><th>Hypothesis</th><td>{_esc(record.get('hypothesis','—') or '—')}</td></tr>
+      <tr><th>Objective</th><td>{objective_val}</td></tr>
+      <tr><th>Research Question</th><td>{rq_val}</td></tr>
+      <tr><th>Hypothesis</th><td>{hypothesis_val}</td></tr>
     </table>
-    <h3>Experiment Configuration Snapshot</h3>
-    <p class="section-note">Frozen at run time. Reflects the experiment as it existed when this batch was submitted.</p>
-    {f'<ul class="model-list">{model_list_html}</ul>' if model_list_html else ''}
-    <pre class="config-dump">{_esc(json.dumps(record.get('experiment_config_snapshot', {}), indent=2))}</pre>
+    <h3>{'Evaluation Configuration' if is_ext else 'Experiment Configuration Snapshot'}</h3>
+    <p class="section-note">{'Package provenance — received and approved as submitted.' if is_ext else 'Frozen at run time. Reflects the experiment as it existed when this batch was submitted.'}</p>
+    {exp_snapshot_html}
   </section>"""
 
-    # ── Section 8: Export Metadata ────────────────────────────────────────────
+    # ── Section 9: Export Metadata ────────────────────────────────────────────
     s8 = f"""
   <section>
-    <div class="section-num">08</div>
+    <div class="section-num">09</div>
     <h2>Export Metadata</h2>
     <table class="mt">
       <tr><th>Export Timestamp</th><td>{exported_fmt}</td></tr>
@@ -947,6 +1130,32 @@ def render_eval_record_html(record: dict) -> str:
   .footer-note { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
   .footer-policy { font-size: 11px; color: #94a3b8; font-style: italic; }
 
+  /* Evaluation philosophy statement */
+  .eval-philosophy { font-size: 13px; color: #1e40af; line-height: 1.65; padding: 12px 16px; background: rgba(255,255,255,0.6); border-left: 3px solid rgba(255,255,255,0.5); border-radius: 0 6px 6px 0; margin-bottom: 20px; font-style: italic; }
+
+  /* Context-aware field states */
+  .field-na { color: #94a3b8; font-style: italic; font-size: 12px; }
+  .field-unknown { color: #94a3b8; font-style: italic; font-size: 12px; }
+
+  /* Artifact reference (external packages) */
+  .artifact-ref { display: flex; flex-direction: column; gap: 4px; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; margin-top: 4px; }
+  .artifact-path { font-family: var(--mono); font-size: 12px; color: var(--accent); word-break: break-all; }
+  .artifact-note { font-size: 11px; color: var(--muted); font-style: italic; }
+
+  /* Evidence chain */
+  .evidence-chain { display: flex; flex-direction: column; align-items: flex-start; max-width: 480px; }
+  .ev-node { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; min-width: 300px; display: flex; flex-direction: column; gap: 2px; }
+  .ev-node.ev-evallab { background: var(--accent-light); border-color: var(--accent-border); }
+  .ev-node.ev-done { background: #f0fdf4; border-color: #bbf7d0; }
+  .ev-node.ev-pending { background: #f8fafc; border-color: #e2e8f0; opacity: 0.65; }
+  .ev-node.ev-exported { background: #fffbeb; border-color: #fde68a; }
+  .ev-node-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .ev-node.ev-evallab .ev-node-label { color: var(--accent); }
+  .ev-node.ev-done .ev-node-label { color: #166534; }
+  .ev-node.ev-pending .ev-node-label { color: #94a3b8; font-style: italic; }
+  .ev-node-detail { font-size: 11px; color: var(--muted); font-family: var(--mono); word-break: break-all; }
+  .ev-arrow { padding: 3px 0 3px 22px; color: #94a3b8; font-size: 16px; line-height: 1; }
+
   /* Misc */
   .muted { color: var(--muted); font-size: 13px; font-style: italic; }
   .mono { font-family: var(--mono); }
@@ -993,6 +1202,7 @@ def render_eval_record_html(record: dict) -> str:
 {s2}
 {s3}
 {s4}
+{s_evidence}
 {s5}
 {s6}
 {s7}

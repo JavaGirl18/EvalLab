@@ -169,3 +169,38 @@ def increment_export_count(evaluation_id: str) -> None:
             "UPDATE evaluation_records SET export_count = export_count + 1 WHERE evaluation_id = ?",
             (evaluation_id,),
         )
+
+
+def register_external_package(pkg_id: str, snapshot: dict) -> str:
+    """
+    Create an Evaluation Record entry for an approved external package.
+    Uses a synthetic run_key so it doesn't collide with batch-run records.
+    Returns the EV-YYYY-NNNNNN id.
+    """
+    run_key = f"external|{pkg_id}"
+    with _conn() as conn:
+        row = conn.execute(
+            "SELECT evaluation_id FROM evaluation_records WHERE run_key = ?",
+            (run_key,),
+        ).fetchone()
+        if row:
+            return row["evaluation_id"]
+
+    ev_id = _next_evaluation_id()
+    now   = datetime.now(timezone.utc).isoformat()
+    with _conn() as conn:
+        try:
+            conn.execute(
+                """INSERT INTO evaluation_records
+                   (evaluation_id, run_key, registered_at, record_snapshot,
+                    first_exported_at, export_count)
+                   VALUES (?,?,?,?,?,0)""",
+                (ev_id, run_key, now, json.dumps(snapshot), now),
+            )
+        except sqlite3.IntegrityError:
+            row = conn.execute(
+                "SELECT evaluation_id FROM evaluation_records WHERE run_key = ?",
+                (run_key,),
+            ).fetchone()
+            return row["evaluation_id"]
+    return ev_id

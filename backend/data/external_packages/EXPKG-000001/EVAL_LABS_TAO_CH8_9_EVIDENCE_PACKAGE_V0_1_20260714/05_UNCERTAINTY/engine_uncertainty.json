@@ -1,0 +1,175 @@
+{
+  "method": "PocketSphinx engine-reported segment probability; threshold <0.25; not calibrated",
+  "low_probability_count": 21,
+  "total_spoken_segments": 185,
+  "segments": [
+    {
+      "word": "our(3)",
+      "start_frame": 691,
+      "end_frame": 701,
+      "start_seconds": 6.91,
+      "end_seconds": 7.02,
+      "engine_probability": 0.08874582419364302
+    },
+    {
+      "word": "residence",
+      "start_frame": 702,
+      "end_frame": 759,
+      "start_seconds": 7.02,
+      "end_seconds": 7.6,
+      "engine_probability": 0.14292964947558381
+    },
+    {
+      "word": "is",
+      "start_frame": 760,
+      "end_frame": 779,
+      "start_seconds": 7.6,
+      "end_seconds": 7.8,
+      "engine_probability": 0.19775646790163254
+    },
+    {
+      "word": "an(2)",
+      "start_frame": 1433,
+      "end_frame": 1446,
+      "start_seconds": 14.33,
+      "end_seconds": 14.47,
+      "engine_probability": 0.021644403587000465
+    },
+    {
+      "word": "of",
+      "start_frame": 2660,
+      "end_frame": 2672,
+      "start_seconds": 26.6,
+      "end_seconds": 26.73,
+      "engine_probability": 0.06327518877179143
+    },
+    {
+      "word": "one",
+      "start_frame": 3656,
+      "end_frame": 3678,
+      "start_seconds": 36.56,
+      "end_seconds": 36.79,
+      "engine_probability": 0.2285669291620251
+    },
+    {
+      "word": "goal",
+      "start_frame": 3917,
+      "end_frame": 3940,
+      "start_seconds": 39.17,
+      "end_seconds": 39.41,
+      "engine_probability": 0.07107157587605453
+    },
+    {
+      "word": "on(2)",
+      "start_frame": 5124,
+      "end_frame": 5138,
+      "start_seconds": 51.24,
+      "end_seconds": 51.39,
+      "engine_probability": 0.175062387111585
+    },
+    {
+      "word": "than(2)",
+      "start_frame": 5209,
+      "end_frame": 5237,
+      "start_seconds": 52.09,
+      "end_seconds": 52.38,
+      "engine_probability": 0.07767108412802817
+    },
+    {
+      "word": "does(2)",
+      "start_frame": 5392,
+      "end_frame": 5411,
+      "start_seconds": 53.92,
+      "end_seconds": 54.12,
+      "engine_probability": 0.028321846900222405
+    },
+    {
+      "word": "fall",
+      "start_frame": 5412,
+      "end_frame": 5457,
+      "start_seconds": 54.12,
+      "end_seconds": 54.58,
+      "engine_probability": 0.07097924747022508
+    },
+    {
+      "word": "two",
+      "start_frame": 6564,
+      "end_frame": 6601,
+      "start_seconds": 65.64,
+      "end_seconds": 66.02,
+      "engine_probability": 0.24401404967741536
+    },
+    {
+      "word": "when",
+      "start_frame": 6710,
+      "end_frame": 6737,
+      "start_seconds": 67.1,
+      "end_seconds": 67.38,
+      "engine_probability": 0.18046572819966877
+    },
+    {
+      "word": "colin",
+      "start_frame": 6738,
+      "end_frame": 6786,
+      "start_seconds": 67.38,
+      "end_seconds": 67.87,
+      "engine_probability": 0.1736328162650446
+    },
+    {
+      "word": "jade",
+      "start_frame": 6787,
+      "end_frame": 6830,
+      "start_seconds": 67.87,
+      "end_seconds": 68.31,
+      "engine_probability": 0.005233696972558149
+    },
+    {
+      "word": "hole",
+      "start_frame": 6872,
+      "end_frame": 6933,
+      "start_seconds": 68.72,
+      "end_seconds": 69.34,
+      "engine_probability": 0.027889053162054648
+    },
+    {
+      "word": "one",
+      "start_frame": 7222,
+      "end_frame": 7241,
+      "start_seconds": 72.22,
+      "end_seconds": 72.42,
+      "engine_probability": 0.22028692891623333
+    },
+    {
+      "word": "fed",
+      "start_frame": 7266,
+      "end_frame": 7284,
+      "start_seconds": 72.66,
+      "end_seconds": 72.85,
+      "engine_probability": 0.15278767503602186
+    },
+    {
+      "word": "of",
+      "start_frame": 8419,
+      "end_frame": 8434,
+      "start_seconds": 84.19,
+      "end_seconds": 84.35,
+      "engine_probability": 0.07157795426244573
+    },
+    {
+      "word": "heaven",
+      "start_frame": 8435,
+      "end_frame": 8486,
+      "start_seconds": 84.35,
+      "end_seconds": 84.87,
+      "engine_probability": 0.01731993361826506
+    },
+    {
+      "word": "of",
+      "start_frame": 8658,
+      "end_frame": 8670,
+      "start_seconds": 86.58,
+      "end_seconds": 86.71,
+      "engine_probability": 0.16781203655782526
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "pkg_id": "EXPKG-000001",
+  "evaluation_id": "EV-2026-000003",
+  "source_file": "03_REFERENCE_TEXT/source_reference_transcript.txt",
+  "transformation_file": "04_ASR_RUN/transcript_raw.txt",
+  "subject_label": "PocketSphinx 5.1.1",
+  "judged_at": "2026-07-15T17:42:13.570592+00:00",
+  "judge_model": "claude-sonnet-4-6",
+  "overall_information_integrity_score": 8.7,
+  "overall_cultural_fidelity_score": 8.3,
+  "executive_summary": "The model output is an ASR transcription of the Tao Teh King (Chapters 8\u20139, Legge translation) that preserves the overall structure and most of the philosophical content, but contains numerous word-level substitution errors that directly contradict the source text. Critical phrases such as 'wrangle' \u2192 'bring goal', 'gold' \u2192 'colin', 'unfilled' \u2192 'on the field', 'wealth and honours' \u2192 'well fed on earth', and 'possessor' \u2192 'possess irked' represent severe false statements that also distort culturally significant Taoist concepts. The errors are consistent with typical ASR phonetic confusions rather than deliberate fabrication, but their cumulative effect significantly undermines fidelity to the source.",
+  "most_significant_failures": [
+    "FS",
+    "CM"
+  ],
+  "suggested_improvements": "Post-processing the ASR output against a known reference text (the Legge translation) using fuzzy string matching or a language model fine-tuned on classical philosophical texts would substantially reduce word-level substitution errors. Particular attention should be paid to culturally specific terms ('gold and jade', 'wrangle', 'wealth and honours') that are phonetically ambiguous but semantically critical. A human review pass or confidence-flagging system for low-certainty words would help catch errors like 'colin' for 'gold' and 'bring goal' for 'wrangle' before final output.",
+  "dimension_scores": {
+    "FH": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "The model does not invent any new factual information such as dates, people, or events. All content is an attempt to transcribe the source text.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "CXH": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "The model output stays entirely within the scope of the source text (Tao Teh King chapters 8-9). No unrelated topics are introduced.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "CTH": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No cultural practices, meanings, or beliefs are invented. The output is a transcription attempt of the existing text.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "AH": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No speakers, quotations, or sources are invented. The model does not attribute content to anyone beyond what is in the source.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "FS": {
+      "severity": 3,
+      "confidence": "High",
+      "explanation": "Multiple ASR errors produce direct contradictions of the source text. Key phrases are rendered incorrectly: 'wrangle' becomes 'bring goal', 'unfilled' becomes 'on the field', 'full' becomes 'fall', 'gold' becomes 'colin', 'hall' becomes 'hole', 'possessor' becomes 'possess irked', 'wealth and honours' becomes 'well fed on earth', 'arrogancy' becomes 'arrogance see', 'associations' becomes 'association says', 'section two' becomes 'section to'. These are numerous and materially alter the meaning of the text.",
+      "source_evidence": "does not wrangle about his low position; leave a vessel unfilled; carry it when it is full; When gold and jade fill the hall, their possessor cannot keep them safe; When wealth and honours lead to arrogancy",
+      "output_evidence": "does not bring goal but his low position; leave a vessel on the field; carry it when it does fall; when colin jade fill the hole there possess irked cannot keep them safe; One well fed on earth lead to arrogance see"
+    },
+    "UC": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "The model does not introduce unsupported motivations, causes, or explanations. It is purely a transcription attempt.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "CL": {
+      "severity": 1,
+      "confidence": "Medium",
+      "explanation": "The overall structure and most philosophical content is preserved. Some minor losses occur due to ASR errors (e.g., 'associations' garbled to 'association says'), but no major contextual blocks are omitted. The ending 'End of chapter nine' is rendered as 'and of chapter nine', which is a minor loss.",
+      "source_evidence": "End of chapter nine",
+      "output_evidence": "and of chapter nine"
+    },
+    "EX": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "The model does not amplify or exaggerate any content beyond the source text.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "OC": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No uncertainty is converted to certainty. The task is transcription and no epistemic claims are made.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "AL": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No attribution is present in the source text that could be lost. The text is a philosophical treatise with no attributed quotes.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "CM": {
+      "severity": 2,
+      "confidence": "High",
+      "explanation": "Several ASR errors distort culturally and philosophically significant terms from the Tao Teh King. 'Gold and jade' (culturally specific Taoist symbols of wealth) becomes 'colin jade'; 'wealth and honours' becomes 'well fed on earth'; 'wrangle' (a key Taoist concept of non-contention) becomes 'bring goal'. These errors flatten or obscure the cultural and philosophical meaning of the Legge translation.",
+      "source_evidence": "When gold and jade fill the hall; When wealth and honours lead to arrogancy; does not wrangle about his low position",
+      "output_evidence": "when colin jade fill the hole; One well fed on earth lead to arrogance see; does not bring goal but his low position"
+    },
+    "FB": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No framing bias is introduced. The output is a transcription attempt with no editorial framing.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "PB": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No political content is present in the source or output.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    },
+    "ST": {
+      "severity": 0,
+      "confidence": "High",
+      "explanation": "No stereotyping is present. The output is a transcription of a philosophical text.",
+      "source_evidence": "N/A",
+      "output_evidence": "N/A"
+    }
+  }
+}

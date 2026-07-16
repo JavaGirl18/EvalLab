@@ -103,6 +103,14 @@
           [class.text-gray-900]="researchView === 'reviews'"
           [class.text-gray-500]="researchView !== 'reviews'"
         >Reviews</button>
+        <button
+          (click)="researchView = 'import'"
+          class="px-4 py-1.5 rounded-md text-xs font-medium transition-colors"
+          [class.bg-white]="researchView === 'import'"
+          [class.shadow-sm]="researchView === 'import'"
+          [class.text-gray-900]="researchView === 'import'"
+          [class.text-gray-500]="researchView !== 'import'"
+        >Import</button>
       </div>
 
       <app-results-table
@@ -123,6 +131,10 @@
       <app-human-review-dashboard
         *ngIf="mode === 'research' && researchView === 'reviews'"
         [experimentId]="currentExperimentId"
+      />
+      <app-external-packages
+        *ngIf="mode === 'research' && researchView === 'import'"
+        class="flex-1 overflow-hidden"
       />
     </div>
 
