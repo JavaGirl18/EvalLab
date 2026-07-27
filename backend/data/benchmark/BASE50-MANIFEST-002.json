@@ -1,0 +1,419 @@
+{
+  "manifest_id": "BASE50-MANIFEST-002",
+  "version": "1.0.0",
+  "description": "Expansion corpus for the BASE50 benchmark. Adds 24 new investigative journalism articles (12 Nigerian ICIR + 12 U.S. ProPublica/MLK50) to BASE50-MANIFEST-001 to form a 50-item benchmark corpus. All items verified: verbatim full prose extracted, word count ≥ 1,200, SHA-256 computed.",
+  "created_date": "2026-07-27",
+  "parent_manifest": "BASE50-MANIFEST-001",
+  "parent_manifest_sha256": "c375fc45d5e7e064a485dd5460e19658f3bbf8bc2dc3951b51bb0de75ff53e58",
+  "total_items": 24,
+  "items": [
+    {
+      "id": "NX01",
+      "title": "Black Gold, bleak future: Rivers communities on the edge despite hosting NNPCL oil wells",
+      "canonical_url": "https://www.icirnigeria.org/rivers-communities-face-extinction-for-hosting-nnpcls-oil-wells/",
+      "publisher": "ICIR",
+      "publication_date": "2025-08-18",
+      "author": "Marcus Fatunmole",
+      "word_count": 4164,
+      "sha256": "5940e7a05f86695f26d0daac02d12925db856964fe848a886f1fe1e346a0838f",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX02",
+      "title": "Lead poisoning outbreak looms in Benue, as illegal mining becomes the 'new farm'",
+      "canonical_url": "https://www.icirnigeria.org/lead-poisoning-outbreak-looms-in-benue-as-illegal-mining-becomes-the-new-farm/",
+      "publisher": "ICIR",
+      "publication_date": "2025-04-14",
+      "author": "Sinafi Omanga",
+      "word_count": 3018,
+      "sha256": "8e4237b2d20b02da114be013996647ee990b9f9a54e32fd7840f07031432ce85",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX03",
+      "title": "Free but unreachable: Why persons with disabilities still struggle for healthcare in Anambra",
+      "canonical_url": "https://www.icirnigeria.org/free-but-unreachable-why-persons-with-disabilities-still-struggle-for-healthcare-in-anambra/",
+      "publisher": "ICIR",
+      "publication_date": "2025-12-06",
+      "author": "ICIR",
+      "word_count": 2789,
+      "sha256": "9f16cdab6a3031cafdaca477c10d9281640cc43b349b48ab527a992e630d829c",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX04",
+      "title": "Free maternal healthcare in Niger State falters under fund delays, cultural barriers, and administrative gaps",
+      "canonical_url": "https://www.icirnigeria.org/free-maternal-healthcare-in-niger-state-falters-under-fund-delays-cultural-barriers-and-administrative-gaps/",
+      "publisher": "ICIR",
+      "publication_date": "2025-11-21",
+      "author": "Anibe Idajili",
+      "word_count": 2689,
+      "sha256": "ffc38c6e5617b5edfd8fae6175852eedcabc6915c778a3454a0f2368371acd04",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX05",
+      "title": "Two years under Tinubu: Students struggle with soaring fees despite NELFund lifeline",
+      "canonical_url": "https://www.icirnigeria.org/two-years-under-tinubu-students-struggle-with-soaring-fees-despite-nelfund-lifeline/",
+      "publisher": "ICIR",
+      "publication_date": "2025-05-15",
+      "author": "Mustapha Usman",
+      "word_count": 1481,
+      "sha256": "830e9e94d87dd0a03ff06c57c460196c92183fe42f47ed33921a2acaa5b883b3",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX06",
+      "title": "In Enugu, cut-throat fees by agents, lawyers, landlords deepen housing crisis",
+      "canonical_url": "https://www.icirnigeria.org/in-enugu-cut-throat-fees-by-agents-lawyers-landlords-deepen-housing-crisis/",
+      "publisher": "ICIR",
+      "publication_date": "2025-11-01",
+      "author": "ICIR",
+      "word_count": 3324,
+      "sha256": "1a4c8cebc99dd43a5e30b62cb797d13dc9bc60ffab292a8bde75561771ec06f7",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX07",
+      "title": "In Kwara, police brutality persists, young lives cut short despite reform claims",
+      "canonical_url": "https://www.icirnigeria.org/in-kwara-police-brutality-persists-young-lives-cut-short-despite-reform-claims/",
+      "publisher": "ICIR",
+      "publication_date": "2025-02-01",
+      "author": "ICIR",
+      "word_count": 3715,
+      "sha256": "b1c7f322bc6e78be0472955f048ee1cafd0cd16b8f9e58bbc2a790ceaf0b0f64",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX08",
+      "title": "Airstrike cover-up: Katsina government helped Nigerian Air Force conceal civilian deaths",
+      "canonical_url": "https://www.icirnigeria.org/airstrike-cover-up-katsina-government-helped-nigerian-air-force-conceal-civilian-deaths/",
+      "publisher": "ICIR",
+      "publication_date": "2025-02-01",
+      "author": "ICIR",
+      "word_count": 3462,
+      "sha256": "1d1920566e76aeff17554f0714ba5c883ab40bdde7a11ca59d0ad258ec9ae89a",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX09",
+      "title": "Kaduna Electric shock: 50 months pension remittance default leaves staff in distress",
+      "canonical_url": "https://www.icirnigeria.org/kaduna-electric-shock-50-months-pension-remittance-default-leaves-staff-in-distress/",
+      "publisher": "ICIR",
+      "publication_date": "2025-06-01",
+      "author": "ICIR",
+      "word_count": 2737,
+      "sha256": "01ed21e6f138f59cfa89719f0da5ea9e0cd234aa2fb3550809edca8023f3e944",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX11",
+      "title": "NBTE Executive Secretary under fire over multimillion naira fraud allegation",
+      "canonical_url": "https://www.icirnigeria.org/nbte-executive-secretary-under-fire-over-multimillion-naira-fraud-allegation/",
+      "publisher": "ICIR",
+      "publication_date": "2025-02-10",
+      "author": "Mustapha Usman",
+      "word_count": 2878,
+      "sha256": "346b50b08927eab33834f444aadf254f5c81f05c8af05af37f5e02d0a9e6e035",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX12",
+      "title": "Sexual harassment persists at BUK despite strict policy",
+      "canonical_url": "https://www.icirnigeria.org/sexual-harassment-persists-at-buk-despite-strict-policy/",
+      "publisher": "ICIR",
+      "publication_date": "2025-09-14",
+      "author": "Nanji Nandang Venley",
+      "word_count": 3885,
+      "sha256": "e32ae71cec8f3fcb6ea1c2e44019dd7cba6b4846289803ed45945b4445fe83d4",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "NX13",
+      "title": "In Anambra, women farmers with disabilities are treated unfairly, denied agricultural inputs",
+      "canonical_url": "https://www.icirnigeria.org/in-anambra-women-farmers-with-disabilities-are-treated-unfairly-denied-agricultural-inputs/",
+      "publisher": "ICIR",
+      "publication_date": "2025-11-12",
+      "author": "Arinze Chijioke",
+      "word_count": 4308,
+      "sha256": "741840f30fc8cf35f0716ebb9b9ded4505e2b3f881f7eca9d98a7ac59693ca7c",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX03",
+      "title": "How Hospitals Are Failing Black Mothers",
+      "canonical_url": "https://www.propublica.org/article/how-hospitals-are-failing-black-mothers",
+      "publisher": "ProPublica",
+      "publication_date": "2017-12-27",
+      "author": "Annie Waldman",
+      "word_count": 4260,
+      "sha256": "7a0fedf1b71d148b8d632fef76c01abdfc5b2fd437c752997ffc98c248f29870",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX04",
+      "title": "Trump's Education Department Has Abandoned Racial Harassment Investigations Involving Black Students",
+      "canonical_url": "https://www.propublica.org/article/trump-education-department-civil-rights-racial-harassment",
+      "publisher": "ProPublica",
+      "publication_date": "2025-12-19",
+      "author": "Jennifer Smith Richards, Megan O'Matz, Jodi S. Cohen",
+      "word_count": 2186,
+      "sha256": "eafac2f45c4765aff9dada34a3b45f37178db9e7be6b902ee1dfefffb8d804ca",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX05",
+      "title": "Federal Investigators Were Preparing Two Texas Housing Discrimination Cases — Until Trump Took Over",
+      "canonical_url": "https://www.propublica.org/article/trump-hud-texas-housing-discrimination-cases-dallas-houston",
+      "publisher": "ProPublica",
+      "publication_date": "2025-03-25",
+      "author": "Jesse Coburn",
+      "word_count": 1598,
+      "sha256": "cfcdaf936e8b9dd38340d19d869fec8c61b81d19a0d4fdd919dd7ac5328fbea7",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX06",
+      "title": "They Were Sleeping, Driving, Walking in Memphis. Then Trump's Police Task Force Came.",
+      "canonical_url": "https://mlk50.com/2025/11/03/they-were-sleeping-driving-walking-in-memphis-then-trumps-police-task-force-came/",
+      "publisher": "MLK50 / ProPublica",
+      "publication_date": "2025-11-03",
+      "author": "Wendi C. Thomas, Katherine Burgess",
+      "word_count": 2749,
+      "sha256": "659eddd2e7aa74bc86fee7318850056997c0f15aaac79034b5791695fcec73de",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX08",
+      "title": "Republicans Hatched a Secret Assault on the Voting Rights Act in Washington State",
+      "canonical_url": "https://www.propublica.org/article/republicans-hatched-secret-assault-voting-rights-act-washington-state",
+      "publisher": "ProPublica",
+      "publication_date": "2024-02-28",
+      "author": "Marilyn W. Thompson",
+      "word_count": 2928,
+      "sha256": "ae50fb7d802a8e46e222edb2850affd4a80160edea9c369358a9ac7bc2dfed70",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX09",
+      "title": "She Says Doctors Ignored Her Concerns About Her Pregnancy. For Many Black Women, It's a Familiar Story.",
+      "canonical_url": "https://www.propublica.org/article/stillbirths-pregnancy-mothers-parents-racial-disparities",
+      "publisher": "ProPublica",
+      "publication_date": "2022-12-27",
+      "author": "Duaa Eldeib",
+      "word_count": 3112,
+      "sha256": "d8cb131cd92684ac5081980bb8b997be3d80c7c03175613038b56240b6751ba4",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "USX11",
+      "title": "Trump HUD Prepares to Drop Major Housing Discrimination Cases",
+      "canonical_url": "https://www.propublica.org/article/trump-hud-drop-housing-discrimination-cases-housing-pollution",
+      "publisher": "ProPublica",
+      "publication_date": "2025-07-18",
+      "author": "Jesse Coburn",
+      "word_count": 1277,
+      "sha256": "b0f0695ab39b8198f4ba930105a564bc921fdda8d353bf89968bd702f8375f9f",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "R-US-01",
+      "title": "How Your Shadow Credit Score Could Decide Whether You Get an Apartment",
+      "canonical_url": "https://www.propublica.org/article/how-your-shadow-credit-score-could-decide-whether-you-get-an-apartment",
+      "publisher": "ProPublica",
+      "publication_date": "2022-03-29",
+      "author": "Erin Smith, Heather Vogell",
+      "word_count": 2977,
+      "sha256": "1ae683f385b23dbf593c1b464bb5c618a636e06534b910fb9d06631f61859c33",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "R-US-02",
+      "title": "Dismissed by DEI: Black Women Federal Workers Are Losing Their Careers as Trump Purges Inclusion Programs",
+      "canonical_url": "https://www.propublica.org/article/trump-dei-black-women-minorities-careers-jobs-dismissed",
+      "publisher": "ProPublica",
+      "publication_date": "2025-06-04",
+      "author": "J. David McSwane",
+      "word_count": 2268,
+      "sha256": "31d6bc2af0c4fd4de279b7ed528861be24bda65ca9f9a4fa4f44fbf3e57aafa0",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "R-US-03",
+      "title": "State Investigation Reveals Racial Disparities in Student Discipline and Police Involvement",
+      "canonical_url": "https://www.propublica.org/article/state-investigation-reveals-racial-disparities-in-student-discipline-and-police-involvement",
+      "publisher": "ProPublica",
+      "publication_date": "2022-09-14",
+      "author": "Jodi S. Cohen, Jennifer Smith Richards",
+      "word_count": 1939,
+      "sha256": "5904d4bcf115d31f5536f99f7ca0a52a3fa3ce4987901f07afbbe049ad6e6464",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "R-US-04",
+      "title": "Disinvested: How Government and Private Industry Let the Main Street of a Black Neighborhood Crumble",
+      "canonical_url": "https://www.propublica.org/article/disinvested-how-government-and-private-industry-let-the-main-street-of-a-black-neighborhood-crumble",
+      "publisher": "ProPublica",
+      "publication_date": "2020-11-11",
+      "author": "Tony Briscoe, Haru Coryne, Mick Dumke",
+      "word_count": 5448,
+      "sha256": "f7501c72f158bd87a94d70df3ac6a81044a1dbc69bd6a6d477c59dc1753c7d8c",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    },
+    {
+      "id": "R-US-05",
+      "title": "EPA Calls Out Environmental Racism in Louisiana's Cancer Alley",
+      "canonical_url": "https://www.propublica.org/article/cancer-alley-louisiana-epa-environmental-racism",
+      "publisher": "ProPublica / Grist",
+      "publication_date": "2022-10-19",
+      "author": "Lisa Song, Lylla Younes",
+      "word_count": 1594,
+      "sha256": "f8e49f5191c6dec906d25f57f169a7f3f8d3236cb60952561be69858fa727f98",
+      "ingestion_status": "verified",
+      "prompt_variants": [
+        "faithful_transformation",
+        "extreme_compression",
+        "international_adaptation",
+        "engagement_optimization"
+      ]
+    }
+  ]
+}

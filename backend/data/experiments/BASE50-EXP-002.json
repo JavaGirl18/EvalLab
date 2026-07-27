@@ -1,0 +1,125 @@
+{
+  "schema_version": "3.0",
+  "research_phase": "BASE Fellowship Final Experiment — Corpus Expansion",
+  "experiment_id": "BASE50-EXP-002",
+  "experiment_name": "NewsAssist AI BASE-50 Benchmark Experiment — MANIFEST-002 Expansion",
+  "research_objective": "Extend the BASE50 benchmark evaluation to 24 new investigative journalism articles (12 Nigerian ICIR + 12 U.S. ProPublica/MLK50) added in BASE50-MANIFEST-002, using the identical experimental design as BASE50-EXP-001 to enable direct cross-corpus comparison.",
+  "research_question": "How do different prompting strategies influence Information Integrity and Cultural Fidelity during AI-assisted transformation of high-context investigative journalism?",
+  "hypothesis": "Prompt strategies emphasising brevity, engagement, or international adaptation will preserve core facts while increasing contextual loss, attribution loss, framing shifts, and cultural simplification relative to the faithful transformation baseline — consistent with BASE50-EXP-001 findings.",
+  "experiment_rationale": "Holds all variables constant as in EXP-001 (single model, temperature 0.2, four prompt variants) while running the 24 expansion articles. Results are directly combinable with EXP-001 to produce a full 50-article BASE50 analysis. A multi-model comparison across the full 50-item corpus is planned for BASE50-EXP-003.",
+  "prompt_variants": [
+    "faithful_transformation",
+    "extreme_compression",
+    "international_adaptation",
+    "engagement_optimization"
+  ],
+  "prompt_variant_display_aliases": {
+    "faithful_transformation": "faithful",
+    "extreme_compression": "compressed",
+    "international_adaptation": "international",
+    "engagement_optimization": "engagement"
+  },
+  "prompt_variant_output_ids": {
+    "faithful_transformation": "F",
+    "extreme_compression": "C",
+    "international_adaptation": "I",
+    "engagement_optimization": "E"
+  },
+  "dataset_item_ids": [
+    "NX01",
+    "NX02",
+    "NX03",
+    "NX04",
+    "NX05",
+    "NX06",
+    "NX07",
+    "NX08",
+    "NX09",
+    "NX11",
+    "NX12",
+    "NX13",
+    "USX03",
+    "USX04",
+    "USX05",
+    "USX06",
+    "USX08",
+    "USX09",
+    "USX11",
+    "R-US-01",
+    "R-US-02",
+    "R-US-03",
+    "R-US-04",
+    "R-US-05"
+  ],
+  "subject_models": [
+    "gemini-3.1-flash-lite"
+  ],
+  "judge_model": "claude-sonnet-4-6",
+  "temperature": 0.2,
+  "independent_variable": "prompt_variant",
+  "controlled_variables": [
+    "source_article",
+    "system_prompt",
+    "subject_model",
+    "judge_model",
+    "temperature",
+    "taxonomy_version"
+  ],
+  "dependent_variables": [
+    "Information Integrity score",
+    "Cultural Fidelity score",
+    "taxonomy-category severity",
+    "judge confidence"
+  ],
+  "study_scope": {
+    "planned_corpus_size": 24,
+    "prompt_variants": 4,
+    "total_planned_runs": 96,
+    "regions": {
+      "Nigeria": 12,
+      "United_States": 12
+    },
+    "outlets": {
+      "Nigeria": [
+        "The ICIR"
+      ],
+      "United_States": [
+        "ProPublica",
+        "MLK50"
+      ]
+    },
+    "model_provider": "google",
+    "model_version_note": "Record exact provider-reported version string in every run."
+  },
+  "generation_settings": {
+    "temperature": 0.2,
+    "max_output_tokens": 4096,
+    "note": "All generation parameters must remain fixed across all 96 runs and must match EXP-001 settings for cross-experiment comparability."
+  },
+  "manifest_reference": {
+    "corpus_name": "BASE-50",
+    "batch_name": "Nigeria_USBlack_24_expansion",
+    "manifest_id": "BASE50-MANIFEST-002",
+    "manifest_version": "1.0.0",
+    "manifest_sha256": "4378e8e8ade1fef8f9c8ca9b6aab47899880ab19838e05cfe2e25e0a8349f3b3",
+    "parent_manifest_id": "BASE50-MANIFEST-001",
+    "parent_manifest_sha256": "c375fc45d5e7e064a485dd5460e19658f3bbf8bc2dc3951b51bb0de75ff53e58",
+    "finalized_at": "2026-07-27T00:00:00+00:00",
+    "items_count": 24
+  },
+  "preflight_check": {
+    "expected_items": 24,
+    "expected_prompt_variants": 4,
+    "expected_models": 1,
+    "expected_total_runs": 96,
+    "filter_expression": "corpus_set == 'BASE50' AND manifest_id == 'BASE50-MANIFEST-002'"
+  },
+  "status": {
+    "phase": "completed",
+    "corpus_verified_items": 24,
+    "created_by": "Valencia Cooper",
+    "created_at": "2026-07-27",
+    "started_at": "2026-07-27T05:01:08.861976+00:00",
+    "completed_at": "2026-07-27T06:22:45.720491+00:00"
+  }
+}

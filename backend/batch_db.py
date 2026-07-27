@@ -186,6 +186,18 @@ def mark_batch_status(
         conn.commit()
 
 
+def reset_failed_items(batch_id: str) -> int:
+    """Reset all failed items (regardless of attempt count) back to pending so they can be retried."""
+    with _conn() as conn:
+        cur = conn.execute(
+            "UPDATE batch_run_items SET status='pending', attempt=0, error=NULL "
+            "WHERE batch_id=? AND status='failed'",
+            (batch_id,),
+        )
+        conn.commit()
+        return cur.rowcount
+
+
 def reset_stale_running_items(batch_id: str) -> None:
     """Any item stuck in 'running' from a prior crash is reset to 'pending'."""
     with _conn() as conn:

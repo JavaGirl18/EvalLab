@@ -334,7 +334,10 @@ def build_eval_record(run_key: str, evaluation_id: str) -> dict:
         "generated_by":          f"EvalLab {EVALLAB_VERSION}",
     }
 
-    record["checksum"] = _checksum({k: v for k, v in record.items() if k != "checksum"})
+    # Exclude export-metadata fields so repeated exports of identical evaluation
+    # content produce the same checksum (record_exported_at changes each time).
+    _CHECKSUM_EXCLUDE = {"checksum", "record_exported_at", "export_format_version", "generated_by"}
+    record["checksum"] = _checksum({k: v for k, v in record.items() if k not in _CHECKSUM_EXCLUDE})
     return record
 
 
@@ -986,9 +989,11 @@ def render_eval_record_html(record: dict) -> str:
       <tr><th>SHA-256 Checksum</th><td class="mono small">{_esc(record.get('checksum','—'))}</td></tr>
     </table>
     <p class="section-note" style="margin-top:16px">
-      The checksum is computed over the canonical JSON representation of all record fields
-      (sorted keys, no whitespace) before HTML rendering. It can be used to verify
-      that this record has not been altered since export.
+      The checksum is a SHA-256 over the canonical JSON of all evaluation content fields
+      (sorted keys, no whitespace between tokens). Export-metadata fields excluded from
+      the checksum: <code>record_exported_at</code>, <code>export_format_version</code>,
+      <code>generated_by</code>. Two exports of the same evaluation produce an identical
+      checksum; a changed checksum indicates the evaluation content was altered.
     </p>
   </section>"""
 

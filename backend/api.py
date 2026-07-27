@@ -16,7 +16,7 @@ from research_judge import score_all_research
 from config import CANONICAL_SYSTEM_PROMPT, STANDARD_PROMPT_VARIANTS, JUDGE_MODEL
 from batch_db import (
     get_batch, get_batch_items, list_batches,
-    cancel_batch, get_completed_results,
+    cancel_batch, get_completed_results, reset_failed_items,
 )
 from batch_runner import validate_request, create_batch_from_request, run_batch, compute_batch_summary
 from human_review_db import (
@@ -531,6 +531,18 @@ def cancel_batch_endpoint(batch_id: str):
         raise HTTPException(status_code=400, detail=f"Batch is already {batch['status']}.")
     cancel_batch(batch_id)
     return {"batch_id": batch_id, "status": "cancelled"}
+
+
+@app.post("/batch/{batch_id}/retry-failed")
+async def retry_failed_batch_items(batch_id: str, background_tasks: BackgroundTasks):
+    batch = get_batch(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail=f"Batch '{batch_id}' not found.")
+    if batch["status"] == "running":
+        raise HTTPException(status_code=409, detail="Batch is already running.")
+    reset_count = reset_failed_items(batch_id)
+    background_tasks.add_task(run_batch, batch_id)
+    return {"batch_id": batch_id, "reset_count": reset_count, "status": "running"}
 
 
 @app.get("/batches", response_model=list[BatchSummaryResponse])
@@ -1265,8 +1277,14 @@ def _build_external_package_record(pkg_id: str) -> dict:
         "generated_by":          "EvalLab 1.0.0",
     }
 
+    # Checksum covers evaluation content only — export timestamp excluded so
+    # HTML and JSON downloads of the same record produce identical checksums.
+    _CHECKSUM_EXCLUDE = {"checksum", "record_exported_at", "export_format_version", "generated_by"}
     record["checksum"] = hashlib.sha256(
-        json.dumps({k: v for k, v in record.items() if k != "checksum"}, sort_keys=True).encode()
+        json.dumps(
+            {k: v for k, v in record.items() if k not in _CHECKSUM_EXCLUDE},
+            sort_keys=True, separators=(",", ":"),
+        ).encode()
     ).hexdigest()
     return record
 

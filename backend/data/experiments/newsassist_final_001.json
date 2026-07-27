@@ -1,0 +1,58 @@
+{
+  "research_phase": "BASE Fellowship Final Experiment",
+  "experiment_id": "newsassist_final_001",
+  "experiment_name": "News Assist Final — Prompt Strategy",
+  "research_objective": "Evaluate how different prompting strategies influence the preservation of Information Integrity and Cultural Fidelity when transforming high-context investigative journalism.",
+  "research_question": "How do different prompting strategies influence Information Integrity and Cultural Fidelity during AI-assisted transformation of high-context investigative journalism?",
+  "hypothesis": "Prompt strategies emphasising brevity, engagement, or international adaptation will preserve core facts while increasing contextual loss, attribution loss, framing shifts, and cultural simplification.",
+  "prompt_variant": "faithful_transformation",
+  "experiment_rationale": "Holds source, system prompt, model, and temperature constant while varying the editorial prompt strategy across four conditions.",
+  "transformation_task": {
+    "id": "faithful_transformation",
+    "name": "Faithful Transformation",
+    "instructions": "Produce a concise news summary preserving factual accuracy, attribution, quoted statements, uncertainty, institutional context, and culturally significant details."
+  },
+  "prompt_variants": [
+    "faithful_transformation",
+    "extreme_compression",
+    "international_adaptation",
+    "engagement_optimization"
+  ],
+  "dataset_item_ids": [
+    "newsassist_final_001"
+  ],
+  "subject_models": [
+    "gemini-3.1-flash-lite"
+  ],
+  "judge_model": "claude-sonnet-4-6",
+  "temperature": 0.2,
+  "independent_variable": "prompt_variant",
+  "controlled_variables": [
+    "source article",
+    "system prompt",
+    "subject model",
+    "judge model",
+    "temperature",
+    "taxonomy version"
+  ],
+  "dependent_variables": [
+    "Information Integrity score",
+    "Cultural Fidelity score",
+    "taxonomy-category severity",
+    "judge confidence"
+  ],
+  "integrity": {
+    "configuration_hash": "ecbd3ced5034da428af3e3128eac536bc0e1fbaead8264a4ad8b0ed1b0c7b3e3",
+    "configuration_hash_algorithm": "SHA-256",
+    "configuration_frozen_at": "2026-07-24",
+    "frozen_by": "Valencia Cooper",
+    "allow_modification_after_freeze": false
+  },
+  "status": {
+    "phase": "completed",
+    "created_by": "Valencia Cooper",
+    "created_at": "2026-07-24",
+    "started_at": "2026-07-25T03:30:32.926622+00:00",
+    "completed_at": "2026-07-25T03:32:34.905237+00:00"
+  }
+}

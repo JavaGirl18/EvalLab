@@ -1,0 +1,140 @@
+{
+  "schema_version": "3.0",
+  "research_phase": "BASE Fellowship Final Experiment",
+  "experiment_id": "BASE50-EXP-001",
+  "experiment_name": "NewsAssist AI BASE-50 Benchmark Experiment",
+  "research_objective": "Evaluate how different prompting strategies influence the preservation of Information Integrity and Cultural Fidelity when transforming high-context investigative journalism from Nigerian and Black American news outlets.",
+  "research_question": "How do different prompting strategies influence Information Integrity and Cultural Fidelity during AI-assisted transformation of high-context investigative journalism?",
+  "hypothesis": "Prompt strategies emphasising brevity, engagement, or international adaptation will preserve core facts while increasing contextual loss, attribution loss, framing shifts, and cultural simplification relative to the faithful transformation baseline.",
+  "prompt_variant": "faithful_transformation",
+  "experiment_rationale": "Holds source article, system prompt, subject model, and temperature constant while varying the editorial prompt strategy across four conditions. One model (Gemini 3.1 Flash Lite) is used to isolate prompt strategy effects. A multi-model comparison is reserved for BASE50-EXP-002.",
+  "transformation_task": {
+    "id": "faithful_transformation",
+    "name": "Faithful Transformation",
+    "instructions": "Produce a concise news summary that preserves factual accuracy, attribution, quoted statements, uncertainty, institutional context, and culturally significant details. Preserve distinctions between verified facts, reported allegations, expert opinions, and quoted viewpoints. Do not add information that is not supported by the article."
+  },
+  "prompt_variants": [
+    "faithful_transformation",
+    "extreme_compression",
+    "international_adaptation",
+    "engagement_optimization"
+  ],
+  "prompt_variant_display_aliases": {
+    "faithful_transformation": "faithful",
+    "extreme_compression": "compressed",
+    "international_adaptation": "international",
+    "engagement_optimization": "engagement"
+  },
+  "prompt_variant_output_ids": {
+    "faithful_transformation": "F",
+    "extreme_compression": "C",
+    "international_adaptation": "I",
+    "engagement_optimization": "E"
+  },
+  "dataset_item_ids": [
+    "N01",
+    "N02",
+    "N03",
+    "N04",
+    "N05",
+    "N06",
+    "N07",
+    "N08",
+    "N09",
+    "N10",
+    "N11",
+    "N12",
+    "N13",
+    "US01",
+    "US02",
+    "US03",
+    "US04",
+    "US05",
+    "US06",
+    "US07",
+    "US08",
+    "US09",
+    "US10",
+    "US11",
+    "US12",
+    "US13"
+  ],
+  "subject_models": [
+    "gemini-3.1-flash-lite"
+  ],
+  "judge_model": "claude-sonnet-4-6",
+  "temperature": 0.2,
+  "independent_variable": "prompt_variant",
+  "controlled_variables": [
+    "source_article",
+    "system_prompt",
+    "subject_model",
+    "judge_model",
+    "temperature",
+    "taxonomy_version"
+  ],
+  "dependent_variables": [
+    "Information Integrity score",
+    "Cultural Fidelity score",
+    "taxonomy-category severity",
+    "judge confidence"
+  ],
+  "study_scope": {
+    "planned_corpus_size": 26,
+    "prompt_variants": 4,
+    "total_planned_runs": 104,
+    "regions": {
+      "Nigeria": 13,
+      "United_States": 13
+    },
+    "outlets": {
+      "Nigeria": [
+        "Premium Times",
+        "The ICIR"
+      ],
+      "United_States": [
+        "Capital B",
+        "MLK50",
+        "ProPublica"
+      ]
+    },
+    "model_provider": "google",
+    "model_version_note": "Record exact provider-reported version string in every run."
+  },
+  "generation_settings": {
+    "temperature": 0.2,
+    "max_output_tokens": 4096,
+    "note": "All generation parameters must remain fixed across all 104 runs. Store the complete request configuration with each run."
+  },
+  "manifest_reference": {
+    "corpus_name": "BASE-50",
+    "batch_name": "Nigeria_USBlack_26",
+    "manifest_id": "BASE50-MANIFEST-001",
+    "manifest_version": "1.0.0",
+    "manifest_sha256": "c375fc45d5e7e064a485dd5460e19658f3bbf8bc2dc3951b51bb0de75ff53e58",
+    "finalized_at": "2026-07-26T00:00:00+00:00",
+    "items_count": 26,
+    "note": "SHA-256 computed over the canonical 26-item manifest JSON (id, source_title, source_url, publisher, published_date, geographic_focus, word_count, extraction_sha256, ingestion_status) in N01–N13, US01–US13 order."
+  },
+  "legacy_comparison": {
+    "note": "newsassist_final_001 in benchmark_corpus.json contains N01 (same article, same source text) run under a prior experiment context. Those outputs are retained as legacy comparison data but are excluded from the primary BASE-50 analysis. The 5 legacy corpus items (control_001, diaspora_001, diaspora_002, investigative_001, newsassist_final_001) are historical and are not counted as part of the frozen BASE-50 corpus.",
+    "excluded_ids": [
+      "newsassist_final_001",
+      "control_001",
+      "diaspora_001",
+      "diaspora_002",
+      "investigative_001"
+    ]
+  },
+  "status": {
+    "phase": "completed",
+    "corpus_verified_items": 26,
+    "corpus_total_items_in_file": 31,
+    "legacy_items_in_file": 5,
+    "created_by": "Valencia Cooper",
+    "created_at": "2026-07-25",
+    "corpus_finalized_at": "2026-07-26",
+    "started_at": "2026-07-26T21:00:15.064144+00:00",
+    "completed_at": "2026-07-27T00:10:03.769150+00:00"
+  }
+}

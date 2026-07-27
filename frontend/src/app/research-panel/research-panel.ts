@@ -35,7 +35,7 @@ const PHASES = [
   'final_validation'
 ];
 
-const KNOWN_MODELS = ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'];
+const KNOWN_MODELS = ['gpt-5.6-sol', 'gemini-3.1-flash-lite', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'];
 
 type SourceMode = 'dataset' | 'url' | 'paste';
 
@@ -99,10 +99,11 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   // Experiment config
   readonly phases      = PHASES;
   readonly knownModels = KNOWN_MODELS;
-  experimentId        = '';
-  experimentName      = '';
-  experimentPhase     = '';
-  experimentObjective = '';
+  experimentId             = '';
+  experimentName           = '';
+  experimentPhase          = '';
+  experimentObjective      = '';
+  experimentDatasetItemIds: string[] = [];
   experimentQuestion  = '';
   experimentHypothesis = '';
   experimentSourceId  = '';
@@ -183,7 +184,8 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
         this.selectedVariants = expVariants?.length > 1 ? expVariants : (this.experimentVariant ? [this.experimentVariant] : []);
         if ((exp as any).temperature !== undefined) this.temperature = (exp as any).temperature;
         this.taskInstructions      = exp.transformation_task?.instructions ?? '';
-        this.experimentModels      = exp.subject_models ?? [];
+        this.experimentModels          = exp.subject_models ?? [];
+        this.experimentDatasetItemIds  = (exp as any).dataset_item_ids ?? [];
         this.experimentStatusPhase = exp.status?.phase ?? 'planned';
         this.experimentCreatedBy   = exp.status?.created_by ?? 'Valencia Cooper';
         this.experimentStartedAt   = exp.status?.started_at ?? '';
@@ -604,8 +606,10 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
     this.batchSubmitted = false;
     this.batchError    = '';
 
+    const allowedIds = this.experimentDatasetItemIds;
     const itemIds = this.items
       .filter((i) => i.source_text?.trim())
+      .filter((i) => allowedIds.length === 0 || allowedIds.includes(i.id))
       .map((i) => i.id);
 
     const request = {

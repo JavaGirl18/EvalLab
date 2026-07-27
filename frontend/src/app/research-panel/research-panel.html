@@ -495,7 +495,7 @@
       </div>
 
       <!-- Temperature -->
-      <div *ngIf="canRun || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
+      <div *ngIf="canRun || hasExperiment || (sourceMode === 'dataset' && selectedItem) || (sourceMode === 'url' && fetchedArticle) || (sourceMode === 'paste' && pastedText.trim())"
         class="flex flex-col gap-2">
         <div class="flex justify-between">
           <span class="text-sm font-semibold text-gray-700">Temperature</span>
@@ -518,7 +518,7 @@
       <div class="flex flex-col gap-2 pt-3 border-t border-gray-100">
         <span class="text-xs font-semibold text-gray-700">Run Full Dataset as Batch</span>
         <p class="text-xs text-gray-400">
-          {{ items.length }} dataset article{{ items.length !== 1 ? 's' : '' }}
+          {{ (experimentDatasetItemIds.length || items.length) }} dataset article{{ (experimentDatasetItemIds.length || items.length) !== 1 ? 's' : '' }}
           · <span class="font-mono">{{ selectedVariants.length > 1 ? selectedVariants.length + ' variants' : (experimentVariant || selectedVariant) }}</span>
           <ng-container *ngIf="hasExperiment"> · {{ experimentId }}</ng-container>
         </p>
