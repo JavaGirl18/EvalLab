@@ -603,6 +603,11 @@ export class EvalService {
     return this.http.get<HumanReviewStats>(`${this.apiUrl}/human-reviews/summary?${q}`);
   }
 
+  benchmarkAnalysisUrl(experimentIds: string[], corpus = 'BASE50'): string {
+    const q = new URLSearchParams({ experiments: experimentIds.join(','), corpus });
+    return `${this.apiUrl}/benchmark/analysis/html?${q}`;
+  }
+
   exportHumanReviewUrl(format: string, params: { review_id?: string; batch_id?: string; experiment_id?: string; review_round?: number } = {}): string {
     const q = new URLSearchParams({ format });
     if (params.review_id)     q.set('review_id',     params.review_id);

@@ -120,6 +120,10 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   availableExperiments: ExperimentFileSummary[] = [];
   selectedExperimentFile = '';
 
+  // Benchmark analysis export
+  analysisExpanded   = false;
+  analysisSelectedIds: string[] = [];
+
   constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
@@ -190,6 +194,10 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
         this.experimentCreatedBy   = exp.status?.created_by ?? 'Valencia Cooper';
         this.experimentStartedAt   = exp.status?.started_at ?? '';
         this.experimentCompletedAt = exp.status?.completed_at ?? '';
+        // Seed the analysis selection with the loaded experiment if not already present
+        if (this.experimentId && !this.analysisSelectedIds.includes(this.experimentId)) {
+          this.analysisSelectedIds = [this.experimentId];
+        }
         this.persistExperimentConfig();
         this.cdr.detectChanges();
       },
@@ -745,6 +753,20 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  toggleAnalysisExp(id: string) {
+    if (this.analysisSelectedIds.includes(id)) {
+      this.analysisSelectedIds = this.analysisSelectedIds.filter(e => e !== id);
+    } else {
+      this.analysisSelectedIds = [...this.analysisSelectedIds, id];
+    }
+  }
+
+  downloadAnalysis() {
+    if (!this.analysisSelectedIds.length) return;
+    const url = this.evalService.benchmarkAnalysisUrl(this.analysisSelectedIds);
+    window.open(url, '_blank');
   }
 
   exportHrHtml(reviewId: string) {

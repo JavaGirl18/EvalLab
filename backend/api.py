@@ -19,6 +19,7 @@ from batch_db import (
     cancel_batch, get_completed_results, reset_failed_items,
 )
 from batch_runner import validate_request, create_batch_from_request, run_batch, compute_batch_summary
+from benchmark_analysis import compute_analysis, render_analysis_html
 from human_review_db import (
     create_human_review, get_human_review, list_human_reviews,
     count_reviews, mark_review_archived,
@@ -543,6 +544,40 @@ async def retry_failed_batch_items(batch_id: str, background_tasks: BackgroundTa
     reset_count = reset_failed_items(batch_id)
     background_tasks.add_task(run_batch, batch_id)
     return {"batch_id": batch_id, "reset_count": reset_count, "status": "running"}
+
+
+@app.get("/benchmark/analysis")
+def get_benchmark_analysis(experiments: str = "BASE50-EXP-001,BASE50-EXP-002", corpus: str = "BASE50"):
+    """
+    Compute combined statistical analysis across one or more experiments.
+    Pass a comma-separated list of experiment IDs via ?experiments=
+    """
+    exp_ids = [e.strip() for e in experiments.split(",") if e.strip()]
+    if not exp_ids:
+        raise HTTPException(status_code=422, detail="At least one experiment ID required.")
+    try:
+        return compute_analysis(exp_ids, corpus_name=corpus)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get("/benchmark/analysis/html")
+def get_benchmark_analysis_html(experiments: str = "BASE50-EXP-001,BASE50-EXP-002", corpus: str = "BASE50"):
+    """Download the benchmark statistical analysis as a self-contained HTML file."""
+    exp_ids = [e.strip() for e in experiments.split(",") if e.strip()]
+    if not exp_ids:
+        raise HTTPException(status_code=422, detail="At least one experiment ID required.")
+    try:
+        data = compute_analysis(exp_ids, corpus_name=corpus)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    html     = render_analysis_html(data)
+    filename = f"{corpus}_statistical_analysis.html"
+    return Response(
+        content=html,
+        media_type="text/html",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/batches", response_model=list[BatchSummaryResponse])
