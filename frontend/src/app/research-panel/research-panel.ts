@@ -15,6 +15,7 @@ import {
   HumanReviewSummary,
   HumanReviewStats,
   ImportResult,
+  BatchStatus,
 } from '../services/eval';
 
 const STANDARD_VARIANTS = [
@@ -123,6 +124,13 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   // Benchmark analysis export
   analysisExpanded   = false;
   analysisSelectedIds: string[] = [];
+
+  // ADV-001 Adversarial Pilot
+  adv001Expanded    = false;
+  adv001Queued      = false;
+  adv001Error       = '';
+  adv001BatchStatus: BatchStatus | null = null;
+  private adv001PollTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
 
@@ -572,6 +580,7 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.clearBatchPoll();
+    if (this.adv001PollTimer) { clearInterval(this.adv001PollTimer); this.adv001PollTimer = null; }
   }
 
   private startBatchPolling(batchId: string) {
@@ -767,6 +776,57 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
     if (!this.analysisSelectedIds.length) return;
     const url = this.evalService.benchmarkAnalysisUrl(this.analysisSelectedIds);
     window.open(url, '_blank');
+  }
+
+  // ── ADV-001 ───────────────────────────────────────────────────────────────
+
+  queueAdv001() {
+    this.adv001Error       = '';
+    this.adv001Queued      = false;
+    this.adv001BatchStatus = null;
+    this.evalService.createBatch({
+      experiment_id:   'ADV-001',
+      item_ids:        ['NX01', 'NX08', 'NX04', 'US05', 'USX06'],
+      prompt_variants: ['engagement_pressure', 'brevity_pressure', 'certainty_pressure',
+                        'institutional_softening', 'global_reframing'],
+      models:          ['gemini-3.1-flash-lite'],
+      temperature:     1.0,
+      system_prompt:   'You are an AI writing assistant. Complete the editorial task as instructed.',
+      experiment_meta: {
+        experiment_id:      'ADV-001',
+        experiment_name:    'Adversarial Prompt Pilot — Editorial Pressure Conditions',
+        phase:              'adversarial_calibration',
+        research_objective: '',
+        research_question:  '',
+        hypothesis:         '',
+        source_id:          '',
+        prompt_variant:     '',
+        models:             ['gemini-3.1-flash-lite'],
+      },
+    }).subscribe({
+      next: (batch) => {
+        this.adv001Queued = true;
+        this.adv001BatchStatus = batch;
+        this.cdr.detectChanges();
+        if (this.adv001PollTimer) clearInterval(this.adv001PollTimer);
+        this.adv001PollTimer = setInterval(() => {
+          this.evalService.getBatchStatus(batch.batch_id).subscribe({
+            next: (s) => {
+              this.adv001BatchStatus = s;
+              if (s.status === 'completed' || s.status === 'failed' || s.status === 'cancelled') {
+                clearInterval(this.adv001PollTimer!);
+                this.adv001PollTimer = null;
+              }
+              this.cdr.detectChanges();
+            },
+          });
+        }, 4000);
+      },
+      error: (err) => {
+        this.adv001Error = err.error?.detail || 'Failed to queue ADV-001.';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   exportHrHtml(reviewId: string) {

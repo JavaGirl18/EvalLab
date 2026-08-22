@@ -201,6 +201,7 @@ export interface BatchRequest {
   prompt_variants: string[];
   models: string[];
   temperature: number;
+  system_prompt?: string;
   task_instructions?: string;
   experiment_meta?: ExperimentMeta;
   max_concurrency?: number;
@@ -728,4 +729,11 @@ export class EvalService {
       : `${this.apiUrl}/external-packages/${pkgId}/export`;
     return this.http.get(path, { responseType: 'blob' });
   }
+
+  batchPdfUrl(batchId: string): string {
+    return `${this.apiUrl}/batch/${batchId}/results/pdf`;
+  }
+
+  // ── ADV-001 Adversarial Prompt Pilot ─────────────────────────────────────
+
 }

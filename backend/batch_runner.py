@@ -234,6 +234,10 @@ async def _run_unit(
         # Resolve dataset item and variant once — these failures are not retried
         try:
             dataset_item = await asyncio.to_thread(get_dataset_item, item_id)
+            # Allow batch config to override the default canonical system prompt
+            override_prompt = config.get("system_prompt")
+            if override_prompt:
+                dataset_item = dataclasses.replace(dataset_item, system_prompt=override_prompt)
             variant      = await asyncio.to_thread(
                 get_prompt_variant, dataset_item, prompt_variant, task_instructions
             )

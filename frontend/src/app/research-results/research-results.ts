@@ -1,6 +1,8 @@
 import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ResearchScoredResult, DimensionScore, BatchResults, EvalService } from '../services/eval';
+import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+import { ResearchScoredResult, DimensionScore, BatchResults, BatchSummary, EvalService } from '../services/eval';
 
 // Taxonomy display metadata — update if taxonomy.yaml categories change.
 const CATEGORY_META: Record<string, { name: string; group: 'ii' | 'cf' }> = {
@@ -29,7 +31,7 @@ export interface DimensionRow {
 @Component({
   selector: 'app-research-results',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './research-results.html',
 })
 export class ResearchResultsComponent implements OnInit {
@@ -38,7 +40,10 @@ export class ResearchResultsComponent implements OnInit {
 
   showTaxonomyKey = false;
 
-  // Batch state
+  // Batch/experiment filter state
+  batches: BatchSummary[] = [];
+  batchFilter = '';
+  experimentFilter = '';
   batchData: BatchResults | null = null;
   batchLoading = false;
   expandedArticles: Record<string, boolean> = {};
@@ -46,25 +51,111 @@ export class ResearchResultsComponent implements OnInit {
   constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    if (this.results.length > 0) return;
-    this.batchLoading = true;
     this.evalService.listBatches().subscribe({
       next: (batches) => {
-        const latest = batches.find((b) => b.status === 'completed');
+        this.batches = batches;
+        if (this.results.length > 0) { this.cdr.detectChanges(); return; }
+        const latest = batches.find((b) => b.status === 'completed' && b.completed > 0);
         if (!latest) { this.batchLoading = false; this.cdr.detectChanges(); return; }
-        this.evalService.getBatchResults(latest.batch_id).subscribe({
-          next: (data) => {
-            this.batchData = data;
-            const firstId = data.results[0]?.item_id;
-            if (firstId) this.expandedArticles = { [firstId]: true };
-            this.batchLoading = false;
-            this.cdr.detectChanges();
-          },
-          error: () => { this.batchLoading = false; this.cdr.detectChanges(); },
-        });
+        this.selectBatch(latest.batch_id);
       },
       error: () => { this.batchLoading = false; this.cdr.detectChanges(); },
     });
+  }
+
+  get experiments(): string[] {
+    const ids = this.batches
+      .filter((b) => b.status === 'completed' && b.completed > 0)
+      .map((b) => b.experiment_id);
+    return [...new Set(ids)];
+  }
+
+  get filteredBatches(): BatchSummary[] {
+    const completed = this.batches.filter((b) => b.completed > 0);
+    return this.experimentFilter
+      ? completed.filter((b) => b.experiment_id === this.experimentFilter)
+      : completed;
+  }
+
+  selectBatch(batchId: string) {
+    this.batchFilter = batchId;
+    if (!batchId) {
+      if (this.experimentFilter) {
+        this.selectExperiment(this.experimentFilter);
+      } else {
+        this.batchData = null;
+      }
+      return;
+    }
+    const batch = this.batches.find((b) => b.batch_id === batchId);
+    if (batch && batch.experiment_id !== this.experimentFilter) {
+      this.experimentFilter = batch.experiment_id;
+    }
+    this.batchLoading = true;
+    this.evalService.getBatchResults(batchId).subscribe({
+      next: (data) => {
+        this.batchData = data;
+        const firstId = data.results[0]?.item_id;
+        if (firstId) this.expandedArticles = { [firstId]: true };
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.batchLoading = false; this.cdr.detectChanges(); },
+    });
+  }
+
+  selectExperiment(expId: string) {
+    this.experimentFilter = expId;
+    this.batchFilter      = '';
+    this.batchData        = null;
+    if (!expId) return;
+
+    const experimentBatches = this.batches.filter(
+      (b) => b.experiment_id === expId && b.status === 'completed' && b.completed > 0
+    );
+    if (experimentBatches.length === 0) return;
+
+    this.batchLoading = true;
+    forkJoin(experimentBatches.map((b) => this.evalService.getBatchResults(b.batch_id))).subscribe({
+      next: (responses) => {
+        const allResults = responses.flatMap((r) => r.results);
+        this.batchData = {
+          batch_id: expId,
+          experiment_id: expId,
+          experiment_meta: responses[0].experiment_meta,
+          results: allResults,
+          summary: this.computeSummary(allResults, responses.reduce((s, r) => s + r.summary.expected, 0)),
+        };
+        const firstId = allResults[0]?.item_id;
+        if (firstId) this.expandedArticles = { [firstId]: true };
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.batchLoading = false; this.cdr.detectChanges(); },
+    });
+  }
+
+  private computeSummary(results: ResearchScoredResult[], expected: number): BatchResults['summary'] {
+    const byModel = new Map<string, { ii: number[]; cf: number[] }>();
+    for (const r of results) {
+      if (!byModel.has(r.model)) byModel.set(r.model, { ii: [], cf: [] });
+      byModel.get(r.model)!.ii.push(r.overall_information_integrity_score);
+      byModel.get(r.model)!.cf.push(r.overall_cultural_fidelity_score);
+    }
+    const avg_ii_by_model: Record<string, number> = {};
+    const avg_cf_by_model: Record<string, number> = {};
+    for (const [m, scores] of byModel) {
+      avg_ii_by_model[m] = Math.round(scores.ii.reduce((a, b) => a + b, 0) / scores.ii.length * 10) / 10;
+      avg_cf_by_model[m] = Math.round(scores.cf.reduce((a, b) => a + b, 0) / scores.cf.length * 10) / 10;
+    }
+    const catCounts = new Map<string, number>();
+    for (const r of results) {
+      for (const cat of r.most_significant_failures) catCounts.set(cat, (catCounts.get(cat) ?? 0) + 1);
+    }
+    const top_failure_categories: [string, number][] = [...catCounts.entries()]
+      .sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return { expected, completed: results.length, failed: 0, skipped: 0, pending: 0,
+             avg_ii_by_model, avg_cf_by_model, top_failure_categories };
   }
 
   get batchModelNames(): string[] {

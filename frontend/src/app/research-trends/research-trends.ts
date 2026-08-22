@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ResearchScoredResult, ResearchHistoryEntry, BatchSummary, EvalService } from '../services/eval';
 
 const CATEGORY_META: Record<string, { name: string; group: 'ii' | 'cf' }> = {
@@ -76,13 +77,13 @@ export class ResearchTrendsComponent implements OnInit {
   batchLoading = false;
   batchError = '';
 
-  constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
+  constructor(public evalService: EvalService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.evalService.listBatches().subscribe({
       next: (b) => {
         this.batches = b;
-        const latest = b.find((x) => x.status === 'completed');
+        const latest = b.find((x) => x.status === 'completed' && x.completed > 0);
         if (latest && !this.batchFilter) {
           this.selectBatch(latest.batch_id);
         }
@@ -96,12 +97,28 @@ export class ResearchTrendsComponent implements OnInit {
     return this.batchFilter ? 'batch' : 'experiment';
   }
 
+  get filteredBatches(): BatchSummary[] {
+    const completed = this.batches.filter((b) => b.completed > 0);
+    return this.experimentFilter
+      ? completed.filter((b) => b.experiment_id === this.experimentFilter)
+      : completed;
+  }
+
   selectBatch(batchId: string) {
-    this.batchFilter      = batchId;
-    this.experimentFilter = '';
+    this.batchFilter = batchId;
     if (!batchId) {
-      this.batchResults = [];
+      // Cleared: if an experiment is selected, reload its aggregate
+      if (this.experimentFilter) {
+        this.selectExperiment(this.experimentFilter);
+      } else {
+        this.batchResults = [];
+      }
       return;
+    }
+    // Stay in the same experiment context; if batch belongs to a different experiment, reset it
+    const batch = this.batches.find((b) => b.batch_id === batchId);
+    if (batch && batch.experiment_id !== this.experimentFilter) {
+      this.experimentFilter = batch.experiment_id;
     }
     this.batchLoading = true;
     this.batchError   = '';
@@ -123,6 +140,28 @@ export class ResearchTrendsComponent implements OnInit {
     this.experimentFilter = expId;
     this.batchFilter      = '';
     this.batchResults     = [];
+
+    if (!expId) return;
+
+    const experimentBatches = this.batches.filter(
+      (b) => b.experiment_id === expId && b.status === 'completed' && b.completed > 0
+    );
+    if (experimentBatches.length === 0) return;
+
+    this.batchLoading = true;
+    this.batchError   = '';
+    forkJoin(experimentBatches.map((b) => this.evalService.getBatchResults(b.batch_id))).subscribe({
+      next: (responses) => {
+        this.batchResults = responses.flatMap((r) => r.results);
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.batchError   = 'Could not load experiment results.';
+        this.batchLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   get hasData(): boolean {
@@ -130,10 +169,13 @@ export class ResearchTrendsComponent implements OnInit {
   }
 
   get experiments(): string[] {
-    const ids = this.history
+    const fromBatches = this.batches
+      .filter((b) => b.status === 'completed' && b.completed > 0)
+      .map((b) => b.experiment_id);
+    const fromHistory = this.history
       .map((e) => e.experiment?.experiment_id)
       .filter((id): id is string => !!id);
-    return [...new Set(ids)];
+    return [...new Set([...fromBatches, ...fromHistory])];
   }
 
   get filteredHistory(): ResearchHistoryEntry[] {
@@ -144,6 +186,7 @@ export class ResearchTrendsComponent implements OnInit {
 
   get allResults(): ResearchScoredResult[] {
     if (this.filterMode === 'batch') return this.batchResults;
+    if (this.experimentFilter && this.batchResults.length > 0) return this.batchResults;
     return this.filteredHistory.flatMap((e) => e.results);
   }
 
@@ -179,14 +222,13 @@ export class ResearchTrendsComponent implements OnInit {
   }
 
   get scoreTimeline(): ScorePoint[] {
-    if (this.filterMode === 'batch') {
-      // Group batch results by item_id to synthesize timeline points
+    if (this.filterMode === 'batch' || (this.experimentFilter && this.batchResults.length > 0)) {
       const grouped = new Map<string, ResearchScoredResult[]>();
       for (const r of this.batchResults) {
         const key = r.item_id || r.source_title;
         grouped.set(key, [...(grouped.get(key) ?? []), r]);
       }
-      return [...grouped.entries()].map(([key, results]) => {
+      return [...grouped.entries()].map(([, results]) => {
         const avgII = results.reduce((s, r) => s + r.overall_information_integrity_score, 0) / results.length;
         const avgCF = results.reduce((s, r) => s + r.overall_cultural_fidelity_score, 0) / results.length;
         const label = results[0].source_title;
@@ -306,6 +348,12 @@ export class ResearchTrendsComponent implements OnInit {
       return b ? `Batch · ${b.experiment_id} (${b.completed}/${b.total} runs)` : this.batchFilter;
     }
     if (!this.experimentFilter) return 'All experiments';
+    if (this.batchResults.length > 0) {
+      const batchCount = this.batches.filter(
+        (b) => b.experiment_id === this.experimentFilter && b.completed > 0
+      ).length;
+      return `${this.experimentFilter} · ${this.batchResults.length} evals across ${batchCount} batch${batchCount !== 1 ? 'es' : ''}`;
+    }
     const meta = this.history.find((e) => e.experiment?.experiment_id === this.experimentFilter)?.experiment;
     if (!meta) return this.experimentFilter;
     return meta.experiment_name

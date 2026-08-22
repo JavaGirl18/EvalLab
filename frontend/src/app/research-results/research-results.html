@@ -35,6 +35,39 @@
     </div>
   </div>
 
+  <!-- Experiment / Batch selectors -->
+  <div *ngIf="experiments.length > 0 || batches.length > 0" class="flex gap-3 flex-wrap items-end">
+
+    <div *ngIf="experiments.length > 0" class="flex flex-col gap-1">
+      <label class="text-xs text-gray-500 font-medium">Experiment</label>
+      <select
+        [ngModel]="experimentFilter"
+        (ngModelChange)="selectExperiment($event)"
+        class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white min-w-44"
+        [class.border-indigo-400]="experimentFilter"
+      >
+        <option value="">All experiments</option>
+        <option *ngFor="let exp of experiments" [value]="exp">{{ exp }}</option>
+      </select>
+    </div>
+
+    <div *ngIf="filteredBatches.length > 0" class="flex flex-col gap-1">
+      <label class="text-xs text-gray-500 font-medium">Batch</label>
+      <select
+        [ngModel]="batchFilter"
+        (ngModelChange)="selectBatch($event)"
+        class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white min-w-52"
+        [class.border-violet-400]="batchFilter"
+      >
+        <option value="">{{ experimentFilter ? 'All runs (aggregated)' : '— select a batch —' }}</option>
+        <option *ngFor="let b of filteredBatches" [value]="b.batch_id">
+          {{ experimentFilter ? '' : b.experiment_id + ' · ' }}{{ b.completed }}/{{ b.total }} ✓
+        </option>
+      </select>
+    </div>
+
+  </div>
+
   <!-- Batch loading -->
   <div *ngIf="batchLoading" class="flex items-center gap-2 text-sm text-gray-400 py-4">
     <svg class="animate-spin h-4 w-4 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -10,3 +10,6 @@ httpx==0.28.1
 pyyaml==6.0.1
 trafilatura>=2.0.0
 lxml_html_clean>=0.1.0
+numpy>=1.26.0
+scipy>=1.13.0
+weasyprint>=62.0

@@ -251,6 +251,80 @@
         </div>
       </div>
 
+      <!-- ── ADV-001 Adversarial Pilot ──────────────────────────────────── -->
+      <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <button (click)="adv001Expanded = !adv001Expanded"
+          class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+          <span class="text-xs font-semibold text-gray-700">ADV-001 Pilot</span>
+          <span class="text-gray-400 text-xs">{{ adv001Expanded ? '▲' : '▼' }}</span>
+        </button>
+
+        <div *ngIf="adv001Expanded" class="px-3 py-3 flex flex-col gap-2">
+          <p class="text-[10px] text-gray-400 leading-snug">
+            5 articles × 5 editorial pressure conditions = 25 runs.
+            Gemini 3.1 Flash Lite generates · Claude Sonnet 4.6 judges.
+            Progress tracked in the Review tab once queued.
+          </p>
+
+          <div class="grid grid-cols-2 gap-1 text-[10px]">
+            <div>
+              <div class="font-semibold text-gray-500 mb-0.5">Articles</div>
+              <div *ngFor="let id of ['NX01','NX08','NX04','US05','USX06']"
+                class="font-mono text-gray-600">{{ id }}</div>
+            </div>
+            <div>
+              <div class="font-semibold text-gray-500 mb-0.5">Conditions</div>
+              <div *ngFor="let c of ['A — Engagement','B — Brevity','C — Certainty','D — Institutional','E — Global']"
+                class="text-gray-600">{{ c }}</div>
+            </div>
+          </div>
+
+          <p *ngIf="adv001Error" class="text-xs text-red-500">{{ adv001Error }}</p>
+
+          <!-- Progress once queued -->
+          <ng-container *ngIf="adv001BatchStatus">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="text-gray-500">
+                  {{ adv001BatchStatus.completed }} / {{ adv001BatchStatus.total }} runs
+                  <span *ngIf="adv001BatchStatus.failed > 0" class="text-red-400 ml-1">· {{ adv001BatchStatus.failed }} failed</span>
+                </span>
+                <span class="font-semibold"
+                  [class.text-violet-600]="adv001BatchStatus.status === 'running'"
+                  [class.text-green-600]="adv001BatchStatus.status === 'completed'"
+                  [class.text-red-500]="adv001BatchStatus.status === 'failed'"
+                  [class.text-gray-400]="adv001BatchStatus.status === 'pending'">
+                  {{ adv001BatchStatus.status }}
+                </span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500"
+                  [class.bg-violet-400]="adv001BatchStatus.status === 'running'"
+                  [class.bg-green-400]="adv001BatchStatus.status === 'completed'"
+                  [class.bg-red-400]="adv001BatchStatus.status === 'failed'"
+                  [class.bg-gray-300]="adv001BatchStatus.status === 'pending'"
+                  [style.width.%]="adv001BatchStatus.total > 0 ? (adv001BatchStatus.completed / adv001BatchStatus.total * 100) : 0">
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <button (click)="queueAdv001()"
+            [disabled]="adv001Queued && adv001BatchStatus?.status !== 'failed'"
+            class="w-full py-2 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            [class.bg-violet-600]="!adv001Queued"
+            [class.hover:bg-violet-700]="!adv001Queued"
+            [class.bg-green-600]="adv001BatchStatus?.status === 'completed'"
+            [class.bg-violet-400]="adv001BatchStatus?.status === 'running' || adv001BatchStatus?.status === 'pending'">
+            {{ adv001BatchStatus?.status === 'completed' ? '✓ Complete' :
+               adv001BatchStatus?.status === 'running'   ? 'Running…' :
+               adv001BatchStatus?.status === 'pending'   ? 'Queued…' :
+               adv001BatchStatus?.status === 'failed'    ? 'Retry' :
+               'Queue ADV-001 as Batch' }}
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════════ -->
@@ -610,6 +684,7 @@
           </button>
         </div>
       </div>
+
 
     </div>
 

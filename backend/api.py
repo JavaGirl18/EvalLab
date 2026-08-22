@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, List
 from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 from runner import run_eval
 from judge import score_all
@@ -19,6 +19,7 @@ from batch_db import (
     cancel_batch, get_completed_results, reset_failed_items,
 )
 from batch_runner import validate_request, create_batch_from_request, run_batch, compute_batch_summary
+from batch_pdf_export import build_batch_pdf
 from benchmark_analysis import compute_analysis, render_analysis_html
 from human_review_db import (
     create_human_review, get_human_review, list_human_reviews,
@@ -43,7 +44,6 @@ from external_package_db import (
     update_meta, mark_approved, mark_rejected,
 )
 from external_package_importer import is_allowed, mime_label, detect_metadata
-
 EXTERNAL_PACKAGES_DIR = Path(__file__).parent / "data" / "external_packages"
 EXTERNAL_PACKAGES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -423,6 +423,7 @@ class BatchRequest(BaseModel):
     prompt_variants:   list[str]
     models:            list[str]
     temperature:       float          = Field(default=0.0, ge=0.0, le=1.0)
+    system_prompt:     Optional[str]  = None
     task_instructions: Optional[str]  = None
     experiment_meta:   Optional[dict] = None
     max_concurrency:   int            = Field(default=3, ge=1, le=10)
@@ -523,6 +524,29 @@ def get_batch_results(batch_id: str):
     }
 
 
+@app.get("/batch/{batch_id}/results/pdf")
+def download_batch_pdf(batch_id: str):
+    batch = get_batch(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail=f"Batch '{batch_id}' not found.")
+    results = get_completed_results(batch_id)
+    summary = compute_batch_summary(batch_id)
+    config  = json.loads(batch["config"]) if isinstance(batch["config"], str) else batch["config"]
+    pdf_bytes = build_batch_pdf(
+        batch_id=batch_id,
+        experiment_id=batch["experiment_id"],
+        experiment_meta=config.get("experiment_meta"),
+        results=results,
+        summary=summary,
+    )
+    filename = f"{batch['experiment_id']}-{batch_id[:8]}-analysis.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @app.post("/batch/{batch_id}/cancel")
 def cancel_batch_endpoint(batch_id: str):
     batch = get_batch(batch_id)
@@ -578,6 +602,8 @@ def get_benchmark_analysis_html(experiments: str = "BASE50-EXP-001,BASE50-EXP-00
         media_type="text/html",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
 
 
 @app.get("/batches", response_model=list[BatchSummaryResponse])

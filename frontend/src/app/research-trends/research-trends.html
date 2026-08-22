@@ -44,7 +44,7 @@
         </div>
 
         <!-- Batch filter -->
-        <div *ngIf="batches.length > 0" class="flex flex-col gap-1">
+        <div *ngIf="filteredBatches.length > 0" class="flex flex-col gap-1">
           <label class="text-xs text-gray-500 font-medium">Batch</label>
           <select
             [ngModel]="batchFilter"
@@ -52,17 +52,23 @@
             class="border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white min-w-44"
             [class.border-violet-400]="filterMode === 'batch'"
             [class.border-gray-200]="filterMode !== 'batch'">
-            <option value="">— select a batch —</option>
-            <option *ngFor="let b of batches" [value]="b.batch_id">
-              {{ b.experiment_id }} · {{ b.completed }}/{{ b.total }}
-              <ng-container [ngSwitch]="b.status">
-                <ng-container *ngSwitchCase="'completed'"> ✓</ng-container>
-                <ng-container *ngSwitchCase="'running'"> ⟳</ng-container>
-                <ng-container *ngSwitchCase="'failed'"> ✕</ng-container>
-              </ng-container>
+            <option value="">{{ experimentFilter ? 'All runs (aggregated)' : '— select a batch —' }}</option>
+            <option *ngFor="let b of filteredBatches" [value]="b.batch_id">
+              {{ experimentFilter ? '' : b.experiment_id + ' · ' }}{{ b.completed }}/{{ b.total }} ✓
             </option>
           </select>
         </div>
+
+        <!-- Download PDF -->
+        <a *ngIf="batchFilter"
+           [href]="evalService.batchPdfUrl(batchFilter)"
+           target="_blank"
+           class="self-end flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors no-underline">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+          Download PDF
+        </a>
 
       </div>
     </div>
