@@ -44,6 +44,15 @@ def init_batch_tables() -> None:
                 FOREIGN KEY (batch_id) REFERENCES batches(batch_id)
             )
         """)
+        for col_sql in [
+            "ALTER TABLE batch_run_items ADD COLUMN stage INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE batch_run_items ADD COLUMN run_type TEXT NOT NULL DEFAULT 'generation'",
+            "ALTER TABLE batch_run_items ADD COLUMN depends_on TEXT",
+        ]:
+            try:
+                conn.execute(col_sql)
+            except sqlite3.OperationalError:
+                pass  # column already exists
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_run_items_batch ON batch_run_items(batch_id)"
         )
@@ -72,9 +81,15 @@ def create_batch(
             rk = make_run_key(experiment_id, ri["item_id"], ri["prompt_variant"], ri["model"])
             conn.execute(
                 "INSERT OR IGNORE INTO batch_run_items "
-                "(run_key, batch_id, experiment_id, item_id, prompt_variant, model) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (rk, batch_id, experiment_id, ri["item_id"], ri["prompt_variant"], ri["model"]),
+                "(run_key, batch_id, experiment_id, item_id, prompt_variant, model, stage, run_type, depends_on) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    rk, batch_id, experiment_id,
+                    ri["item_id"], ri["prompt_variant"], ri["model"],
+                    ri.get("stage", 0),
+                    ri.get("run_type", "generation"),
+                    json.dumps(ri["depends_on"]) if ri.get("depends_on") else None,
+                ),
             )
         conn.commit()
 
@@ -108,6 +123,45 @@ def get_batch_items(batch_id: str) -> list[dict]:
             (batch_id,),
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+def get_batch_items_by_stage(batch_id: str, stage: int) -> list[dict]:
+    with _conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM batch_run_items WHERE batch_id = ? AND stage = ? "
+            "ORDER BY item_id, prompt_variant, model",
+            (batch_id, stage),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_max_stage(batch_id: str) -> int:
+    with _conn() as conn:
+        row = conn.execute(
+            "SELECT MAX(stage) as max_stage FROM batch_run_items WHERE batch_id = ?",
+            (batch_id,),
+        ).fetchone()
+        return row["max_stage"] or 0
+
+
+def insert_batch_items(batch_id: str, experiment_id: str, items: list[dict]) -> None:
+    """Insert additional run items into an existing batch (used by stage transition hooks)."""
+    with _conn() as conn:
+        for ri in items:
+            rk = make_run_key(experiment_id, ri["item_id"], ri["prompt_variant"], ri["model"])
+            conn.execute(
+                "INSERT OR IGNORE INTO batch_run_items "
+                "(run_key, batch_id, experiment_id, item_id, prompt_variant, model, stage, run_type, depends_on) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    rk, batch_id, experiment_id,
+                    ri["item_id"], ri["prompt_variant"], ri["model"],
+                    ri.get("stage", 0),
+                    ri.get("run_type", "generation"),
+                    json.dumps(ri["depends_on"]) if ri.get("depends_on") else None,
+                ),
+            )
+        conn.commit()
 
 
 def list_batches() -> list[dict]:
