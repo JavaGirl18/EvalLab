@@ -68,6 +68,12 @@ RESEARCH_SUBJECT_MODELS = [
         "version_note": "",
     },
     {
+        "model_id": "gemini-3.5-flash-lite",
+        "display_name": "Gemini 3.5 Flash Lite",
+        "provider": "google",
+        "version_note": "",
+    },
+    {
         "model_id": "gpt-4o",
         "display_name": "GPT-4o",
         "provider": "openai",

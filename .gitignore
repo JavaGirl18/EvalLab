@@ -19,3 +19,10 @@ dist/
 
 # macOS
 .DS_Store
+
+# Handoff / spec docs — session artifacts, not source
+PR*_SPEC.md
+HANDOFF_*.md
+
+# Local SQLite database — recreated by init_db() on server start
+backend/evallab.db
