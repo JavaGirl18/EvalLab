@@ -232,6 +232,11 @@ async def run_batch(batch_id: str) -> None:
                 return_exceptions=True,
             )
 
+            # Check if batch was cancelled while this stage was running
+            current_batch = get_batch(batch_id)
+            if current_batch and current_batch.get("status") == "cancelled":
+                return
+
             # Pass completed stage to handler; it returns items for the next stage
             finished = get_batch_items_by_stage(batch_id, current_stage)
             _attach_results(finished)
