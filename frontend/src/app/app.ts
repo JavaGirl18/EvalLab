@@ -9,6 +9,7 @@ import { ResearchResultsComponent } from './research-results/research-results';
 import { ResearchTrendsComponent } from './research-trends/research-trends';
 import { HumanReviewDashboardComponent } from './human-review-dashboard/human-review-dashboard';
 import { ExternalPackagesComponent } from './external-packages/external-packages';
+import { SciqResultsComponent } from './sciq-results/sciq-results';
 import {
   EvalResponse,
   ResearchEvalResponse,
@@ -32,6 +33,7 @@ const MAX_HISTORY = 10;
     ResearchTrendsComponent,
     HumanReviewDashboardComponent,
     ExternalPackagesComponent,
+    SciqResultsComponent,
     NgIcon,
   ],
   providers: [provideIcons({ lucideGavel })],
@@ -40,7 +42,8 @@ const MAX_HISTORY = 10;
 })
 export class App {
   mode: 'eval' | 'research' = 'research';
-  researchView: 'results' | 'trends' | 'reviews' | 'import' = 'results';
+  researchView: 'results' | 'trends' | 'reviews' | 'import' | 'sciq' = 'results';
+  sciqBatchId = '';
   sidebarCollapsed = false;
   currentExperimentId = '';
 
@@ -91,6 +94,11 @@ export class App {
       this.pendingExperiment = null;
       this.saveHistory(this.researchHistory);
     }
+  }
+
+  onSciqBatchCreated(batchId: string) {
+    this.sciqBatchId = batchId;
+    this.researchView = 'sciq';
   }
 
   onHistorySelect(entry: ResearchHistoryEntry) {

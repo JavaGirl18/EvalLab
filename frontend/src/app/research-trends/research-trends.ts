@@ -81,7 +81,9 @@ export class ResearchTrendsComponent implements OnInit {
 
   ngOnInit() {
     this.evalService.listBatches().subscribe({
-      next: (b) => {
+      next: (all) => {
+        // SCIQ batches have their own tab and a different result schema
+        const b = all.filter((x) => x.experiment_type !== 'sciq');
         this.batches = b;
         const latest = b.find((x) => x.status === 'completed' && x.completed > 0);
         if (latest && !this.batchFilter) {

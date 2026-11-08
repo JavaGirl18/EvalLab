@@ -1,0 +1,188 @@
+<div class="p-6 overflow-auto h-full flex flex-col gap-5">
+
+  <!-- Header + batch picker -->
+  <div class="flex items-start justify-between gap-4 flex-wrap">
+    <div class="flex flex-col gap-1">
+      <h2 class="text-lg font-bold text-gray-800">SCIQ Error Propagation</h2>
+      <p class="text-xs text-gray-400">
+        R0 free-text answer → accurate vs. erroneous Claude feedback → R1 revision → R2 neutral self-review.
+      </p>
+    </div>
+
+    <div *ngIf="batches.length > 0" class="flex flex-col gap-1">
+      <label class="text-xs text-gray-500 font-medium">Batch</label>
+      <select
+        [ngModel]="selectedBatchId"
+        (ngModelChange)="select($event)"
+        class="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white min-w-64">
+        <option *ngFor="let b of batches" [value]="b.batch_id">
+          {{ b.experiment_id }} · {{ b.batch_id.slice(0, 8) }} · {{ b.status }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="batches.length === 0 && !selectedBatchId" class="flex items-center justify-center flex-1 text-gray-400 text-sm">
+    No SCIQ batches yet. Start one from “SCIQ Run” in the sidebar.
+  </div>
+
+  <p *ngIf="error" class="text-xs text-red-500">{{ error }}</p>
+
+  <!-- Status / progress for non-completed batches -->
+  <div *ngIf="status && status.status !== 'completed'"
+    class="border border-gray-200 rounded-lg p-4 flex flex-col gap-2 max-w-xl">
+    <div class="flex items-center justify-between text-xs">
+      <span class="text-gray-600">
+        {{ status.completed }} / {{ status.total }} runs
+        <span *ngIf="status.failed > 0" class="text-red-400 ml-1">· {{ status.failed }} failed</span>
+      </span>
+      <span class="font-semibold"
+        [class.text-violet-600]="status.status === 'running'"
+        [class.text-gray-400]="status.status === 'pending'"
+        [class.text-red-500]="status.status === 'failed' || status.status === 'cancelled'">
+        {{ status.status }}
+      </span>
+    </div>
+    <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+      <div class="h-full rounded-full transition-all duration-500"
+        [class.bg-violet-400]="status.status === 'running' || status.status === 'pending'"
+        [class.bg-red-400]="status.status === 'failed' || status.status === 'cancelled'"
+        [style.width.%]="progressPct"></div>
+    </div>
+    <p *ngIf="status.status === 'running' || status.status === 'pending'" class="text-[10px] text-gray-400">
+      The total grows as each stage completes and adds the next stage's items (R0 → feedback → R1 → R2).
+      Results appear here when the batch finishes.
+    </p>
+    <p *ngIf="status.status === 'failed' || status.status === 'cancelled'" class="text-[10px] text-gray-400">
+      Results are shown for completed batches only.
+    </p>
+  </div>
+
+  <div *ngIf="loading" class="text-xs text-gray-400">Loading results…</div>
+
+  <!-- Results -->
+  <ng-container *ngIf="results && accurate && erroneous">
+
+    <!-- Summary cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Qualifying items</span>
+        <span class="text-2xl font-bold text-gray-800">{{ results.summary.qualifying_items }}</span>
+        <span class="text-[10px] text-gray-400">
+          {{ results.summary.baseline_correct }} of {{ results.summary.candidates }} candidates correct at R0
+        </span>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Error adoption rate</span>
+        <span class="text-2xl font-bold text-violet-700">{{ pct(erroneous.error_adopted, erroneous.r1_total) }}</span>
+        <span class="text-[10px] text-gray-400">
+          {{ erroneous.error_adopted }} / {{ erroneous.r1_total }} in erroneous condition
+          · {{ accurate.error_adopted }} / {{ accurate.r1_total }} accurate
+        </span>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Recovery rate</span>
+        <span class="text-2xl font-bold text-green-700">
+          {{ results.summary.recovery_rate === null ? '—' : pct(erroneous.error_recovered, erroneous.error_adopted) }}
+        </span>
+        <span class="text-[10px] text-gray-400">
+          {{ erroneous.error_recovered }} / {{ erroneous.error_adopted }} adopted errors corrected at R2
+        </span>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">McNemar p (adoption)</span>
+        <span class="text-2xl font-bold text-gray-800">{{ formatP(results.summary.mcnemar.p_value) }}</span>
+        <span class="text-[10px] text-gray-400">
+          exact, {{ results.summary.mcnemar.pairs }} pairs ·
+          discordant {{ results.summary.mcnemar.erroneous_only }} vs {{ results.summary.mcnemar.accurate_only }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="border border-gray-200 rounded-lg overflow-x-auto max-w-2xl">
+      <table class="w-full text-xs border-collapse">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-200">
+            <th class="text-left px-3 py-2 font-semibold text-gray-500">Metric</th>
+            <th class="text-right px-3 py-2 font-semibold text-gray-500">Accurate</th>
+            <th class="text-right px-3 py-2 font-semibold text-gray-500">Erroneous</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-100">
+            <td class="px-3 py-2 text-gray-600">R1 correct</td>
+            <td class="px-3 py-2 text-right font-mono">{{ accurate.r1_correct }} / {{ accurate.r1_total }}</td>
+            <td class="px-3 py-2 text-right font-mono">{{ erroneous.r1_correct }} / {{ erroneous.r1_total }}</td>
+          </tr>
+          <tr class="border-b border-gray-100">
+            <td class="px-3 py-2 text-gray-600">Error adopted</td>
+            <td class="px-3 py-2 text-right font-mono">{{ accurate.error_adopted }} / {{ accurate.r1_total }}</td>
+            <td class="px-3 py-2 text-right font-mono font-semibold text-violet-700">{{ erroneous.error_adopted }} / {{ erroneous.r1_total }}</td>
+          </tr>
+          <tr class="border-b border-gray-100">
+            <td class="px-3 py-2 text-gray-600">Error persisted (R2)</td>
+            <td class="px-3 py-2 text-right font-mono">{{ accurate.error_persisted }}</td>
+            <td class="px-3 py-2 text-right font-mono">{{ erroneous.error_persisted }}</td>
+          </tr>
+          <tr class="border-b border-gray-100">
+            <td class="px-3 py-2 text-gray-600">Error recovered (R2)</td>
+            <td class="px-3 py-2 text-right font-mono text-gray-400">—</td>
+            <td class="px-3 py-2 text-right font-mono">{{ erroneous.error_recovered }}</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-gray-600">R2 correct</td>
+            <td class="px-3 py-2 text-right font-mono">{{ accurate.r2_correct }} / {{ accurate.r1_total }}</td>
+            <td class="px-3 py-2 text-right font-mono">{{ erroneous.r2_correct }} / {{ erroneous.r1_total }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Per-item table (collapsible) -->
+    <div class="border border-gray-200 rounded-lg overflow-hidden">
+      <button (click)="itemsExpanded = !itemsExpanded"
+        class="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+        <span class="text-xs font-semibold text-gray-700">Per-item results ({{ results.items.length }} rows)</span>
+        <span class="text-gray-400 text-xs">{{ itemsExpanded ? '▲' : '▼' }}</span>
+      </button>
+      <div *ngIf="itemsExpanded" class="overflow-x-auto">
+        <table class="w-full text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="text-left px-3 py-2 font-semibold text-gray-500">item_id</th>
+              <th class="text-left px-3 py-2 font-semibold text-gray-500">condition</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">baseline</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">R1</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">R2</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">adopted</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">persisted</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">recovered</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of results.items" class="border-b border-gray-100">
+              <td class="px-3 py-1.5 font-mono text-gray-600">{{ row.item_id }}</td>
+              <td class="px-3 py-1.5"
+                [class.text-violet-700]="row.condition === 'erroneous'"
+                [class.text-gray-500]="row.condition === 'accurate'">{{ row.condition }}</td>
+              <td class="px-3 py-1.5 text-center" [class.text-green-600]="row.baseline_correct" [class.text-red-500]="!row.baseline_correct">{{ row.baseline_correct ? '✓' : '✗' }}</td>
+              <td class="px-3 py-1.5 text-center" [class.text-green-600]="row.r1_correct" [class.text-red-500]="!row.r1_correct">{{ row.r1_correct ? '✓' : '✗' }}</td>
+              <td class="px-3 py-1.5 text-center" [class.text-green-600]="row.r2_correct" [class.text-red-500]="!row.r2_correct">{{ row.r2_correct ? '✓' : '✗' }}</td>
+              <td class="px-3 py-1.5 text-center"
+                [class.bg-violet-100]="row.error_adopted && row.condition === 'erroneous'"
+                [class.text-violet-800]="row.error_adopted && row.condition === 'erroneous'"
+                [class.font-semibold]="row.error_adopted"
+                [class.bg-amber-100]="row.error_adopted && row.condition === 'accurate'"
+                [class.text-gray-300]="!row.error_adopted">{{ row.error_adopted ? 'yes' : '—' }}</td>
+              <td class="px-3 py-1.5 text-center" [class.text-red-600]="row.error_persisted" [class.text-gray-300]="!row.error_persisted">{{ row.error_persisted ? 'yes' : '—' }}</td>
+              <td class="px-3 py-1.5 text-center" [class.text-green-600]="row.error_recovered" [class.text-gray-300]="!row.error_recovered">{{ row.error_recovered ? 'yes' : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </ng-container>
+</div>
