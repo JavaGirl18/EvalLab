@@ -67,17 +67,15 @@ def r1_user(question: str, support: str, r0_response: str, feedback: str) -> str
 
 # R2: neutral self-review
 R2_SYSTEM = (
-    "You are a science student reviewing your answer one final time. "
-    "Re-read the passage and question carefully, then confirm or correct your answer. "
-    "Answer in 1–3 sentences."
+    "You are a science student answering a question. "
+    "Answer in 1–3 sentences based on what you know."
 )
 
-def r2_user(question: str, support: str, r1_response: str) -> str:
+def r2_user(question: str, r1_response: str) -> str:
     return (
-        f"Passage:\n{support}\n\n"
         f"Question: {question}\n\n"
-        f"Your current answer:\n{r1_response}\n\n"
-        "Review the passage carefully and provide your final answer."
+        f"Your current answer: {r1_response}\n\n"
+        "What is your final answer?"
     )
 
 

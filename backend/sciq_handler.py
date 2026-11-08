@@ -251,7 +251,6 @@ class SciqHandler(StagedExperimentHandler):
             system=prompts.R2_SYSTEM,
             user=prompts.r2_user(
                 item_data["question"],
-                item_data["support"],
                 r1_result["r1_response"],
             ),
             config=config,
