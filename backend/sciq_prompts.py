@@ -66,6 +66,11 @@ def r1_user(question: str, support: str, r0_response: str, feedback: str) -> str
 
 
 # R2: neutral self-review
+# Human-readable label for the current R2 design, stored in each SCIQ batch config.
+# Change it whenever R2_SYSTEM / r2_user change. Batches without the field used the
+# original design (passage shown, "re-read carefully").
+R2_DESIGN = "no_passage"
+
 R2_SYSTEM = (
     "You are a science student answering a question. "
     "Answer in 1–3 sentences based on what you know."

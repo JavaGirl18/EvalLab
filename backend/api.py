@@ -24,6 +24,7 @@ from batch_db import (
 )
 from batch_runner import validate_request, create_batch_from_request, run_batch, compute_batch_summary
 import sciq_handler  # registers "sciq" in handler_registry on import
+import sciq_prompts
 from sciq_dataset import list_sciq_item_ids
 from config import RESEARCH_SUBJECT_MODELS
 from batch_pdf_export import build_batch_pdf
@@ -707,6 +708,7 @@ def create_sciq_batch(request: SciqBatchRequest, background_tasks: BackgroundTas
         "experiment_id": experiment_id,
         "item_ids":      item_ids,          # sampling order; the qualifying cap follows it
         "code_commit":   _current_commit(),
+        "r2_design":     sciq_prompts.R2_DESIGN,  # absent on older batches = original passage design
     }
     batch_id = str(uuid.uuid4())
     create_batch(batch_id, experiment_id, config, warnings=[], run_items=items)
