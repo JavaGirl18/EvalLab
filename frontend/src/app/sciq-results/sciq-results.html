@@ -6,6 +6,10 @@
       <h2 class="text-lg font-bold text-gray-800">SCIQ Error Propagation</h2>
       <p class="text-xs text-gray-400">
         R0 free-text answer → accurate vs. erroneous Claude feedback → R1 revision → R2 neutral self-review.
+        <ng-container *ngIf="results?.summary?.has_r2b">
+          R2 runs twice: <span class="font-medium text-gray-500">R2-A</span> without the feedback and
+          <span class="font-medium text-gray-500">R2-B</span> with the tutor feedback still in context.
+        </ng-container>
       </p>
     </div>
 
@@ -65,7 +69,7 @@
   <ng-container *ngIf="results && accurate && erroneous">
 
     <!-- Summary cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3">
       <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
         <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Qualifying items</span>
         <span class="text-2xl font-bold text-gray-800">{{ results.summary.qualifying_items }}</span>
@@ -82,12 +86,26 @@
         </span>
       </div>
       <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
-        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Recovery rate</span>
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          Recovery rate<ng-container *ngIf="results.summary.has_r2b"> · R2-A feedback removed</ng-container>
+        </span>
         <span class="text-2xl font-bold text-green-700">
           {{ results.summary.recovery_rate === null ? '—' : pct(erroneous.error_recovered, erroneous.error_adopted) }}
         </span>
         <span class="text-[10px] text-gray-400">
           {{ erroneous.error_recovered }} / {{ erroneous.error_adopted }} adopted errors corrected at R2
+        </span>
+      </div>
+      <div *ngIf="results.summary.has_r2b" class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Persistence · R2-B feedback retained</span>
+        <span class="text-2xl font-bold text-red-700">
+          {{ erroneous.error_adopted ? pct(erroneous.r2b_error_persisted ?? 0, erroneous.error_adopted) : '—' }}
+        </span>
+        <span class="text-[10px] text-gray-400">
+          {{ erroneous.r2b_error_persisted }} / {{ erroneous.error_adopted }} adopted errors kept with feedback in view
+          <ng-container *ngIf="results.summary.persistence_mcnemar as pm">
+            · vs R2-A p = {{ formatP(pm.p_value) }}
+          </ng-container>
         </span>
       </div>
       <div class="border border-gray-200 rounded-lg p-4 flex flex-col gap-1">
@@ -122,20 +140,37 @@
             <td class="px-3 py-2 text-right font-mono font-semibold text-violet-700">{{ erroneous.error_adopted }} / {{ erroneous.r1_total }}</td>
           </tr>
           <tr class="border-b border-gray-100">
-            <td class="px-3 py-2 text-gray-600">Error persisted (R2)</td>
+            <td class="px-3 py-2 text-gray-600">Error persisted ({{ results.summary.has_r2b ? 'R2-A · feedback removed' : 'R2' }})</td>
             <td class="px-3 py-2 text-right font-mono">{{ accurate.error_persisted }}</td>
             <td class="px-3 py-2 text-right font-mono">{{ erroneous.error_persisted }}</td>
           </tr>
           <tr class="border-b border-gray-100">
-            <td class="px-3 py-2 text-gray-600">Error recovered (R2)</td>
+            <td class="px-3 py-2 text-gray-600">Error recovered ({{ results.summary.has_r2b ? 'R2-A · feedback removed' : 'R2' }})</td>
             <td class="px-3 py-2 text-right font-mono text-gray-400">—</td>
             <td class="px-3 py-2 text-right font-mono">{{ erroneous.error_recovered }}</td>
           </tr>
-          <tr>
-            <td class="px-3 py-2 text-gray-600">R2 correct</td>
+          <tr [class.border-b]="results.summary.has_r2b" class="border-gray-100">
+            <td class="px-3 py-2 text-gray-600">{{ results.summary.has_r2b ? 'R2-A correct' : 'R2 correct' }}</td>
             <td class="px-3 py-2 text-right font-mono">{{ accurate.r2_correct }} / {{ accurate.r1_total }}</td>
             <td class="px-3 py-2 text-right font-mono">{{ erroneous.r2_correct }} / {{ erroneous.r1_total }}</td>
           </tr>
+          <ng-container *ngIf="results.summary.has_r2b">
+            <tr class="border-b border-gray-100 bg-gray-50/60">
+              <td class="px-3 py-2 text-gray-600">Error persisted (R2-B · feedback retained)</td>
+              <td class="px-3 py-2 text-right font-mono">{{ accurate.r2b_error_persisted }}</td>
+              <td class="px-3 py-2 text-right font-mono font-semibold text-red-700">{{ erroneous.r2b_error_persisted }}</td>
+            </tr>
+            <tr class="border-b border-gray-100 bg-gray-50/60">
+              <td class="px-3 py-2 text-gray-600">Error recovered (R2-B · feedback retained)</td>
+              <td class="px-3 py-2 text-right font-mono text-gray-400">—</td>
+              <td class="px-3 py-2 text-right font-mono">{{ erroneous.r2b_error_recovered }}</td>
+            </tr>
+            <tr class="bg-gray-50/60">
+              <td class="px-3 py-2 text-gray-600">R2-B correct</td>
+              <td class="px-3 py-2 text-right font-mono">{{ accurate.r2b_correct }} / {{ accurate.r2b_total }}</td>
+              <td class="px-3 py-2 text-right font-mono">{{ erroneous.r2b_correct }} / {{ erroneous.r2b_total }}</td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -155,10 +190,15 @@
               <th class="text-left px-3 py-2 font-semibold text-gray-500">condition</th>
               <th class="text-center px-3 py-2 font-semibold text-gray-500">baseline</th>
               <th class="text-center px-3 py-2 font-semibold text-gray-500">R1</th>
-              <th class="text-center px-3 py-2 font-semibold text-gray-500">R2</th>
+              <th class="text-center px-3 py-2 font-semibold text-gray-500">{{ results.summary.has_r2b ? 'R2-A' : 'R2' }}</th>
               <th class="text-center px-3 py-2 font-semibold text-gray-500">adopted</th>
               <th class="text-center px-3 py-2 font-semibold text-gray-500">persisted</th>
               <th class="text-center px-3 py-2 font-semibold text-gray-500">recovered</th>
+              <ng-container *ngIf="results.summary.has_r2b">
+                <th class="text-center px-3 py-2 font-semibold text-gray-500 border-l border-gray-200">R2-B</th>
+                <th class="text-center px-3 py-2 font-semibold text-gray-500">persisted (B)</th>
+                <th class="text-center px-3 py-2 font-semibold text-gray-500">recovered (B)</th>
+              </ng-container>
             </tr>
           </thead>
           <tbody>
@@ -178,6 +218,15 @@
                 [class.text-gray-300]="!row.error_adopted">{{ row.error_adopted ? 'yes' : '—' }}</td>
               <td class="px-3 py-1.5 text-center" [class.text-red-600]="row.error_persisted" [class.text-gray-300]="!row.error_persisted">{{ row.error_persisted ? 'yes' : '—' }}</td>
               <td class="px-3 py-1.5 text-center" [class.text-green-600]="row.error_recovered" [class.text-gray-300]="!row.error_recovered">{{ row.error_recovered ? 'yes' : '—' }}</td>
+              <ng-container *ngIf="results.summary.has_r2b">
+                <td class="px-3 py-1.5 text-center border-l border-gray-200"
+                  [class.text-green-600]="row.r2b_correct === true" [class.text-red-500]="row.r2b_correct === false"
+                  [class.text-gray-300]="row.r2b_correct === null">{{ row.r2b_correct === null ? '·' : (row.r2b_correct ? '✓' : '✗') }}</td>
+                <td class="px-3 py-1.5 text-center"
+                  [class.bg-red-100]="row.r2b_persisted" [class.text-red-700]="row.r2b_persisted" [class.font-semibold]="row.r2b_persisted"
+                  [class.text-gray-300]="!row.r2b_persisted">{{ row.r2b_persisted ? 'yes' : '—' }}</td>
+                <td class="px-3 py-1.5 text-center" [class.text-green-600]="row.r2b_recovered" [class.text-gray-300]="!row.r2b_recovered">{{ row.r2b_recovered ? 'yes' : '—' }}</td>
+              </ng-container>
             </tr>
           </tbody>
         </table>

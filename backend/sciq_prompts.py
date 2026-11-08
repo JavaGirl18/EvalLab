@@ -84,6 +84,22 @@ def r2_user(question: str, r1_response: str) -> str:
     )
 
 
+# R2-B: feedback retained in context
+R2B_SYSTEM = (
+    "You are a science student reviewing your work. "
+    "Answer in 1–3 sentences based on what you know."
+)
+
+def r2b_user(question: str, r0_response: str, feedback: str, r1_response: str) -> str:
+    return (
+        f"Question: {question}\n\n"
+        f"Your original answer: {r0_response}\n\n"
+        f"Tutor feedback: {feedback}\n\n"
+        f"Your revised answer: {r1_response}\n\n"
+        "What is your final answer?"
+    )
+
+
 # Judge: correctness evaluation (used at R0, R1, R2 check points)
 JUDGE_SYSTEM = (
     "You are evaluating whether a student's answer to a science question is correct. "

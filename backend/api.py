@@ -750,8 +750,23 @@ def get_sciq_results(batch_id: str):
         })
     rows.sort(key=lambda x: (order.get(x["item_id"], len(order)), x["item_id"], x["condition"]))
 
+    # R2-B (feedback retained) rows, merged onto the matching R2-A row.
+    # Batches created before R2-B existed have none; their r2b_* fields are null.
+    r2b_results = {
+        (it["item_id"], "accurate" if it["run_type"].endswith("_accurate") else "erroneous"): json.loads(it["result_json"])
+        for it in all_items
+        if it["run_type"] in ("r2b_review_accurate", "r2b_review_erroneous") and it["status"] == "completed"
+    }
+    has_r2b = bool(r2b_results)
+    for x in rows:
+        rb = r2b_results.get((x["item_id"], x["condition"]))
+        x["r2b_correct"]   = bool(rb.get("r2b_correct"))     if rb else None
+        x["r2b_persisted"] = bool(rb.get("error_persisted")) if rb else None
+        x["r2b_recovered"] = bool(rb.get("error_recovered")) if rb else None
+
     def _condition_summary(cond: str) -> dict:
         rs = [x for x in rows if x["condition"] == cond]
+        rbs = [x for x in rs if x["r2b_correct"] is not None]
         return {
             "r1_correct":      sum(x["r1_correct"] for x in rs),
             "r1_total":        len(rs),
@@ -759,9 +774,22 @@ def get_sciq_results(batch_id: str):
             "error_adopted":   sum(x["error_adopted"] for x in rs),
             "error_persisted": sum(x["error_persisted"] for x in rs),
             "error_recovered": sum(x["error_recovered"] for x in rs),
+            "r2b_total":           len(rbs) if has_r2b else None,
+            "r2b_correct":         sum(x["r2b_correct"] for x in rbs) if has_r2b else None,
+            "r2b_error_persisted": sum(x["r2b_persisted"] for x in rbs) if has_r2b else None,
+            "r2b_error_recovered": sum(x["r2b_recovered"] for x in rbs) if has_r2b else None,
         }
 
     accurate, erroneous = _condition_summary("accurate"), _condition_summary("erroneous")
+
+    # Paired persistence comparison on adopted errors: R2-B (feedback retained) vs R2-A (removed)
+    persistence_mcnemar = None
+    if has_r2b:
+        adopted_rows = [x for x in rows if x["error_adopted"] and x["r2b_persisted"] is not None]
+        pb = sum(1 for x in adopted_rows if x["r2b_persisted"] and not x["error_persisted"])
+        pa = sum(1 for x in adopted_rows if x["error_persisted"] and not x["r2b_persisted"])
+        persistence_mcnemar = {"pairs": len(adopted_rows), "persisted_b_only": pb, "persisted_a_only": pa,
+                               "p_value": _mcnemar_exact_p(pb, pa)}
 
     # Paired adoption comparison: items with both conditions completed
     adopted = {(x["item_id"], x["condition"]): x["error_adopted"] for x in rows}
@@ -785,6 +813,12 @@ def get_sciq_results(batch_id: str):
             ),
             "mcnemar": {"pairs": len(paired), "erroneous_only": b, "accurate_only": c,
                         "p_value": _mcnemar_exact_p(b, c)},
+            "has_r2b": has_r2b,
+            "r2b_persistence_rate": (
+                erroneous["r2b_error_persisted"] / erroneous["error_adopted"]
+                if has_r2b and erroneous["error_adopted"] else None
+            ),
+            "persistence_mcnemar": persistence_mcnemar,
         },
         "items": rows,
     }
