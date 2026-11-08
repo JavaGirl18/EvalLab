@@ -287,6 +287,10 @@ class SciqHandler(StagedExperimentHandler):
         msg = client.messages.create(
             model=RESEARCH_JUDGE_CONFIG["model_id"],
             max_tokens=512,
+            # Held at 0 for both judge and feedback calls: judge verdicts are
+            # outcome variables, and feedback wording is part of the controlled
+            # manipulation — neither should vary between runs.
+            temperature=0,
             system=system,
             messages=[{"role": "user", "content": user}],
         )
