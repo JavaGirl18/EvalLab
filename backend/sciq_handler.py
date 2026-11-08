@@ -20,26 +20,52 @@ class SciqHandler(StagedExperimentHandler):
         completed_items: list[dict],
     ) -> list[dict]:
         if stage == 0:
-            return self._after_r0(experiment_id, completed_items)
+            return self._after_r0(batch_id, experiment_id, completed_items)
         elif stage == 1:
             return self._after_feedback(experiment_id, completed_items)
         elif stage == 2:
             return self._after_r1(experiment_id, completed_items)
         return []
 
-    def _after_r0(self, experiment_id: str, items: list[dict]) -> list[dict]:
+    def _after_r0(self, batch_id: str, experiment_id: str, items: list[dict]) -> list[dict]:
         """
         Qualification pass. Only items where R0 was correct proceed.
         Creates two stage-1 items per qualifying R0 (accurate + erroneous feedback).
-        """
-        new_items = []
-        for it in items:
-            if it["status"] != "completed" or not it.get("result"):
-                continue
-            result = it["result"]
-            if not result.get("baseline_correct"):
-                continue  # Did not qualify — skip both conditions
 
+        Capped at config["qualifying_target"] (default 50) qualifying items,
+        taken in sampling order (the order of config["item_ids"]), so the
+        dataset is exactly the first N qualifiers. Qualifiers beyond the cap
+        stay as completed stage-0 rows with no stage-1 follow-ups.
+        """
+        from batch_db import get_batch, get_batch_items_by_stage
+
+        batch  = get_batch(batch_id) or {}
+        config = batch.get("config") or {}
+        if isinstance(config, str):
+            config = json.loads(config)
+        target = config.get("qualifying_target", 50)
+        order  = {iid: n for n, iid in enumerate(config.get("item_ids", []))}
+
+        qualifiers = [
+            it for it in items
+            if it["status"] == "completed"
+            and it.get("result")
+            and it["result"].get("baseline_correct")
+        ]
+        qualifiers.sort(key=lambda it: (order.get(it["item_id"], len(order)), it["item_id"]))
+
+        # Items already advanced (e.g. on resume) keep their slots and are
+        # re-emitted so the executor continues to stage 1; inserts are idempotent.
+        already  = {(it["item_id"], it["model"]) for it in get_batch_items_by_stage(batch_id, 1)}
+        selected = [it for it in qualifiers if (it["item_id"], it["model"]) in already]
+        for it in qualifiers:
+            if len(selected) >= target:
+                break
+            if (it["item_id"], it["model"]) not in already:
+                selected.append(it)
+
+        new_items = []
+        for it in selected:
             item_id = it["item_id"]
             model   = it["model"]
             r0_key  = it["run_key"]
@@ -200,7 +226,9 @@ class SciqHandler(StagedExperimentHandler):
             correct_answer=item_data["correct_answer"],
             response=response,
         )
-        error_adopted = self._check_error_adopted(
+        error_adopted, adoption_judge = self._judge_error_adopted(
+            question=item_data["question"],
+            correct_answer=item_data["correct_answer"],
             response=response,
             distractor1=item_data["distractor1"],
         )
@@ -214,6 +242,7 @@ class SciqHandler(StagedExperimentHandler):
             "r1_correct":   correct,
             "r1_judge":     judge,
             "error_adopted": error_adopted,
+            "error_adopted_judge": adoption_judge,
         }
 
     def _run_r2(self, item_row: dict, item_data: dict, config: dict) -> dict:
@@ -256,6 +285,7 @@ class SciqHandler(StagedExperimentHandler):
             "r0_judge":       r1_result.get("r0_judge"),
             "r1_judge":       r1_result.get("r1_judge"),
             "r2_judge":       judge,
+            "error_adopted_judge": r1_result.get("error_adopted_judge"),
         }
 
     # ── Model call helpers ────────────────────────────────────────────────────
@@ -317,21 +347,57 @@ class SciqHandler(StagedExperimentHandler):
             system=prompts.JUDGE_SYSTEM,
             user=prompts.judge_user(question, correct_answer, response),
         )
-        # Tolerate ```json fences or stray text around the object
+        parsed = self._parse_judge_json(raw)
+        if parsed is None:
+            # Claude returned non-JSON — treat as incorrect conservatively
+            correct, reasoning = False, None
+        else:
+            correct, reasoning = bool(parsed.get("correct", False)), parsed.get("reasoning")
+        return correct, {"correct": correct, "reasoning": reasoning, "raw": raw}
+
+    def _judge_error_adopted(
+        self, question: str, correct_answer: str, response: str, distractor1: str
+    ) -> tuple[bool, dict]:
+        """
+        Ask Claude whether a response adopts distractor1 as its answer.
+
+        Replaces substring matching, which misfires on words that contain the
+        distractor ("backbones" ⊃ "bones") or on explicit rejections ("not
+        antioxidants"). The judge sees both the correct answer and distractor1
+        and classifies the response as "correct" / "target" / "other";
+        adopted == (committed_to == "target"). Without the correct answer as a
+        reference, the judge read "backbones" as a paraphrase of "Bones".
+
+        Returns (adopted, judge_record) with reasoning and raw reply kept for
+        audit. Unparseable or unrecognised replies count as not adopted, with
+        committed_to = None so they can be found later.
+        """
+        raw = self._call_claude(
+            system=prompts.ADOPTION_JUDGE_SYSTEM,
+            user=prompts.adoption_judge_user(question, correct_answer, distractor1, response),
+        )
+        parsed = self._parse_judge_json(raw)
+        committed_to = parsed.get("committed_to") if parsed else None
+        if committed_to not in ("correct", "target", "other"):
+            committed_to = None
+        adopted = committed_to == "target"
+        return adopted, {
+            "adopted":      adopted,
+            "committed_to": committed_to,
+            "reasoning":    parsed.get("reasoning") if parsed else None,
+            "raw":          raw,
+        }
+
+    @staticmethod
+    def _parse_judge_json(raw: str) -> dict | None:
+        """Parse a judge reply, tolerating ```json fences or stray text around the object."""
         start, end = raw.find("{"), raw.rfind("}")
         candidate = raw[start:end + 1] if start != -1 and end > start else raw
         try:
             parsed = json.loads(candidate)
-            correct = bool(parsed.get("correct", False))
-            reasoning = parsed.get("reasoning")
-        except (json.JSONDecodeError, AttributeError):
-            # Claude returned non-JSON — treat as incorrect conservatively
-            correct, reasoning = False, None
-        return correct, {"correct": correct, "reasoning": reasoning, "raw": raw}
-
-    def _check_error_adopted(self, response: str, distractor1: str) -> bool:
-        """Heuristic: does the response contain the distractor text?"""
-        return distractor1.lower().strip() in response.lower()
+        except json.JSONDecodeError:
+            return None
+        return parsed if isinstance(parsed, dict) else None
 
     # ── Data helpers ──────────────────────────────────────────────────────────
 
