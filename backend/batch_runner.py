@@ -41,6 +41,9 @@ from batch_db import (
     create_batch,
     get_batch,
     get_batch_items,
+    get_batch_items_by_stage,   # NEW
+    get_max_stage,               # NEW
+    insert_batch_items,          # NEW
     get_completed_results,
     make_run_key,
     mark_batch_status,
@@ -50,6 +53,7 @@ from batch_db import (
     mark_item_skipped,
     reset_stale_running_items,
 )
+from handler_registry import get_handler  # NEW
 
 
 def _now() -> str:
@@ -168,6 +172,13 @@ def create_batch_from_request(req: dict, warnings: list[str]) -> str:
 
 # ── Async executor ────────────────────────────────────────────────────────────
 
+def _attach_results(items: list[dict]) -> None:
+    """Parse result_json into a 'result' key in-place, for handler consumption."""
+    for it in items:
+        raw = it.get("result_json")
+        it["result"] = json.loads(raw) if raw else None
+
+
 async def run_batch(batch_id: str) -> None:
     """Background async executor. Called as a FastAPI BackgroundTask."""
     now = _now()
@@ -178,24 +189,67 @@ async def run_batch(batch_id: str) -> None:
     if not batch:
         return
 
-    config          = json.loads(batch["config"]) if isinstance(batch["config"], str) else batch["config"]
+    config = json.loads(batch["config"]) if isinstance(batch["config"], str) else batch["config"]
     _update_experiment_status(batch["experiment_id"], phase="in_progress", started_at=now)
     max_concurrency = config.get("max_concurrency", 3)
     retry_limit     = config.get("retry_limit", 3)
+    experiment_id   = batch["experiment_id"]
 
-    all_items = get_batch_items(batch_id)
-    to_run = [
-        it for it in all_items
-        if it["status"] not in ("completed", "skipped", "cancelled")
-        and not (it["status"] == "failed" and it["attempt"] >= retry_limit)
-    ]
-
+    handler  = get_handler(config.get("experiment_type"))
     semaphore = asyncio.Semaphore(max_concurrency)
-    await asyncio.gather(
-        *[_run_unit(semaphore, batch_id, item, config, retry_limit) for item in to_run],
-        return_exceptions=True,
-    )
 
+    if handler is None:
+        # ── Flat experiment: existing behavior unchanged ──────────────────────
+        all_items = get_batch_items(batch_id)
+        to_run = [
+            it for it in all_items
+            if it["status"] not in ("completed", "skipped", "cancelled")
+            and not (it["status"] == "failed" and it["attempt"] >= retry_limit)
+        ]
+        await asyncio.gather(
+            *[_run_unit(semaphore, batch_id, item, config, retry_limit) for item in to_run],
+            return_exceptions=True,
+        )
+    else:
+        # ── Staged experiment ─────────────────────────────────────────────────
+        current_stage = 0
+        while True:
+            stage_items = get_batch_items_by_stage(batch_id, current_stage)
+            if not stage_items:
+                break
+
+            to_run = [
+                it for it in stage_items
+                if it["status"] not in ("completed", "skipped", "cancelled")
+                and not (it["status"] == "failed" and it["attempt"] >= retry_limit)
+            ]
+
+            await asyncio.gather(
+                *[
+                    _run_unit(semaphore, batch_id, item, config, retry_limit, handler=handler)
+                    for item in to_run
+                ],
+                return_exceptions=True,
+            )
+
+            # Check if batch was cancelled while this stage was running
+            current_batch = get_batch(batch_id)
+            if current_batch and current_batch.get("status") == "cancelled":
+                return
+
+            # Pass completed stage to handler; it returns items for the next stage
+            finished = get_batch_items_by_stage(batch_id, current_stage)
+            _attach_results(finished)
+            new_items = handler.on_stage_complete(
+                current_stage, batch_id, experiment_id, finished
+            )
+            if new_items:
+                insert_batch_items(batch_id, experiment_id, new_items)
+                current_stage += 1
+            else:
+                break
+
+    # ── Final status ──────────────────────────────────────────────────────────
     final_items    = get_batch_items(batch_id)
     has_incomplete = any(it["status"] in ("pending", "running") for it in final_items)
     final_status   = "failed" if has_incomplete else "completed"
@@ -214,31 +268,64 @@ async def _run_unit(
     item_row: dict,
     config: dict,
     retry_limit: int,
+    handler=None,
 ) -> None:
     from research_runner import get_dataset_item, get_prompt_variant, _call_model_with_retry
     from research_judge import score_research_response
 
     async with semaphore:
         run_key        = item_row["run_key"]
+        run_type       = item_row.get("run_type", "generation")
+        depends_on_raw = item_row.get("depends_on")
+
+        # ── Dependency check ──────────────────────────────────────────────────
+        if depends_on_raw:
+            dep_keys = json.loads(depends_on_raw) if isinstance(depends_on_raw, str) else depends_on_raw
+            if dep_keys:
+                from batch_db import get_batch_item_by_run_key
+                for dep_key in dep_keys:
+                    dep = get_batch_item_by_run_key(dep_key)
+                    if not dep or dep["status"] != "completed":
+                        mark_item_failed(run_key, f"dependency not satisfied: {dep_key}")
+                        return
+
         item_id        = item_row["item_id"]
         prompt_variant = item_row["prompt_variant"]
         model_id       = item_row["model"]
         temperature    = config.get("temperature", 0.0)
         task_instructions = config.get("task_instructions")
 
+        # ── Non-generation dispatch ───────────────────────────────────────────
+        if run_type != "generation" and handler is not None:
+            attempt = item_row["attempt"]
+            while attempt < retry_limit:
+                attempt += 1
+                mark_item_running(run_key, attempt)
+                try:
+                    result = await asyncio.to_thread(
+                        handler.dispatch, run_type, item_row, config
+                    )
+                    mark_item_completed(run_key, json.dumps(result))
+                    return
+                except Exception as e:
+                    if attempt < retry_limit:
+                        await asyncio.sleep(2 ** attempt)
+                    else:
+                        mark_item_failed(run_key, str(e))
+            return
+
+        # ── Standard generation path (unchanged) ─────────────────────────────
         model_cfg = next(
             (m for m in RESEARCH_SUBJECT_MODELS if m["model_id"] == model_id),
             {"model_id": model_id, "display_name": model_id, "provider": "openai", "version_note": ""},
         )
 
-        # Resolve dataset item and variant once — these failures are not retried
         try:
             dataset_item = await asyncio.to_thread(get_dataset_item, item_id)
-            # Allow batch config to override the default canonical system prompt
             override_prompt = config.get("system_prompt")
             if override_prompt:
                 dataset_item = dataclasses.replace(dataset_item, system_prompt=override_prompt)
-            variant      = await asyncio.to_thread(
+            variant = await asyncio.to_thread(
                 get_prompt_variant, dataset_item, prompt_variant, task_instructions
             )
         except ValueError as e:
