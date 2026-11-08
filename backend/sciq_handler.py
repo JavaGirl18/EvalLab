@@ -390,14 +390,26 @@ class SciqHandler(StagedExperimentHandler):
 
     @staticmethod
     def _parse_judge_json(raw: str) -> dict | None:
-        """Parse a judge reply, tolerating ```json fences or stray text around the object."""
-        start, end = raw.find("{"), raw.rfind("}")
-        candidate = raw[start:end + 1] if start != -1 and end > start else raw
-        try:
-            parsed = json.loads(candidate)
-        except json.JSONDecodeError:
-            return None
-        return parsed if isinstance(parsed, dict) else None
+        """
+        Parse a judge reply, tolerating ```json fences or stray text.
+
+        If the reply contains several JSON objects (e.g. a verdict, then
+        "Wait, let me reconsider...", then a revised verdict), the LAST
+        object is returned as the judge's final answer.
+        """
+        decoder = json.JSONDecoder()
+        objects: list[dict] = []
+        pos = raw.find("{")
+        while pos != -1:
+            try:
+                obj, end = decoder.raw_decode(raw, pos)
+            except json.JSONDecodeError:
+                pos = raw.find("{", pos + 1)
+                continue
+            if isinstance(obj, dict):
+                objects.append(obj)
+            pos = raw.find("{", end)
+        return objects[-1] if objects else None
 
     # ── Data helpers ──────────────────────────────────────────────────────────
 
