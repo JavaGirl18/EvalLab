@@ -52,7 +52,9 @@ export class ResearchResultsComponent implements OnInit {
 
   ngOnInit() {
     this.evalService.listBatches().subscribe({
-      next: (batches) => {
+      next: (all) => {
+        // SCIQ batches have their own tab and a different result schema
+        const batches = all.filter((b) => b.experiment_type !== 'sciq');
         this.batches = batches;
         if (this.results.length > 0) { this.cdr.detectChanges(); return; }
         const latest = batches.find((b) => b.status === 'completed' && b.completed > 0);

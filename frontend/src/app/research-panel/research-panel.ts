@@ -16,6 +16,7 @@ import {
   HumanReviewStats,
   ImportResult,
   BatchStatus,
+  SciqBatchRequest,
 } from '../services/eval';
 
 const STANDARD_VARIANTS = [
@@ -53,6 +54,7 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   @Output() historyTagged   = new EventEmitter<{ timestamp: string; experiment: ExperimentMeta }>();
   @Output() loadingChange   = new EventEmitter<boolean>();
   @Output() experimentReady = new EventEmitter<ExperimentMeta | null>();
+  @Output() sciqBatchCreated = new EventEmitter<string>();
 
   // Source mode
   sourceMode: SourceMode = 'dataset';
@@ -131,6 +133,20 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
   adv001Error       = '';
   adv001BatchStatus: BatchStatus | null = null;
   private adv001PollTimer: ReturnType<typeof setInterval> | null = null;
+
+  // SCIQ error-propagation run
+  readonly sciqModels = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+  sciqExpanded   = false;
+  sciqSubmitting = false;
+  sciqError      = '';
+  sciqForm: SciqBatchRequest = {
+    experiment_id:     '',
+    candidate_count:   80,
+    qualifying_target: 50,
+    seed:              42,
+    subject_model:     'gemini-3.5-flash-lite',
+    temperature:       0.0,
+  };
 
   constructor(private evalService: EvalService, private cdr: ChangeDetectorRef) {}
 
@@ -776,6 +792,34 @@ export class ResearchPanelComponent implements OnInit, OnDestroy {
     if (!this.analysisSelectedIds.length) return;
     const url = this.evalService.benchmarkAnalysisUrl(this.analysisSelectedIds);
     window.open(url, '_blank');
+  }
+
+  // ── SCIQ ──────────────────────────────────────────────────────────────────
+
+  get canStartSciq(): boolean {
+    return !this.sciqSubmitting && this.sciqForm.experiment_id.trim().length > 0;
+  }
+
+  startSciqRun() {
+    if (!this.canStartSciq) return;
+    this.sciqSubmitting = true;
+    this.sciqError      = '';
+    this.evalService.createSciqBatch({ ...this.sciqForm, experiment_id: this.sciqForm.experiment_id.trim() }).subscribe({
+      next: (created) => {
+        this.sciqSubmitting = false;
+        this.sciqForm = { ...this.sciqForm, experiment_id: '' };
+        this.sciqBatchCreated.emit(created.batch_id);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.sciqSubmitting = false;
+        const d = err.error?.detail;
+        this.sciqError = Array.isArray(d?.errors) ? d.errors.join(' ')
+          : Array.isArray(d) ? d.map((e: { msg: string }) => e.msg).join(' ')
+          : (typeof d === 'string' ? d : 'Failed to start SCIQ run.');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ── ADV-001 ───────────────────────────────────────────────────────────────

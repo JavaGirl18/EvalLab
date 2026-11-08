@@ -236,6 +236,7 @@ export interface BatchStatus {
   started_at: string | null;
   completed_at: string | null;
   items: BatchRunItem[];
+  experiment_type?: string | null;
 }
 
 export interface BatchSummary {
@@ -249,6 +250,62 @@ export interface BatchSummary {
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  experiment_type?: string | null;
+}
+
+// ── SCIQ (staged error-propagation experiment) ────────────────────────────────
+
+export interface SciqBatchRequest {
+  experiment_id: string;
+  candidate_count: number;
+  qualifying_target: number;
+  seed: number;
+  subject_model: string;
+  temperature: number;
+  max_concurrency?: number;
+  retry_limit?: number;
+}
+
+export interface SciqBatchCreated {
+  batch_id: string;
+  candidate_count: number;
+  experiment_id: string;
+}
+
+export interface SciqConditionSummary {
+  r1_correct: number;
+  r1_total: number;
+  r2_correct: number;
+  error_adopted: number;
+  error_persisted: number;
+  error_recovered: number;
+}
+
+export interface SciqItemRow {
+  item_id: string;
+  condition: 'accurate' | 'erroneous';
+  baseline_correct: boolean;
+  r1_correct: boolean;
+  r2_correct: boolean;
+  error_adopted: boolean;
+  error_persisted: boolean;
+  error_recovered: boolean;
+}
+
+export interface SciqResults {
+  batch_id: string;
+  experiment_id: string;
+  status: string;
+  summary: {
+    candidates: number;
+    baseline_correct: number;
+    qualifying_items: number;
+    accurate_condition: SciqConditionSummary;
+    erroneous_condition: SciqConditionSummary;
+    recovery_rate: number | null;
+    mcnemar: { pairs: number; erroneous_only: number; accurate_only: number; p_value: number };
+  };
+  items: SciqItemRow[];
 }
 
 export interface BatchResults {
@@ -560,6 +617,14 @@ export class EvalService {
 
   listBatches(): Observable<BatchSummary[]> {
     return this.http.get<BatchSummary[]>(`${this.apiUrl}/batches`);
+  }
+
+  createSciqBatch(request: SciqBatchRequest): Observable<SciqBatchCreated> {
+    return this.http.post<SciqBatchCreated>(`${this.apiUrl}/batch/sciq`, request);
+  }
+
+  getSciqResults(batchId: string): Observable<SciqResults> {
+    return this.http.get<SciqResults>(`${this.apiUrl}/batch/${batchId}/sciq-results`);
   }
 
   listExperiments(): Observable<ExperimentFileSummary[]> {

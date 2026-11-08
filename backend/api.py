@@ -1,5 +1,8 @@
 import hashlib
 import json
+import math
+import subprocess
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List
@@ -17,8 +20,12 @@ from config import CANONICAL_SYSTEM_PROMPT, STANDARD_PROMPT_VARIANTS, JUDGE_MODE
 from batch_db import (
     get_batch, get_batch_items, list_batches,
     cancel_batch, get_completed_results, reset_failed_items,
+    create_batch,
 )
 from batch_runner import validate_request, create_batch_from_request, run_batch, compute_batch_summary
+import sciq_handler  # registers "sciq" in handler_registry on import
+from sciq_dataset import list_sciq_item_ids
+from config import RESEARCH_SUBJECT_MODELS
 from batch_pdf_export import build_batch_pdf
 from benchmark_analysis import compute_analysis, render_analysis_html
 from human_review_db import (
@@ -458,6 +465,7 @@ class BatchStatusResponse(BaseModel):
     started_at:    Optional[str]
     completed_at:  Optional[str]
     items:         list[BatchRunItemResponse]
+    experiment_type: Optional[str] = None   # e.g. "sciq" for staged experiments; None for flat batches
 
 
 class BatchSummaryResponse(BaseModel):
@@ -471,6 +479,12 @@ class BatchSummaryResponse(BaseModel):
     created_at:    str
     started_at:    Optional[str]
     completed_at:  Optional[str]
+    experiment_type: Optional[str] = None
+
+
+def _batch_config(batch: dict) -> dict:
+    cfg = batch.get("config") or {}
+    return json.loads(cfg) if isinstance(cfg, str) else cfg
 
 
 @app.post("/batch", response_model=BatchStatusResponse, status_code=201)
@@ -490,6 +504,7 @@ async def create_batch_endpoint(request: BatchRequest, background_tasks: Backgro
                                   "failed","skipped","pending","warnings","created_at",
                                   "started_at","completed_at")},
         items=[BatchRunItemResponse(**{k: it[k] for k in BatchRunItemResponse.model_fields}) for it in items],
+        experiment_type=_batch_config(batch).get("experiment_type"),
     )
 
 
@@ -504,6 +519,7 @@ def get_batch_status(batch_id: str):
                                   "failed","skipped","pending","warnings","created_at",
                                   "started_at","completed_at")},
         items=[BatchRunItemResponse(**{k: it[k] for k in BatchRunItemResponse.model_fields}) for it in items],
+        experiment_type=_batch_config(batch).get("experiment_type"),
     )
 
 
@@ -609,10 +625,167 @@ def get_benchmark_analysis_html(experiments: str = "BASE50-EXP-001,BASE50-EXP-00
 @app.get("/batches", response_model=list[BatchSummaryResponse])
 def list_batches_endpoint():
     rows = list_batches()
-    return [
-        BatchSummaryResponse(**{k: r[k] for k in BatchSummaryResponse.model_fields})
-        for r in rows
+    out = []
+    for r in rows:
+        full = get_batch(r["batch_id"]) or {}
+        out.append(BatchSummaryResponse(
+            **{k: r[k] for k in BatchSummaryResponse.model_fields if k != "experiment_type"},
+            experiment_type=_batch_config(full).get("experiment_type"),
+        ))
+    return out
+
+
+# ── SCIQ (staged error-propagation experiment) ────────────────────────────────
+
+class SciqBatchRequest(BaseModel):
+    experiment_id:     str
+    candidate_count:   int   = Field(default=80, ge=1, le=200)
+    qualifying_target: int   = Field(default=50, ge=1)
+    seed:              int   = 42
+    subject_model:     str   = "gemini-3.5-flash-lite"
+    temperature:       float = Field(default=0.0, ge=0.0, le=1.0)
+    max_concurrency:   int   = Field(default=3, ge=1, le=10)
+    retry_limit:       int   = Field(default=3, ge=1, le=5)
+
+
+def _current_commit() -> Optional[str]:
+    """Best-effort code provenance for research runs; None when git is unavailable."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent, text=True,
+            stderr=subprocess.DEVNULL, timeout=5,
+        ).strip()
+    except Exception:
+        return None
+
+
+def _mcnemar_exact_p(b: int, c: int) -> float:
+    """Two-sided exact McNemar test on discordant pair counts b and c."""
+    n = b + c
+    if n == 0:
+        return 1.0
+    tail = sum(math.comb(n, i) for i in range(min(b, c) + 1)) / 2 ** n
+    return min(1.0, 2 * tail)
+
+
+@app.post("/batch/sciq", status_code=201)
+def create_sciq_batch(request: SciqBatchRequest, background_tasks: BackgroundTasks):
+    experiment_id = request.experiment_id.strip()
+    errors: list[str] = []
+    if not experiment_id:
+        errors.append("experiment_id is required.")
+    if request.qualifying_target > request.candidate_count:
+        errors.append("qualifying_target cannot exceed candidate_count.")
+    model_cfg = next((m for m in RESEARCH_SUBJECT_MODELS if m["model_id"] == request.subject_model), None)
+    if model_cfg is None:
+        errors.append(
+            f"Model '{request.subject_model}' is not configured. "
+            f"Available: {sorted(m['model_id'] for m in RESEARCH_SUBJECT_MODELS)}"
+        )
+    elif model_cfg.get("provider") != "google":
+        errors.append("SCIQ subject model must be a Gemini (google) model — the SCIQ handler calls Gemini directly.")
+    if errors:
+        raise HTTPException(status_code=422, detail={"errors": errors, "warnings": []})
+
+    # Run keys are experiment-scoped and globally unique, so reusing an
+    # experiment_id would silently create a batch with no items.
+    if any(b["experiment_id"] == experiment_id for b in list_batches()):
+        raise HTTPException(
+            status_code=409,
+            detail=f"experiment_id '{experiment_id}' already has a batch. Use a new experiment_id.",
+        )
+
+    item_ids = list_sciq_item_ids(seed=request.seed, limit=request.candidate_count)
+    items = [
+        {"item_id": item_id, "prompt_variant": "r0_generation", "model": request.subject_model,
+         "stage": 0, "run_type": "r0_generation"}
+        for item_id in item_ids
     ]
+    config = {
+        "experiment_type": "sciq",
+        **request.model_dump(),
+        "experiment_id": experiment_id,
+        "item_ids":      item_ids,          # sampling order; the qualifying cap follows it
+        "code_commit":   _current_commit(),
+    }
+    batch_id = str(uuid.uuid4())
+    create_batch(batch_id, experiment_id, config, warnings=[], run_items=items)
+    background_tasks.add_task(run_batch, batch_id)
+    return {"batch_id": batch_id, "candidate_count": len(items), "experiment_id": experiment_id}
+
+
+@app.get("/batch/{batch_id}/sciq-results")
+def get_sciq_results(batch_id: str):
+    batch = get_batch(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail=f"Batch '{batch_id}' not found.")
+    config = _batch_config(batch)
+    if config.get("experiment_type") != "sciq":
+        raise HTTPException(status_code=400, detail="batch is not a SCIQ experiment")
+
+    all_items = get_batch_items(batch_id)
+    order = {iid: n for n, iid in enumerate(config.get("item_ids", []))}
+
+    r0_rows = [it for it in all_items if it["stage"] == 0]
+    baseline_correct = sum(
+        1 for it in r0_rows
+        if it["status"] == "completed" and it["result_json"]
+        and json.loads(it["result_json"]).get("baseline_correct")
+    )
+    qualifying = {it["item_id"] for it in all_items if it["stage"] == 1}
+
+    fields = ("baseline_correct", "r1_correct", "r2_correct",
+              "error_adopted", "error_persisted", "error_recovered")
+    rows = []
+    for it in all_items:
+        if it["run_type"] not in ("r2_review_accurate", "r2_review_erroneous") or it["status"] != "completed":
+            continue
+        r = json.loads(it["result_json"])
+        rows.append({
+            "item_id":   it["item_id"],
+            "condition": "accurate" if it["run_type"].endswith("_accurate") else "erroneous",
+            **{f: bool(r.get(f)) for f in fields},
+        })
+    rows.sort(key=lambda x: (order.get(x["item_id"], len(order)), x["item_id"], x["condition"]))
+
+    def _condition_summary(cond: str) -> dict:
+        rs = [x for x in rows if x["condition"] == cond]
+        return {
+            "r1_correct":      sum(x["r1_correct"] for x in rs),
+            "r1_total":        len(rs),
+            "r2_correct":      sum(x["r2_correct"] for x in rs),
+            "error_adopted":   sum(x["error_adopted"] for x in rs),
+            "error_persisted": sum(x["error_persisted"] for x in rs),
+            "error_recovered": sum(x["error_recovered"] for x in rs),
+        }
+
+    accurate, erroneous = _condition_summary("accurate"), _condition_summary("erroneous")
+
+    # Paired adoption comparison: items with both conditions completed
+    adopted = {(x["item_id"], x["condition"]): x["error_adopted"] for x in rows}
+    paired  = {iid for iid, _ in adopted if (iid, "accurate") in adopted and (iid, "erroneous") in adopted}
+    b = sum(1 for iid in paired if adopted[(iid, "erroneous")] and not adopted[(iid, "accurate")])
+    c = sum(1 for iid in paired if adopted[(iid, "accurate")] and not adopted[(iid, "erroneous")])
+
+    return {
+        "batch_id":      batch_id,
+        "experiment_id": batch["experiment_id"],
+        "status":        batch["status"],
+        "summary": {
+            "candidates":        len(r0_rows),
+            "baseline_correct":  baseline_correct,
+            "qualifying_items":  len(qualifying),
+            "accurate_condition":  accurate,
+            "erroneous_condition": erroneous,
+            "recovery_rate": (
+                erroneous["error_recovered"] / erroneous["error_adopted"]
+                if erroneous["error_adopted"] else None
+            ),
+            "mcnemar": {"pairs": len(paired), "erroneous_only": b, "accurate_only": c,
+                        "p_value": _mcnemar_exact_p(b, c)},
+        },
+        "items": rows,
+    }
 
 
 # ── Human Review ──────────────────────────────────────────────────────────────

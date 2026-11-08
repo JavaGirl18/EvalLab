@@ -61,6 +61,7 @@
             (historySelect)="onHistorySelect($event)"
             (historyTagged)="onHistoryTagged($event)"
             (experimentReady)="onExperimentReady($event)"
+            (sciqBatchCreated)="onSciqBatchCreated($event)"
           />
         </div>
       </div>
@@ -111,6 +112,14 @@
           [class.text-gray-900]="researchView === 'import'"
           [class.text-gray-500]="researchView !== 'import'"
         >Import</button>
+        <button
+          (click)="researchView = 'sciq'"
+          class="px-4 py-1.5 rounded-md text-xs font-medium transition-colors"
+          [class.bg-white]="researchView === 'sciq'"
+          [class.shadow-sm]="researchView === 'sciq'"
+          [class.text-gray-900]="researchView === 'sciq'"
+          [class.text-gray-500]="researchView !== 'sciq'"
+        >SCIQ</button>
       </div>
 
       <app-results-table
@@ -135,6 +144,10 @@
       <app-external-packages
         *ngIf="mode === 'research' && researchView === 'import'"
         class="flex-1 overflow-hidden"
+      />
+      <app-sciq-results
+        *ngIf="mode === 'research' && researchView === 'sciq'"
+        [batchId]="sciqBatchId"
       />
     </div>
 
