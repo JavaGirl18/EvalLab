@@ -13,6 +13,9 @@ venv/
 # CSV results — these are generated output, not source code
 backend/results/
 
+# Experiment run outputs (e.g. SCIQ) — local data, not source
+backend/data/results/
+
 # Node / Angular
 node_modules/
 dist/
