@@ -107,7 +107,10 @@ class SciqHandler(StagedExperimentHandler):
         return new_items
 
     def _after_r1(self, experiment_id: str, items: list[dict]) -> list[dict]:
-        """Creates one stage-3 (R2 neutral review) item per completed R1."""
+        """
+        Creates two stage-3 items per completed R1:
+        R2-A (feedback removed, r2_review_*) and R2-B (feedback retained, r2b_review_*).
+        """
         new_items = []
         for it in items:
             if it["status"] != "completed" or not it.get("result"):
@@ -117,16 +120,27 @@ class SciqHandler(StagedExperimentHandler):
             r1_key  = it["run_key"]
             r1_type = it.get("run_type", "")
 
-            r2_type = (
-                "r2_review_accurate" if "accurate" in r1_type
-                else "r2_review_erroneous"
-            )
+            condition = "accurate" if "accurate" in r1_type else "erroneous"
+
+            # R2-A: existing, feedback removed
+            r2a_type = f"r2_review_{condition}"
             new_items.append({
                 "item_id":        item_id,
-                "prompt_variant": r2_type,
+                "prompt_variant": r2a_type,
                 "model":          model,
                 "stage":          3,
-                "run_type":       r2_type,
+                "run_type":       r2a_type,
+                "depends_on":     [r1_key],
+            })
+
+            # R2-B: new, feedback retained
+            r2b_type = f"r2b_review_{condition}"
+            new_items.append({
+                "item_id":        item_id,
+                "prompt_variant": r2b_type,
+                "model":          model,
+                "stage":          3,
+                "run_type":       r2b_type,
                 "depends_on":     [r1_key],
             })
         return new_items
@@ -147,6 +161,8 @@ class SciqHandler(StagedExperimentHandler):
             return self._run_r1(item_row, item_data, config)
         elif run_type in ("r2_review_accurate", "r2_review_erroneous"):
             return self._run_r2(item_row, item_data, config)
+        elif run_type in ("r2b_review_accurate", "r2b_review_erroneous"):
+            return self._run_r2b(item_row, item_data, config)
         else:
             raise ValueError(f"Unknown run_type: {run_type}")
 
@@ -284,6 +300,52 @@ class SciqHandler(StagedExperimentHandler):
             "r0_judge":       r1_result.get("r0_judge"),
             "r1_judge":       r1_result.get("r1_judge"),
             "r2_judge":       judge,
+            "error_adopted_judge": r1_result.get("error_adopted_judge"),
+        }
+
+    def _run_r2b(self, item_row: dict, item_data: dict, config: dict) -> dict:
+        """R2-B: re-ask with the original answer, tutor feedback and R1 still in context (no passage)."""
+        r1_result = self._get_dependency_result(item_row)
+        response = self._call_gemini(
+            system=prompts.R2B_SYSTEM,
+            user=prompts.r2b_user(
+                item_data["question"],
+                r1_result["r0_response"],
+                r1_result["feedback"],
+                r1_result["r1_response"],
+            ),
+            config=config,
+        )
+        correct, judge = self._judge_correctness(
+            question=item_data["question"],
+            correct_answer=item_data["correct_answer"],
+            response=response,
+        )
+        error_persisted = (
+            r1_result.get("error_adopted", False)
+            and not correct
+        )
+        error_recovered = (
+            r1_result.get("error_adopted", False)
+            and correct
+        )
+        return {
+            "run_type":        item_row["run_type"],
+            "item_id":         item_row["item_id"],
+            "r0_response":     r1_result["r0_response"],
+            "feedback":        r1_result["feedback"],
+            "r1_response":     r1_result["r1_response"],
+            "r2b_response":    response,
+            "baseline_correct": True,
+            "r1_correct":      r1_result["r1_correct"],
+            "r2b_correct":     correct,
+            "error_adopted":   r1_result.get("error_adopted", False),
+            "error_persisted": error_persisted,
+            "error_recovered": error_recovered,
+            # audit trail, same as R2-A
+            "r0_judge":        r1_result.get("r0_judge"),
+            "r1_judge":        r1_result.get("r1_judge"),
+            "r2b_judge":       judge,
             "error_adopted_judge": r1_result.get("error_adopted_judge"),
         }
 
