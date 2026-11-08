@@ -132,7 +132,7 @@ class SciqHandler(StagedExperimentHandler):
             user=prompts.r0_user(item_data["question"], item_data["support"]),
             config=config,
         )
-        correct = self._judge_correctness(
+        correct, judge = self._judge_correctness(
             question=item_data["question"],
             correct_answer=item_data["correct_answer"],
             response=response,
@@ -142,6 +142,7 @@ class SciqHandler(StagedExperimentHandler):
             "item_id":         item_row["item_id"],
             "r0_response":     response,
             "baseline_correct": correct,
+            "r0_judge":        judge,
         }
 
     def _run_feedback_accurate(self, item_row: dict, item_data: dict, config: dict) -> dict:
@@ -159,6 +160,7 @@ class SciqHandler(StagedExperimentHandler):
             "run_type":    "feedback_accurate",
             "item_id":     item_row["item_id"],
             "r0_response": r0_result["r0_response"],
+            "r0_judge":    r0_result.get("r0_judge"),
             "feedback":    feedback,
         }
 
@@ -177,6 +179,7 @@ class SciqHandler(StagedExperimentHandler):
             "run_type":    "feedback_erroneous",
             "item_id":     item_row["item_id"],
             "r0_response": r0_result["r0_response"],
+            "r0_judge":    r0_result.get("r0_judge"),
             "feedback":    feedback,
         }
 
@@ -192,7 +195,7 @@ class SciqHandler(StagedExperimentHandler):
             ),
             config=config,
         )
-        correct = self._judge_correctness(
+        correct, judge = self._judge_correctness(
             question=item_data["question"],
             correct_answer=item_data["correct_answer"],
             response=response,
@@ -205,9 +208,11 @@ class SciqHandler(StagedExperimentHandler):
             "run_type":     item_row["run_type"],
             "item_id":      item_row["item_id"],
             "r0_response":  fb_result["r0_response"],
+            "r0_judge":     fb_result.get("r0_judge"),
             "feedback":     fb_result["feedback"],
             "r1_response":  response,
             "r1_correct":   correct,
+            "r1_judge":     judge,
             "error_adopted": error_adopted,
         }
 
@@ -222,7 +227,7 @@ class SciqHandler(StagedExperimentHandler):
             ),
             config=config,
         )
-        correct = self._judge_correctness(
+        correct, judge = self._judge_correctness(
             question=item_data["question"],
             correct_answer=item_data["correct_answer"],
             response=response,
@@ -248,6 +253,9 @@ class SciqHandler(StagedExperimentHandler):
             "error_adopted":  r1_result.get("error_adopted", False),
             "error_persisted": error_persisted,
             "error_recovered": error_recovered,
+            "r0_judge":       r1_result.get("r0_judge"),
+            "r1_judge":       r1_result.get("r1_judge"),
+            "r2_judge":       judge,
         }
 
     # ── Model call helpers ────────────────────────────────────────────────────
@@ -287,13 +295,24 @@ class SciqHandler(StagedExperimentHandler):
         msg = client.messages.create(
             model=RESEARCH_JUDGE_CONFIG["model_id"],
             max_tokens=512,
+            # Held at 0 for both judge and feedback calls: judge verdicts are
+            # outcome variables, and feedback wording is part of the controlled
+            # manipulation — neither should vary between runs.
+            temperature=0,
             system=system,
             messages=[{"role": "user", "content": user}],
         )
         return msg.content[0].text
 
-    def _judge_correctness(self, question: str, correct_answer: str, response: str) -> bool:
-        """Ask Claude to judge whether a response is correct. Returns bool."""
+    def _judge_correctness(
+        self, question: str, correct_answer: str, response: str
+    ) -> tuple[bool, dict]:
+        """
+        Ask Claude to judge whether a response is correct.
+
+        Returns (correct, judge_record). judge_record keeps the parsed
+        reasoning and the raw reply text so any verdict can be audited later.
+        """
         raw = self._call_claude(
             system=prompts.JUDGE_SYSTEM,
             user=prompts.judge_user(question, correct_answer, response),
@@ -303,10 +322,12 @@ class SciqHandler(StagedExperimentHandler):
         candidate = raw[start:end + 1] if start != -1 and end > start else raw
         try:
             parsed = json.loads(candidate)
-            return bool(parsed.get("correct", False))
+            correct = bool(parsed.get("correct", False))
+            reasoning = parsed.get("reasoning")
         except (json.JSONDecodeError, AttributeError):
             # Claude returned non-JSON — treat as incorrect conservatively
-            return False
+            correct, reasoning = False, None
+        return correct, {"correct": correct, "reasoning": reasoning, "raw": raw}
 
     def _check_error_adopted(self, response: str, distractor1: str) -> bool:
         """Heuristic: does the response contain the distractor text?"""
