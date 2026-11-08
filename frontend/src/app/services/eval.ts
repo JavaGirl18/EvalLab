@@ -279,6 +279,11 @@ export interface SciqConditionSummary {
   error_adopted: number;
   error_persisted: number;
   error_recovered: number;
+  // R2-B (feedback retained); null for batches without R2-B
+  r2b_total: number | null;
+  r2b_correct: number | null;
+  r2b_error_persisted: number | null;
+  r2b_error_recovered: number | null;
 }
 
 export interface SciqItemRow {
@@ -290,6 +295,9 @@ export interface SciqItemRow {
   error_adopted: boolean;
   error_persisted: boolean;
   error_recovered: boolean;
+  r2b_correct: boolean | null;
+  r2b_persisted: boolean | null;
+  r2b_recovered: boolean | null;
 }
 
 export interface SciqResults {
@@ -304,6 +312,9 @@ export interface SciqResults {
     erroneous_condition: SciqConditionSummary;
     recovery_rate: number | null;
     mcnemar: { pairs: number; erroneous_only: number; accurate_only: number; p_value: number };
+    has_r2b: boolean;
+    r2b_persistence_rate: number | null;
+    persistence_mcnemar: { pairs: number; persisted_b_only: number; persisted_a_only: number; p_value: number } | null;
   };
   items: SciqItemRow[];
 }
